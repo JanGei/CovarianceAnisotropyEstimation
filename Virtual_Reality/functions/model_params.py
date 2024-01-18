@@ -11,7 +11,10 @@ def get():
         'ang'   : np.array([291, 17])+90,                   # angle (logK, recharge)
         'sigma' : np.array([1.7, 0.1]),                     # variance (logK, recharge)
         'mu'    : np.array([-8.5, -0.7]),                   # mean (logK, recharge)
-        'cov'   : cov_mods[0]                               # Covariance models
+        'cov'   : cov_mods[0],                              # Covariance models
+        'nlay'  : np.array([1]),                            # Number of layers
+        'bot'   : np.array([0]),                            # Bottom of aquifer
+        'top'   : np.array([50]),                           # Top of aquifer
         }
 
     return pars
