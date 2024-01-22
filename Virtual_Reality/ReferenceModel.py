@@ -4,6 +4,9 @@ Created on Tue Dec 12 10:01:12 2023
 
 @author: Janek
 """
+import flopy
+from flopy.discretization.structuredgrid import StructuredGrid
+from flopy.utils.gridgen import Gridgen
 from functions.model_params import get
 import numpy as np
 
@@ -18,13 +21,13 @@ ang     = pars['ang']
 sigma   = pars['sigma']
 mu      = pars['mu']
 cov     = pars['cov']
-top     = pars['top']
-bot     = pars['bot']
-nlay    = pars['nlay']
+toph    = pars['top']
+both    = pars['bot']
+nlay    = pars['nlay'][0]
 
 
-model_ws    = "./ModelFiles"
-model_name  = "Refernce"
+model_ws    = "./model_files"
+model_name  = "Reference"
 
 
 #%% Grid Generation
@@ -35,26 +38,57 @@ Ly = nx[1] * dx[1]
 delr = np.ones(nx[0])*Lx/nx[0]
 delc = np.ones(nx[1])*Ly/nx[1]
 
-delv = (top - bot) / nlay
+delv = (toph - both) / nlay
 
-# top =  np.ones((nx[1],nx[0]))*top
-# botm = np.array([np.ones((nrow,ncol))*ztop-zbot*0.5,
-#                 np.ones((nrow,ncol))*(ztop-zbot)])
+top     =  np.array([np.ones((nx[1],nx[0]))]*toph)
+botm    =  np.array([np.ones((nx[1],nx[0]))]*toph-both)
 
-# x = np.arange(-nx[0] / 2 * dx[0], (nx[0] - 1) / 2 * dx[0] + dx[0], dx[0])
-# y = np.arange(-nx[1] / 2 * dx[1], (nx[1] - 1) / 2 * dx[1] + dx[1], dx[1])
-# # Grid in Physical Coordinates
-# X, Y = np.meshgrid(x, y)
+strgrd = StructuredGrid(delc=delc.astype(int), delr=delr.astype(int), top=top, botm=botm, nlay=nlay)
 
-# strgrd = StructuredGrid(delc=delc, delr=delr, top=top, botm=botm, nlay=nlay)
-
-# g = Gridgen(strgrd, model_ws=model_ws)
+g = Gridgen(strgrd, model_ws=model_ws)
 
 
+#%% Well Location
+row_well    = 5
+col_well    = 9
+well_loc    = np.zeros((col_well*row_well,2))
+for i in range(row_well):
+    for j in range(col_well):
+        well_loc[i*col_well + j, 0] = (20 + 10*j) #*dx[0]
+        well_loc[i*col_well + j, 1] = (10 + 10*i)   #*dx[1]
+        
+# pumping wells should be at (5, 9, 15, 27, 31)
+# CHECK WHETHER THESE WELLS ARE AT THE CORRECT LOCATION
+
+# possible refinements
+# g.add_refinement_features(list(zip(wells)), "point", 4, range(nlay))
 
 
 
+#%% Southern Boudnary - river
+river           = np.array([[0.0,0], [1000.0,0]])
+river_stages    = np.array([13.4])
+riv_line        = [tuple(xy) for xy in river]
 
+# NEED VARAIBLE RIVER STAGE DATA
+# possible refinements
+# g.add_refinement_features([riv_line], "line", 3, range(nlay))
+
+#%% Buildng Grid
+
+g.build()
+g.plot()
+disv_props  = g.get_gridprops_vertexgrid()
+vgrid       = flopy.discretization.VertexGrid(**disv_props)
+idom        = np.ones([vgrid.nlay, vgrid.ncpl])
+strt        = np.zeros([vgrid.nlay, vgrid.ncpl])+20
+ixs         = flopy.utils.GridIntersect(vgrid, method = "vertex")
+
+# TODO: RUN STEADYSTATE MODEL TO OBTAIN STARTING HEADS
+
+#%% Loading reference fields
+logK = np.loadtxt('model_data/logK_reference.csv', delimiter = ',')
+rech = np.loadtxt('model_data/rech_reference.csv', delimiter = ',')
 
 
 
@@ -89,8 +123,8 @@ delv = (top - bot) / nlay
 # from matplotlib.colors import Normalize
 # from matplotlib import cm
 # from scipy.stats import qmc
-# from flopy.utils.gridgen import Gridgen
-# from flopy.discretization.structuredgrid import StructuredGrid
+
+
 # from shapely.geometry import Point, LineString, shape, MultiPoint
 # from gstools import Matern
 # from pykrige.ok import OrdinaryKriging
@@ -135,24 +169,11 @@ delv = (top - bot) / nlay
 # # mf = flopy.modflow.Modflow("_temp")
 
 
-# wells = np.array([[723,550],[123,789]])
-# wells_pump = [-123, -300]
-# wells_lay = [1,0]
 
-# river = np.array([[0.0,30.0], [100.0,20.0], [300.0,50.0], [500.0,100.0], [750.0,300.0], [1000.0,320.0]])
-# river_stages = np.array([-5,-7,-10,-12,-16,-20])+100
-# riv_line = [tuple(xy) for xy in river]
 
-# g.add_refinement_features(list(zip(wells)), "point", 4, range(nlay))
-# g.add_refinement_features([riv_line], "line", 3, range(nlay))
 
-# g.build()
-# g.plot()
-# disv_props = g.get_gridprops_vertexgrid()
-# vgrid = flopy.discretization.VertexGrid(**disv_props)
-# idom = np.ones([vgrid.nlay, vgrid.ncpl])
-# strt = np.zeros([vgrid.nlay, vgrid.ncpl])+85
-# ixs = flopy.utils.GridIntersect(vgrid, method = "vertex")
+
+
 
 # ### K field
 # pp1 = np.array([[50,300], [500, 220], [700,900], [200,700]])

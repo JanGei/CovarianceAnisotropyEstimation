@@ -29,9 +29,9 @@ cov     = pars['cov']
 #%% Field generation (based on gstools)
 
 X,Y,logK    = gsgenerator(nx, dx, lx[0], ang[0], sigma[0],  cov, random = False) 
-logK        = logK + mu[0]
+logK        = logK.T + mu[0]
 X,Y,rech    = gsgenerator(nx, dx, lx[1], ang[1], sigma[1],  cov, random = False) 
-rech        = rech + mu[1]
+rech        = rech.T + mu[1]
 
 
 #%% plotting
@@ -49,8 +49,6 @@ windowy = np.array([0, 2500])
 mask_x = (X >= windowx[0]) & (X <= windowx[1])
 mask_y = (Y >= windowy[0]) & (Y <= windowy[1])
 mask_combined = np.ix_(mask_y[:, 0], mask_x[0, :])
-Xpl = X[mask_combined]
-Ypl = Y[mask_combined]
 
 cmap_rech = cm.turku_r
 cmap_logK = cm.bilbao_r
@@ -58,23 +56,25 @@ cmap_logK = cm.bilbao_r
 pad = 0.1
 
 fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(8, 6), sharex=True)
-ax1.pcolor(Xpl, Ypl, logK.T[mask_combined], cmap=cmap_logK)
+ax1.pcolor(X, Y, logK, cmap=cmap_logK)
 divider = make_axes_locatable(ax1)
 cax = divider.append_axes("right", size="3%", pad=pad)
-cbar = fig.colorbar(ax1.pcolor(Xpl, Ypl, logK.T[mask_combined], cmap=cmap_logK), cax=cax)
+cbar = fig.colorbar(ax1.pcolor(X, Y, logK, cmap=cmap_logK), cax=cax)
 cbar.set_label('Log-Conductivity (log(m/s))')
 ax1.set_ylabel('Y-axis')
 ax1.set_aspect('equal')
 
-ax2.pcolor(Xpl, Ypl, rech.T[mask_combined], cmap=cmap_rech)
+ax2.pcolor(X, Y, rech, cmap=cmap_rech)
 divider = make_axes_locatable(ax2)
-cax = divider.append_axes("right", size="3%", pad=pad)  # Adjust the 'pad' value as needed
-cbar = fig.colorbar(ax2.pcolor(Xpl, Ypl, rech.T[mask_combined], cmap=cmap_rech), cax=cax)
-cbar.set_label('Log-Conductivity (log(m/s))')
+cax = divider.append_axes("right", size="3%", pad=pad)  
+cbar = fig.colorbar(ax2.pcolor(X, Y, rech, cmap=cmap_rech), cax=cax)
+cbar.set_label('Recharge (log(m/s))')
 ax2.set_xlabel('X-axis')
 ax2.set_ylabel('Y-axis')
 ax2.set_aspect('equal')
 
+print(mu)
+print(np.mean(logK), np.mean(rech))
 #%% Saving the fields
 np.savetxt('model_data/logK_reference.csv', logK, delimiter = ',')
 np.savetxt('model_data/rech_reference.csv', rech, delimiter = ',')
