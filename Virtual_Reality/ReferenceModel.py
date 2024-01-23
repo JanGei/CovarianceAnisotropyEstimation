@@ -69,6 +69,11 @@ riv_line        = [tuple(xy) for xy in river]
 # possible refinements
 # g.add_refinement_features([riv_line], "line", 3, range(nlay))
 
+#%% Northern Boudnary - Fixed head
+chdl            = pars['chd']
+chd_stage       = pars['chdh']
+chd_line        = [tuple(xy) for xy in river]
+
 #%% Buildng Grid
 
 g.build()
@@ -81,11 +86,11 @@ ixs         = flopy.utils.GridIntersect(vgrid, method = "vertex")
 # TODO: RUN STEADYSTATE MODEL TO OBTAIN STARTING HEADS
 
 #%% Loading reference fields
-logK = np.loadtxt('model_data/logK_reference.csv', delimiter = ',')
-rech = np.loadtxt('model_data/rech_reference.csv', delimiter = ',')
+k_ref = np.loadtxt('model_data/logK_reference.csv', delimiter = ',')
+r_ref = np.loadtxt('model_data/rech_reference.csv', delimiter = ',')
 
-logK = np.flip(logK, axis  = 0)
-rech = np.flip(rech, axis  = 0)
+k_ref = np.flip(k_ref, axis  = 0)
+r_ref = np.flip(r_ref, axis  = 0)
 # logK = np.flip(np.flip(logK, axis = 0), axis = 1)
 
 #%% Intersecting model grid with model features
@@ -94,7 +99,7 @@ rech = np.flip(rech, axis  = 0)
 rch_cells       = np.arange(vgrid.ncpl)
 rch_lay         = np.zeros(vgrid.ncpl, dtype = int)
 rch_cell2d      = list(zip(rch_lay,rch_cells))
-rch_list        = list(zip(rch_cell2d, abs(rech.flatten())))
+rch_list        = list(zip(rch_cell2d, abs(r_ref.flatten())))
 for i in range(vgrid.ncpl):
     rch_list[i] = list(rch_list[i])
 
@@ -112,11 +117,23 @@ l           = riverLS.length
 riv_list    = []
 
 for i in range(len(river)-1):
-    rivl = LineString(np.array([river[i],river[i+1]]))
-    result = ixs.intersect(rivl)
+    rivl    = LineString(np.array([river[i],river[i+1]]))
+    result  = ixs.intersect(rivl)
     for cell in result.cellids:
         xc,yc = vgrid.xyzcellcenters[0][cell],vgrid.xyzcellcenters[1][cell]
         riv_list.append([(0, cell), river_stages, rivC , river_stages])
+        
+### Chd
+chdLS       = LineString(chdl)
+lchd        = chdLS.length
+chd_list    = []
+
+for i in range(len(chdl)-1):
+    chdls   = LineString(np.array([chdl[i],chdl[i+1]]))
+    result  = ixs.intersect(chdls)
+    for cell in result.cellids:
+        xc,yc = vgrid.xyzcellcenters[0][cell],vgrid.xyzcellcenters[1][cell]
+        chd_list.append([(0, cell), chd_stage])
 
 #%% Flopy Model definiiton
 
@@ -147,11 +164,11 @@ disv    = flopy.mf6.ModflowGwfdisv(model            = gwf,
 disv.export("./ModelFiles/disv_ref.shp")
 # npf package
 npf     = flopy.mf6.ModflowGwfnpf(model             = gwf,
-                                  k                 = np.exp(logK))
+                                  k                 = k_ref)
 # tdis package
 tdis    = flopy.mf6.ModflowTdis(sim,
-                                time_units          = "DAYS",
-                                perioddata          = [[1, 1, 1.0]])
+                                time_units          = "SECONDS",
+                                perioddata          = [[60*60*6, 1, 1.0]])
 # ims package
 ims = flopy.mf6.ModflowIms(sim,
                            print_option             = "SUMMARY",
@@ -169,6 +186,9 @@ wel = flopy.mf6.ModflowGwfwel(gwf,
 # riv package
 riv = flopy.mf6.ModflowGwfriv(gwf,
                               stress_period_data    = {0:riv_list})
+# chd package
+chd = flopy.mf6.ModflowGwfchd(gwf,
+                              stress_period_data    = {0:chd_list})
 # oc package
 headfile            = "{}.hds".format(model_name)
 head_filerecord     = [headfile]
@@ -192,21 +212,6 @@ k       = np.log(npf.k.array)
 rech    = np.reshape(-1*rch.stress_period_data.get_data()[0]['recharge'], (np.shape(k)))
 #%% Plotting the necessary fields for comparison
 
-plot(gwf, ['logK', 'rch'])
-
-
-
-# disv_shp = gpd.read_file("./ModelFiles/dummy_disv.shp")
-# heads = flopy.utils.binaryfile.HeadFile("./ModelFiles/"+headfile).get_data(kstpkper=(0, 0))
-# for lay in range(vgrid.nlay):
-#     fig = plt.figure(figsize=(18, 12))
-#     # ax = fig.add_subplot(1, 1, 1, aspect='equal')
-#     disv_shp[f"heads_l{lay}"] = heads[lay][0]
-#     ax = disv_shp.plot(column = f"heads_l{lay}")
-#     norm = Normalize(vmin=disv_shp[f"heads_l{lay}"][disv_shp[f"heads_l{lay}"]>0].min(), vmax=disv_shp[f"heads_l{lay}"].max())
-#     n_cmap = cm.ScalarMappable(norm=norm)
-#     n_cmap.set_array([])
-#     ax.get_figure().colorbar(n_cmap, label = "h [m a.s.l.]", ax = plt.gca())
-#     plt.axis('equal')
-#     plt.title(f"Hydraulic head in layer {lay+1}")
-#     plt.show()
+# plot(gwf, ['logK', 'rch'])
+plot(gwf, ['logK', 'rch', 'h'])
+# plot(gwf, ['logK','h'], bc=False)

@@ -12,7 +12,7 @@ import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
-def plot(gwf, pkgs):
+def plot(gwf, pkgs, bc = False):
     plotables = {}
     if 'rch' in pkgs:
         rch = {
@@ -30,7 +30,7 @@ def plot(gwf, pkgs):
         plotables.update({'logK':logK})
     if 'h' in pkgs:
         h = {
-            'cmap'      : cm.devon,
+            'cmap'      : cm.devon_r,
             'data'      : gwf.output.head().get_data(), 
             'cbttl'     : 'Hydraulic Head (m)', 
             }
@@ -48,6 +48,16 @@ def plot(gwf, pkgs):
         cbar.set_label(plotables[pkg]['cbttl'])
         axes[i].set_aspect('equal')
         axes[i].set_ylabel('Y-axis')
+        if pkg == 'h' and bc == True:
+            ax.plot_bc(name     = 'WEL',
+                       package  = gwf.wel,
+                       color    = 'black')
+            ax.plot_bc(name     = 'RIV',
+                       package  = gwf.riv,
+                       color    = 'yellow')
+            ax.plot_bc(name     = 'CHD',
+                       package  = gwf.chd,
+                       color    = 'red')
         if i == len(pkgs)-1:
             axes[i].set_xlabel('X-axis')
 

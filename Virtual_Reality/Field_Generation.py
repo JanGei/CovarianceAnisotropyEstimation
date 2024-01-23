@@ -29,10 +29,13 @@ cov     = pars['cov']
 #%% Field generation (based on gstools)
 
 X,Y,logK    = gsgenerator(nx, dx, lx[0], ang[0], sigma[0],  cov, random = False) 
-logK        = logK.T + mu[0]
+logK        = logK.T + mu[0]    # [log(m/s)]
 X,Y,rech    = gsgenerator(nx, dx, lx[1], ang[1], sigma[1],  cov, random = False) 
-rech        = rech.T + mu[1]
+rech        = (rech.T + mu[1])  # [mm/d]
 
+# Anmerkung des Übersetzers: Beim generieren dieser Felder ist die Varianz per se dimensionslos
+# Wenn wir also die Felder von Erdal und Cirpka nachbilden wollen, müssen wir überhaupt nicht
+# die Varianz mitscalieren, wenn die Einheiten geändert werden, sonder nur der mean
 
 #%% plotting
 cmaps = ['Blues', 'BuPu', 'CMRmap', 'Grays', 'OrRd', 'RdGy', 'YlOrBr', 'afmhot',
@@ -54,9 +57,9 @@ cmap_rech = cm.turku_r
 cmap_logK = cm.bilbao_r
 
 pad = 0.1
+d = 3600
 
 fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(8, 6), sharex=True)
-ax1.pcolor(X, Y, logK, cmap=cmap_logK)
 divider = make_axes_locatable(ax1)
 cax = divider.append_axes("right", size="3%", pad=pad)
 cbar = fig.colorbar(ax1.pcolor(X, Y, logK, cmap=cmap_logK), cax=cax)
@@ -64,17 +67,16 @@ cbar.set_label('Log-Conductivity (log(m/s))')
 ax1.set_ylabel('Y-axis')
 ax1.set_aspect('equal')
 
-ax2.pcolor(X, Y, rech, cmap=cmap_rech)
 divider = make_axes_locatable(ax2)
 cax = divider.append_axes("right", size="3%", pad=pad)  
 cbar = fig.colorbar(ax2.pcolor(X, Y, rech, cmap=cmap_rech), cax=cax)
-cbar.set_label('Recharge (m/s)')
+cbar.set_label('Recharge (m/d)')
 ax2.set_xlabel('X-axis')
 ax2.set_ylabel('Y-axis')
 ax2.set_aspect('equal')
 
 print(mu)
 print(np.mean(logK), np.mean(rech))
-#%% Saving the fields
-np.savetxt('model_data/logK_reference.csv', logK, delimiter = ',')
-np.savetxt('model_data/rech_reference.csv', rech, delimiter = ',')
+#%% Saving the fields - Übergabe in (m/s)
+np.savetxt('model_data/logK_reference.csv', np.exp(logK), delimiter = ',')
+np.savetxt('model_data/rech_reference.csv', rech/1000/86400, delimiter = ',')
