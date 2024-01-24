@@ -37,12 +37,26 @@ def get():
         'welq'  : np.array([9, 18, 90, 0.09, 0.9])/3600,    # Q of wells [m3s-1]
         'welay' : np.array(np.zeros(5)),                    # layer of wells
         'river' : np.array([[0.0,0], [5000,0]]),            # start / end of river
-        'rivh'  : 13.4,                                     # initial stage of riv
         'rivC'  : 1e-5,                                     # river conductance [ms-1]
         'chd'   : np.array([[0.0,2500], [5000,2500]]),      # start / end of river
         'chdh'  : 15,                                       # initial stage of riv
+        'ss'    : 1e-5,                                     # specific storage
+        'sy'    : 0.15,                                     # specific yield
+        'mname' : "Reference",
+        'sname' : "Reference",
+        'sim_ws': "./model_files",
         'timuni': timuni,                                   # time unit
         'lenuni': lenuni,                                   # length unit
+        'k_ref' : np.loadtxt('model_data/logK_ref.csv',
+                             delimiter = ','),
+        'r_ref' : np.loadtxt('model_data/rech_ref.csv',
+                             delimiter = ','),
+        'rivh'  : np.genfromtxt('model_data/tssl.csv',
+                                delimiter = ',',
+                                names=True)['Wert'],
+        'sfac'  : np.genfromtxt('model_data/sfac.csv',
+                                delimiter = ',',
+                                names=True)['Wert'],
         }
 
     return pars

@@ -16,7 +16,7 @@ import numpy as np
 
 #%% Model Parameters
 
-pars = get()
+pars    = get()
 nx      = pars['nx']
 dx      = pars['dx']
 lx      = pars['lx']
@@ -27,10 +27,9 @@ cov     = pars['cov']
 toph    = pars['top']
 both    = pars['bot']
 nlay    = pars['nlay'][0]
-
-
-model_ws    = "./model_files"
-model_name  = "Reference"
+mname   = pars['mname']
+sname   = pars['sname']
+sim_ws  = pars['sim_ws']
 
 
 #%% Grid Generation
@@ -48,7 +47,7 @@ botm    =  np.array([np.zeros((nx[1],nx[0]))])
 
 strgrd = StructuredGrid(delc=delc.astype(int), delr=delr.astype(int), top=top, botm=botm, nlay=nlay)
 
-g = Gridgen(strgrd, model_ws=model_ws)
+g = Gridgen(strgrd, model_ws=sim_ws)
 
 
 #%% Well Location
@@ -86,8 +85,10 @@ ixs         = flopy.utils.GridIntersect(vgrid, method = "vertex")
 # TODO: RUN STEADYSTATE MODEL TO OBTAIN STARTING HEADS
 
 #%% Loading reference fields
-k_ref = np.loadtxt('model_data/logK_reference.csv', delimiter = ',')
-r_ref = np.loadtxt('model_data/rech_reference.csv', delimiter = ',')
+k_ref = pars['k_ref']
+r_ref = pars['r_ref']
+rivh  = pars['rivh']
+sfac  = pars['sfac']
 
 k_ref = np.flip(k_ref, axis  = 0)
 r_ref = np.flip(r_ref, axis  = 0)
@@ -95,11 +96,10 @@ r_ref = np.flip(r_ref, axis  = 0)
 
 #%% Intersecting model grid with model features
 
-### Recharge TODO: Schau nach, ob das Ding auch richtig herum geplottet wird PLUS der seasonal scaling factor ist ferade bei 2
 rch_cells       = np.arange(vgrid.ncpl)
 rch_lay         = np.zeros(vgrid.ncpl, dtype = int)
 rch_cell2d      = list(zip(rch_lay,rch_cells))
-rch_list        = list(zip(rch_cell2d, abs(r_ref.flatten())))
+rch_list        = list(zip(rch_cell2d, abs(r_ref.flatten())*sfac[0]))
 for i in range(vgrid.ncpl):
     rch_list[i] = list(rch_list[i])
 
@@ -121,7 +121,7 @@ for i in range(len(river)-1):
     result  = ixs.intersect(rivl)
     for cell in result.cellids:
         xc,yc = vgrid.xyzcellcenters[0][cell],vgrid.xyzcellcenters[1][cell]
-        riv_list.append([(0, cell), river_stages, rivC , river_stages])
+        riv_list.append([(0, cell), river_stages[0], rivC , river_stages[0]])
         
 ### Chd
 chdLS       = LineString(chdl)
@@ -138,12 +138,12 @@ for i in range(len(chdl)-1):
 #%% Flopy Model definiiton
 
 # simulation object
-sim     = flopy.mf6.MFSimulation(sim_name           = model_ws,
-                                 sim_ws             = model_ws,
+sim     = flopy.mf6.MFSimulation(sim_name           = sname,
+                                 sim_ws             = sim_ws,
                                  verbosity_level    = 2)
 # groundwater flow / model object
 gwf     = flopy.mf6.ModflowGwf(sim,
-                               modelname            = model_name,
+                               modelname            = mname,
                                save_flows           = True)
 # disv package
 disv    = flopy.mf6.ModflowGwfdisv(model            = gwf,
@@ -161,7 +161,7 @@ disv    = flopy.mf6.ModflowGwfdisv(model            = gwf,
                                    idomain          = idom, 
                                    cell2d           = disv_props["cell2d"], 
                                    vertices         = disv_props["vertices"])
-disv.export("./ModelFiles/disv_ref.shp")
+disv.export("./model_files/disv_ref.shp")
 # npf package
 npf     = flopy.mf6.ModflowGwfnpf(model             = gwf,
                                   k                 = k_ref)
@@ -177,6 +177,14 @@ ims = flopy.mf6.ModflowIms(sim,
 # ic package
 ic = flopy.mf6.ModflowGwfic(gwf, 
                             strt                    = strt)
+sto = flopy.mf6.ModflowGwfsto(gwf, 
+                              pname                 = "sto",
+                              save_flows            = True,
+                              iconvert              = 1,
+                              ss                    = pars['ss'],
+                              sy                    = pars['sy'],
+                              steady_state          = {0: True},)
+                               # transient             = {0: True},)
 # rch package
 rch = flopy.mf6.ModflowGwfrch(gwf,
                               stress_period_data    = {0:rch_list})
@@ -190,9 +198,9 @@ riv = flopy.mf6.ModflowGwfriv(gwf,
 chd = flopy.mf6.ModflowGwfchd(gwf,
                               stress_period_data    = {0:chd_list})
 # oc package
-headfile            = "{}.hds".format(model_name)
+headfile            = "{}.hds".format(mname)
 head_filerecord     = [headfile]
-budgetfile          = "{}.cbb".format(model_name)
+budgetfile          = "{}.cbb".format(mname)
 budget_filerecord   = [budgetfile]
 saverecord          = [("HEAD", "ALL"), ("BUDGET", "ALL")]
 printrecord         = [("HEAD", "LAST")]
@@ -205,11 +213,10 @@ oc = flopy.mf6.ModflowGwfoc(gwf,
 sim.write_simulation()
 sim.run_simulation()
 
-#%% Obtain results
-# head    = flopy.utils.binaryfile.HeadFile("./model_files/"+headfile).get_data(kstpkper=(0, 0))
-head    = gwf.output.head().get_data()
-k       = np.log(npf.k.array)
-rech    = np.reshape(-1*rch.stress_period_data.get_data()[0]['recharge'], (np.shape(k)))
+#%% Set steady-state solution as initial condition
+ic.strt             = gwf.output.head().get_data()
+sim.write_simulation()
+
 #%% Plotting the necessary fields for comparison
 
 # plot(gwf, ['logK', 'rch'])
