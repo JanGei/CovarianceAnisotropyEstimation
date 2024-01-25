@@ -10,6 +10,8 @@ from cmcrameri import cm
 import flopy
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from matplotlib.animation import FuncAnimation
+from matplotlib.animation import PillowWriter
 
 
 def plot(gwf, pkgs, bc = False):
@@ -60,36 +62,61 @@ def plot(gwf, pkgs, bc = False):
                        color    = 'red')
         if i == len(pkgs)-1:
             axes[i].set_xlabel('X-axis')
+            
+# def update(frame, head_file, ax, c):
 
+#     c.set_array(head_file[frame, :, :])#.flatten())
 
-# def plot_k_rch(gwf, k, rch):
-#     cmap_rech   = cm.turku_r
-#     cmap_logK   = cm.bilbao_r
-#     pad         = 0.1
-
-#     # Create subplots
-#     fig, axes   = plt.subplots(nrows=2, ncols=1, figsize=(8,6), sharex=True)
-
-#     # Plot the heads using plotmapview for the first subplot
-#     ax1         = flopy.plot.PlotMapView(model=gwf, ax=axes[0])
-#     c1          = ax1.plot_array(k, cmap=cmap_logK, alpha=1)
-#     divider     = make_axes_locatable(axes[0])
-#     cax         = divider.append_axes("right", size="3%", pad=pad)
-#     cbar        = fig.colorbar(c1, cax=cax)
-#     cbar.set_label('Log-Conductivity (log(m/s))')
-#     axes[0].set_aspect('equal')
-#     axes[0].set_ylabel('Y-axis')
-
-#     ax2         = flopy.plot.PlotMapView(model=gwf, ax=axes[1])
-#     c2          = ax2.plot_array(rch, cmap=cmap_rech, alpha=1)
-#     divider     = make_axes_locatable(axes[1])
-#     cax         = divider.append_axes("right", size="3%", pad=pad)
-#     cbar        = fig.colorbar(c2, cax=cax)
-#     cbar.set_label('Recharge (m/s))')
-#     axes[1].set_aspect('equal')
-#     axes[1].set_ylabel('Y-axis')
-#     axes[1].set_xlabel('X-axis')
+#     return c,
+            
+# def movie(gwf, bc = False):
     
-#     plt.tight_layout()
-#     plt.show()
+#     # ax      = flopy.plot.PlotMapView(model=gwf)
+#     heads   = np.load('model_data/head_ref.npy')
+#     # c       = ax.plot_array(heads[0,0,:], cmap=cm.devon_r, alpha=1)
+    
+#     # animation = FuncAnimation(plt.gcf(), update, fargs=(heads, ax, c), frames=np.shape(heads)[0], interval=100, blit=True)
+
+#     # plt.show()
+    
+#     fig, ax = plt.subplots(1, 1)
+#     fig.set_size_inches(5,5)
+#     ax      = flopy.plot.PlotMapView(model=gwf)
+#     c       = ax.plot_array(heads[0,0,:], cmap=cm.devon_r, alpha=1)
+#     def animate(i):
+#         # ax.clear()
+#         # Get the point from the points list at index i
+#         head = heads[i,0,:]
+#         # Plot that point using the x and y coordinates
+#         c.set_array(head.flatten())
+#         # ax.plot_array(head, cmap=cm.devon_r, alpha=1)
+#         # Set the x and y axis to display a fixed range
+#         # ax.set_xlim([0, 1])
+#         # ax.set_ylim([0, 1])
+        
+#     ani = FuncAnimation(fig, animate, frames=np.shape(heads)[0],
+#                     interval=500, repeat=False)
+    
+#     ani.save("Transient.gif", dpi=300,
+#          writer=PillowWriter(fps=12))
+    
+def movie(gwf, bc=False):
+    # Does not work yet
+    heads = np.load('model_data/head_ref.npy')
+
+    fig, ax = plt.subplots(1, 1)
+    fig.set_size_inches(5, 5)
+    ax = flopy.plot.PlotMapView(model=gwf)
+    c = ax.plot_array(heads[0, 0, :], cmap=cm.devon_r, alpha=1)
+
+    def animate(i):
+        head = heads[i, 0, :]
+        c.set_array(head.flatten())
+
+    ani = FuncAnimation(fig, animate, frames=np.shape(heads)[0], interval=500, repeat=False)
+
+    # Save the animation as a GIF using imagemagick
+    ani.save("Transient.gif", writer="imagemagick", fps=12, dpi=300)    
+
+
 

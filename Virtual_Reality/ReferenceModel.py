@@ -82,17 +82,11 @@ idom        = np.ones([vgrid.nlay, vgrid.ncpl])
 strt        = np.zeros([vgrid.nlay, vgrid.ncpl])+20
 ixs         = flopy.utils.GridIntersect(vgrid, method = "vertex")
 
-# TODO: RUN STEADYSTATE MODEL TO OBTAIN STARTING HEADS
-
 #%% Loading reference fields
 k_ref = pars['k_ref']
 r_ref = pars['r_ref']
 rivh  = pars['rivh']
 sfac  = pars['sfac']
-
-k_ref = np.flip(k_ref, axis  = 0)
-r_ref = np.flip(r_ref, axis  = 0)
-# logK = np.flip(np.flip(logK, axis = 0), axis = 1)
 
 #%% Intersecting model grid with model features
 

@@ -20,6 +20,11 @@ def get():
     # Model units
     lenuni      = 'METERS'
     timuni      = 'SECONDS'
+    # load reference data
+    k_ref       = np.loadtxt('model_data/logK_ref.csv',
+                         delimiter = ',')
+    r_ref       = np.loadtxt('model_data/rech_ref.csv',
+                         delimiter = ',')
 
     pars    = {
         'nx'    : np.array([100, 50]),                      # number of cells
@@ -47,10 +52,8 @@ def get():
         'sim_ws': "./model_files",
         'timuni': timuni,                                   # time unit
         'lenuni': lenuni,                                   # length unit
-        'k_ref' : np.loadtxt('model_data/logK_ref.csv',
-                             delimiter = ','),
-        'r_ref' : np.loadtxt('model_data/rech_ref.csv',
-                             delimiter = ','),
+        'k_ref' : np.flip(k_ref, axis  = 0),
+        'r_ref' : np.flip(r_ref, axis  = 0),
         'rivh'  : np.genfromtxt('model_data/tssl.csv',
                                 delimiter = ',',
                                 names=True)['Wert'],
