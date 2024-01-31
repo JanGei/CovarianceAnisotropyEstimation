@@ -141,7 +141,7 @@ np.save('model_data/obs_ref.npy', obs)
 #     json.dump(obs, json_file)
 # lb = flopy.utils.Mf6ListBudget(model_dir+'Reference.cbb')
 # data = lb.get_dataframes()
-movie(gwf, diff = False, contour = True)
+# movie(gwf, diff = False, contour = True)
     
 
         
