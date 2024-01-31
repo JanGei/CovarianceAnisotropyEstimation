@@ -4,14 +4,16 @@ Created on Tue Dec 12 10:01:12 2023
 
 @author: Janek
 """
-
 import numpy as np
 from cmcrameri import cm
 import matplotlib.pyplot as plt
-from functions.generator import gsgenerator
-from functions.model_params import get
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from functions.generator import gsgenerator
 
+# imports from parent directory
+import sys
+sys.path.append('..')
+from dependencies.model_params import get
 
 #%% Field generation (based on Olafs Skript)
 # Watch out as first entry corresponds to y and not to x

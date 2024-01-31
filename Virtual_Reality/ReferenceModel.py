@@ -8,10 +8,13 @@ import flopy
 from flopy.discretization.structuredgrid import StructuredGrid
 from flopy.utils.gridgen import Gridgen
 from shapely.geometry import LineString, MultiPoint
-from functions.model_params import get
-from functions.plot import plot
 import numpy as np
 
+# imports from parent directory
+import sys
+sys.path.append('..')
+from dependencies.model_params import get
+from dependencies.plot import plot
 
 #%% Model Parameters
 
@@ -29,6 +32,7 @@ nlay    = pars['nlay'][0]
 mname   = pars['mname']
 sname   = pars['sname']
 sim_ws  = pars['sim_ws']
+gg_ws   = pars['gg_ws']
 
 
 #%% Grid Generation
@@ -46,7 +50,7 @@ botm    =  np.array([np.zeros((nx[1],nx[0]))])
 
 strgrd = StructuredGrid(delc=delc.astype(int), delr=delr.astype(int), top=top, botm=botm, nlay=nlay)
 
-g = Gridgen(strgrd, model_ws=sim_ws)
+g = Gridgen(strgrd, model_ws=gg_ws)
 
 
 #%% Well Location
