@@ -63,60 +63,43 @@ def plot(gwf, pkgs, bc = False):
         if i == len(pkgs)-1:
             axes[i].set_xlabel('X-axis')
             
-# def update(frame, head_file, ax, c):
-
-#     c.set_array(head_file[frame, :, :])#.flatten())
-
-#     return c,
-            
-# def movie(gwf, bc = False):
+ 
+def movie(gwf, diff = False, bc=False, contour = False):
     
-#     # ax      = flopy.plot.PlotMapView(model=gwf)
-#     heads   = np.load('model_data/head_ref.npy')
-#     # c       = ax.plot_array(heads[0,0,:], cmap=cm.devon_r, alpha=1)
-    
-#     # animation = FuncAnimation(plt.gcf(), update, fargs=(heads, ax, c), frames=np.shape(heads)[0], interval=100, blit=True)
-
-#     # plt.show()
-    
-#     fig, ax = plt.subplots(1, 1)
-#     fig.set_size_inches(5,5)
-#     ax      = flopy.plot.PlotMapView(model=gwf)
-#     c       = ax.plot_array(heads[0,0,:], cmap=cm.devon_r, alpha=1)
-#     def animate(i):
-#         # ax.clear()
-#         # Get the point from the points list at index i
-#         head = heads[i,0,:]
-#         # Plot that point using the x and y coordinates
-#         c.set_array(head.flatten())
-#         # ax.plot_array(head, cmap=cm.devon_r, alpha=1)
-#         # Set the x and y axis to display a fixed range
-#         # ax.set_xlim([0, 1])
-#         # ax.set_ylim([0, 1])
-        
-#     ani = FuncAnimation(fig, animate, frames=np.shape(heads)[0],
-#                     interval=500, repeat=False)
-    
-#     ani.save("Transient.gif", dpi=300,
-#          writer=PillowWriter(fps=12))
-    
-def movie(gwf, bc=False):
-    # Does not work yet
     heads = np.load('model_data/head_ref.npy')
+    if diff:
+        heads = heads - heads[0,:,:]
 
-    fig, ax = plt.subplots(1, 1)
-    fig.set_size_inches(5, 5)
-    ax = flopy.plot.PlotMapView(model=gwf)
-    c = ax.plot_array(heads[0, 0, :], cmap=cm.devon_r, alpha=1)
+    vmin = np.min(heads)
+    vmax = np.max(heads)
+    fig, ax = plt.subplots(1, 1, figsize=(12,6))
+    mm = flopy.plot.PlotMapView(model=gwf, ax=ax)
+    h  = mm.plot_array(heads[0, 0, :], cmap=cm.devon_r, alpha=1, vmin = vmin, vmax = vmax)
+    if contour:
+        mm.contour_array(heads[0, 0, :], vmin = vmin, vmax = vmax)
+    plt.colorbar(h, ax=ax, label='Head [m]')  
+    ax.set_aspect('equal')
+     
+    # Function to update the plot for each frame
+    def update(frame):
+        ax.clear()  # Clear the previous plot
+        ax.set_aspect('equal')
+        mm = flopy.plot.PlotMapView(model=gwf, ax=ax)
+        h = mm.plot_array(heads[frame], cmap=cm.devon_r, alpha=1, vmin = vmin, vmax = vmax)  # Update the plot for the current frame
+        if contour:
+            mm.contour_array(heads[frame, 0, :], vmin = vmin, vmax = vmax)
+        # cbar.update_normal(h)  # Update colorbar
+        ax.set_title(f'Time: {(frame*0.25):.2f} days')  # Optional: Add a title
+        # Add any other customization you need
+        
+    # Create the animation
+    animation = FuncAnimation(fig, update, frames=np.shape(heads)[0], interval=500, repeat=False)
 
-    def animate(i):
-        head = heads[i, 0, :]
-        c.set_array(head.flatten())
-
-    ani = FuncAnimation(fig, animate, frames=np.shape(heads)[0], interval=500, repeat=False)
-
-    # Save the animation as a GIF using imagemagick
-    ani.save("Transient.gif", writer="imagemagick", fps=12, dpi=300)    
+    plt.close(fig)
+    # Save the animation as a GIF using ffmpeg
+    animation.save("Transient.gif", writer="ffmpeg", fps=36)
+    
+    
 
 
 

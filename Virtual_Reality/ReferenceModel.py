@@ -5,7 +5,6 @@ Created on Tue Dec 12 10:01:12 2023
 @author: Janek
 """
 import flopy
-import matplotlib.pyplot as plt
 from flopy.discretization.structuredgrid import StructuredGrid
 from flopy.utils.gridgen import Gridgen
 from shapely.geometry import LineString, MultiPoint
@@ -60,6 +59,7 @@ welay   = pars['welay']
 
 #%% Southern Boudnary - river
 river           = pars['river']
+rivd            = pars['rivd']
 river_stages    = pars['rivh']
 rivC            = pars['rivC']
 riv_line        = [tuple(xy) for xy in river]
@@ -115,7 +115,7 @@ for i in range(len(river)-1):
     result  = ixs.intersect(rivl)
     for cell in result.cellids:
         xc,yc = vgrid.xyzcellcenters[0][cell],vgrid.xyzcellcenters[1][cell]
-        riv_list.append([(0, cell), river_stages[0], rivC , river_stages[0]])
+        riv_list.append([(0, cell), river_stages[0], rivC , river_stages[0]-rivd])
         
 ### Chd
 chdLS       = LineString(chdl)
@@ -208,11 +208,11 @@ sim.write_simulation()
 sim.run_simulation()
 
 #%% Set steady-state solution as initial condition
-ic.strt             = gwf.output.head().get_data()
+ic.strt.set_data(gwf.output.head().get_data())
 sim.write_simulation()
 
 #%% Plotting the necessary fields for comparison
 
 # plot(gwf, ['logK', 'rch'])
-plot(gwf, ['logK', 'rch', 'h'])
+plot(gwf, ['logK', 'rch', 'h'], bc = True)
 # plot(gwf, ['logK','h'], bc=False)

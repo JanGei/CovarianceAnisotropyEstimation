@@ -12,7 +12,7 @@ def get():
     for i in range(row_well):
         for j in range(col_well):
             well_loc[i*col_well + j, 0] = (20 + 10*j) *dx[0]
-            well_loc[i*col_well + j, 1] = (10 + 10*i) *dx[1]
+            well_loc[i*col_well + j, 1] = (9 + 10*i) *dx[1]
     # pumping wells should be at (5, 9, 15, 27, 31)
     q_idx       = [5, 9, 15, 27, 31]
     mask        = np.full(len(well_loc),True,dtype=bool)
@@ -40,9 +40,12 @@ def get():
         'welxy' : np.array(well_loc[q_idx]),                # location of pumps
         'obsxy' : np.array(well_loc[mask]),                 # location of obs
         'welq'  : np.array([9, 18, 90, 0.09, 0.9])/3600,    # Q of wells [m3s-1]
+        'welst' : np.array([20, 300, 200, 0, 0]),           # start day of pump
+        'welnd' : np.array([150, 365, 360, 370, 300]),      # end day of pump
         'welay' : np.array(np.zeros(5)),                    # layer of wells
         'river' : np.array([[0.0,0], [5000,0]]),            # start / end of river
-        'rivC'  : 1e-5,                                     # river conductance [ms-1]
+        'rivC'  : 5*1e-4,                                   # river conductance [ms-1]
+        'rivd'  : 2,                                        # depth of river [m]
         'chd'   : np.array([[0.0,2500], [5000,2500]]),      # start / end of river
         'chdh'  : 15,                                       # initial stage of riv
         'ss'    : 1e-5,                                     # specific storage
