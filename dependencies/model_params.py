@@ -42,6 +42,7 @@ def get():
     gg_ws       = Vrdir + '/gridgen_files'
     trs_ws      = Vrdir + '/transient_model'
     temp_m_ws   = parent_directory + '/Ensemble/template_model'
+    member_ws   = parent_directory + '/Ensemble/member'
     
 
     pars    = {
@@ -72,6 +73,7 @@ def get():
         'sname' : "Reference",
         'sim_ws': sim_ws,
         'gg_ws' : gg_ws,
+        'mem_ws': member_ws,
         'timuni': timuni,                                   # time unit
         'lenuni': lenuni,                                   # length unit
         'k_ref' : np.flip(k_ref, axis  = 0),
@@ -81,8 +83,9 @@ def get():
         'n_mem' : 5,
         'tm_ws' : temp_m_ws,
         'trs_ws': trs_ws ,
-        'up_tem': True,
+        'up_tem': False,
         'nsteps': 365*24/6,
+        'n_PP'  : 50,
         }
     
     return pars

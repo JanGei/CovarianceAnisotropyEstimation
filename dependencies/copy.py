@@ -1,10 +1,13 @@
 import os
 import shutil
 
-def create_Ensemble(orig_dir: str, model_dir: str, n_members: int) -> list:
+def create_Ensemble(pars: dict) -> list:
     ens_m_dir = []
-    for i in range(n_members):
-        mem_dir = model_dir + f'{i}'
+    orig_dir    = pars['tm_ws']
+    mem_ws      = pars['mem_ws']
+    n_mem       = pars['n_mem']
+    for i in range(n_mem):
+        mem_dir = mem_ws + f'{i}'
         # Check if the destination folder already exists
         if os.path.exists(mem_dir):
             # Remove the existing destination folder and its contents
