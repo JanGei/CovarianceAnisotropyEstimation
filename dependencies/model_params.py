@@ -3,7 +3,7 @@ import os
 
 def get():
     
-    # Changing the working directory to the parent directory to have consisten access
+    # Changing the working directory to the parent directory to have consistent access
     current_directory = os.path.dirname(os.path.abspath(__file__))
     parent_directory = os.path.dirname(current_directory)
     Vrdir = parent_directory + '/Virtual_Reality'
@@ -80,7 +80,7 @@ def get():
         'r_ref' : np.flip(r_ref, axis  = 0),
         'rivh'  : rivh,
         'sfac'  : sfac,
-        'n_mem' : 5,
+        'n_mem' : 2,
         'tm_ws' : temp_m_ws,
         'trs_ws': trs_ws ,
         'up_tem': False,

@@ -5,16 +5,17 @@ Created on Tue Jan 23 10:54:48 2024
 
 @author: janek
 """
+import sys
+sys.path.append('..')
 import matplotlib.pyplot as plt
 from cmcrameri import cm
 import flopy
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.animation import FuncAnimation
-from matplotlib.animation import PillowWriter
 
 
-def plot(gwf, pkgs, bc = False):
+def plot(gwf, pkgs, pars, bc = False, points = []):
     plotables = {}
     if 'rch' in pkgs:
         rch = {
@@ -50,6 +51,13 @@ def plot(gwf, pkgs, bc = False):
         cbar.set_label(plotables[pkg]['cbttl'])
         axes[i].set_aspect('equal')
         axes[i].set_ylabel('Y-axis')
+        if pkg == 'logK' and len(points) != 0:
+            axes[i].scatter(points[:,0], points[:,1], label = 'Pilot Points', marker = '*', s = 25, color = 'black')
+            welxy   = pars['welxy']
+            obsxy   = pars['obsxy']
+            axes[i].scatter(welxy[:,0], welxy[:,1], label = 'Wells', marker = 'o', s = 50, color = 'blue')
+            axes[i].scatter(obsxy[:,0], obsxy[:,1], label = 'Observation Points', marker = 'v', s = 35, color = 'red')
+            axes[i].legend()
         if pkg == 'h' and bc == True:
             ax.plot_bc(name     = 'WEL',
                        package  = gwf.wel,
@@ -63,6 +71,33 @@ def plot(gwf, pkgs, bc = False):
         if i == len(pkgs)-1:
             axes[i].set_xlabel('X-axis')
             
+def plot_k(gwf, k):
+    
+    mink = np.min([np.min(np.log(gwf.npf.k.array)),np.min(np.log(k))])
+    maxk = np.min([np.max(np.log(gwf.npf.k.array)),np.max(np.log(k))])
+    fig, axes   = plt.subplots(nrows=2, ncols=1, figsize=(8,6), sharex=True)
+    
+    ax1     = flopy.plot.PlotMapView(model=gwf, ax=axes[0])
+    c       = ax1.plot_array(np.log(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1)
+    divider     = make_axes_locatable(axes[0])
+    cax1         = divider.append_axes("right", size="3%", pad=0.75)
+    cbar1        = fig.colorbar(c, cax=cax1)
+    cbar1.mappable.set_clim(mink, maxk)
+    # cbar.set_label(plotables[pkg]['cbttl'])
+    axes[0].set_aspect('equal')
+    axes[0].set_ylabel('Y-axis')
+    
+    ax2     = flopy.plot.PlotMapView(model=gwf, ax=axes[1])
+    c       = ax2.plot_array(np.log(k), cmap=cm.bilbao_r, alpha=1)
+    divider     = make_axes_locatable(axes[1])
+    cax2         = divider.append_axes("right", size="3%", pad=0.75)
+    cbar2        = fig.colorbar(c, cax=cax2)
+    cbar2.mappable.set_clim(mink, maxk)
+    # cbar.set_label(plotables[pkg]['cbttl'])
+    axes[1].set_aspect('equal')
+    axes[1].set_ylabel('Y-axis')
+    
+
  
 def movie(gwf, diff = False, bc=False, contour = False):
     

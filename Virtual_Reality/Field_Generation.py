@@ -49,11 +49,11 @@ cmapc = ['batlowK', 'bilbao', 'berlin', 'devon', 'glasgow', 'grayC', 'lajolla',
 cmnam = cm.cmaps
 names = list(cmnam.keys())
 
-windowx = np.array([0, 5000])
-windowy = np.array([0, 2500])
-mask_x = (X >= windowx[0]) & (X <= windowx[1])
-mask_y = (Y >= windowy[0]) & (Y <= windowy[1])
-mask_combined = np.ix_(mask_y[:, 0], mask_x[0, :])
+# windowx = np.array([0, 5000])
+# windowy = np.array([0, 2500])
+# mask_x = (X >= windowx[0]) & (X <= windowx[1])
+# mask_y = (Y >= windowy[0]) & (Y <= windowy[1])
+# mask_combined = np.ix_(mask_y[:, 0], mask_x[0, :])
 
 cmap_rech = cm.turku_r
 cmap_logK = cm.bilbao_r

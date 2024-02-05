@@ -2,6 +2,7 @@ from dependencies.model_params import get
 from dependencies.copy import create_Ensemble
 from dependencies.convert_transient import convert_to_transient
 from dependencies.create_pilot_points import create_pilot_points
+from dependencies.create_k_fields import create_k_fields
 from objects.Ensemble import Ensemble
 from objects.Member import Member
 
@@ -22,6 +23,7 @@ if __name__ == '__main__':
     
     model_dir = create_Ensemble(pars)
     
-    # pilot_p = create_pilot_points(pars)
-    # k_fields = create_k_fields(pars)
+    pp_cid, pp_xy = create_pilot_points(pars)
+    k_fields = create_k_fields(pars, pp_xy, pp_cid, cov_type = 'random', val_type = 'good')
     
+    lol = True
