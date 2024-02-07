@@ -3,7 +3,7 @@ import os
 
 def get():
     
-    # Changing the working directory to the parent directory to have consistent access
+    # Changing the working directory to the parent directory to have consisten access
     current_directory = os.path.dirname(os.path.abspath(__file__))
     parent_directory = os.path.dirname(current_directory)
     Vrdir = parent_directory + '/Virtual_Reality'
@@ -41,8 +41,9 @@ def get():
     sim_ws      = Vrdir + '/model_files'
     gg_ws       = Vrdir + '/gridgen_files'
     trs_ws      = Vrdir + '/transient_model'
-    temp_m_ws   = parent_directory + '/Ensemble/template_model'
-    member_ws   = parent_directory + '/Ensemble/member'
+    ensemb_dir  = parent_directory + '/Ensemble'
+    temp_m_ws   = ensemb_dir + '/template_model'
+    member_ws   = ensemb_dir + '/member'
     
 
     pars    = {
@@ -73,14 +74,17 @@ def get():
         'sname' : "Reference",
         'sim_ws': sim_ws,
         'gg_ws' : gg_ws,
+        'ens_ws': ensemb_dir,
         'mem_ws': member_ws,
         'timuni': timuni,                                   # time unit
         'lenuni': lenuni,                                   # length unit
-        'k_ref' : np.flip(k_ref, axis  = 0),
-        'r_ref' : np.flip(r_ref, axis  = 0),
+        'k_ref' : k_ref,
+        'kmin'  : np.min(np.log(k_ref)),
+        'kmax'  : np.max(np.log(k_ref)),
+        'r_ref' : r_ref,
         'rivh'  : rivh,
         'sfac'  : sfac,
-        'n_mem' : 2,
+        'n_mem' : 8,
         'tm_ws' : temp_m_ws,
         'trs_ws': trs_ws ,
         'up_tem': False,
