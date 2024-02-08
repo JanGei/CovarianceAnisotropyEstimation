@@ -47,6 +47,9 @@ def get():
     
 
     pars    = {
+        'office': True,
+        'iclust': False,
+        'binnac': False,
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
         'lx'    : np.array([[600, 2000], [500, 5000]]),     # corellation lengths
@@ -84,7 +87,7 @@ def get():
         'r_ref' : r_ref,
         'rivh'  : rivh,
         'sfac'  : sfac,
-        'n_mem' : 8,
+        'n_mem' : 10,
         'tm_ws' : temp_m_ws,
         'trs_ws': trs_ws ,
         'up_tem': False,

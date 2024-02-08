@@ -101,8 +101,8 @@ def plot_k_fields(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pars,  k_fields: list
     
     fig, axes = plt.subplot_mosaic(layout, figsize=(4,len(k_fields)/2+2), sharex=True, sharey = True)    
     for i in range(int(len(k_fields)/2)):
-        for letter in ['r', 'l']:
-            gwf.npf.k.set_data(k_fields[i])
+        for j, letter in enumerate(['r', 'l']):
+            gwf.npf.k.set_data(k_fields[i*2+j])
             ax = axes[letter+str(i)]
             axf = flopy.plot.PlotMapView(model=gwf, ax=ax)
             c = axf.plot_array(np.log(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1)
