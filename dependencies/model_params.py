@@ -18,8 +18,8 @@ def get():
     well_loc    = np.zeros((col_well*row_well,2))
     for i in range(row_well):
         for j in range(col_well):
-            well_loc[i*col_well + j, 0] = (20 + 10*j) *dx[0]
-            well_loc[i*col_well + j, 1] = (9 + 10*i) *dx[1]
+            well_loc[i*col_well + j, 0] = (19.5 + 10*j) *dx[0] 
+            well_loc[i*col_well + j, 1] = (8.5 + 10*i) *dx[1]
     # pumping wells should be at (5, 9, 15, 27, 31)
     q_idx       = [5, 9, 15, 27, 31]
     mask        = np.full(len(well_loc),True,dtype=bool)
@@ -44,7 +44,8 @@ def get():
     ensemb_dir  = parent_directory + '/Ensemble'
     temp_m_ws   = ensemb_dir + '/template_model'
     member_ws   = ensemb_dir + '/member'
-    
+    vr_h_dir    = Vrdir + '/model_data/head_ref.npy'
+    vr_obs_dir  = Vrdir + '/model_data/obs_ref.npy'
 
     pars    = {
         'office': True,
@@ -76,6 +77,8 @@ def get():
         'mname' : "Reference",
         'sname' : "Reference",
         'sim_ws': sim_ws,
+        'vr_h_d': vr_h_dir,
+        'vr_o_d': vr_obs_dir,
         'gg_ws' : gg_ws,
         'ens_ws': ensemb_dir,
         'mem_ws': member_ws,
@@ -87,7 +90,7 @@ def get():
         'r_ref' : r_ref,
         'rivh'  : rivh,
         'sfac'  : sfac,
-        'n_mem' : 10,
+        'n_mem' : 2,
         'tm_ws' : temp_m_ws,
         'trs_ws': trs_ws ,
         'up_tem': False,
