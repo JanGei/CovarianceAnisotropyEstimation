@@ -8,7 +8,7 @@ with warnings.catch_warnings():
     
 class Ensemble:
     
-    def __init__(self, members: list, nprocs: int, pp_cid, pp_xy, obs_cid: list):
+    def __init__(self, members: list, nprocs: int, pp_cid, pp_xy, obs_cid: list, mask):
         self.members    = members
         self.nprocs     = nprocs
         self.n_mem      = len(self.members)
@@ -16,6 +16,8 @@ class Ensemble:
         self.pp_xy      = pp_xy
         self.obs_cid    = [int(i) for i in obs_cid]
         self.ny         = len(obs_cid)
+        self.h_mask     = mask.astype(bool)
+        
         
     def set_field(self, field, pkg_name: list):
         Parallel(n_jobs=self.nprocs)(delayed(self.members[idx].set_field)(
@@ -39,21 +41,30 @@ class Ensemble:
     def apply_X(self, params: list, X):
         # THIS STILL NEEDS A GOOD DEAL OF WORK
         # get head file, identify chd cells and put new 
-        chd =  self.members[0].get_field(['chd'])
-        chd_cid = list(map(lambda tup: tup[1], chd['chd'][0]['cellid']))
-        chd_val = chd['chd'][0]['head']
-        n_cells = len(chd['h'].flatten())
+        head =  Parallel(n_jobs=self.nprocs)(delayed(self.members[idx].get_field)(
+            ['h']
+            ) 
+            for idx in range(self.n_mem)
+            )
         
         cov_data = []
         pp_k = []
         heads = []
+        
+        # THIS WORKS NOW, CONTUNUE HERE
         for i in range(self.n_mem):
             if 'cov_data' in params:
                 if 'npf' in params:
                     cov_data.append(X[0:4,i])
                     pp_k.append(X[4:len(self.pp_cid),i])
-                    head = X[4+len(self.pp_cid):,i]
-                    heads.append(np.insert(head, chd_cid, chd_val))
+                    
+                    h_interim = head[i]['h'].copy().flatten()
+                    h_interim[~self.h_mask] =  X[4+len(self.pp_cid):,i]
+                    head[i]['h'] =  h_interim
+       
+                    # TH
+                    # head =
+                    # heads.append(np.insert(head, chd_cid, chd_val))
                     # x = np.concatenate((data[i]['cov_data'].flatten(),
                     #                     data[i]['npf'][:,self.pp_cid].flatten(),
                     #                     head[i]['h'].flatten()))
@@ -69,7 +80,7 @@ class Ensemble:
     
     def get_Kalman_X_Y(self, params: list):   
         head =  Parallel(n_jobs=self.nprocs)(delayed(self.members[idx].get_field)(
-            ['h','chd']
+            ['h']
             ) 
             for idx in range(self.n_mem)
             )
@@ -82,10 +93,10 @@ class Ensemble:
         
         Ysim = np.zeros((self.ny,self.n_mem))
         # account for fixed head cells --> need to be ommited
+        
         for i in range(self.n_mem):
             Ysim[:,i] = head[i]['h'].flatten()[self.obs_cid]
-            chd_cid = list(map(lambda tup: tup[1], head[i]['chd'][0]['cellid']))
-            head[i]['h'] = np.delete(head[i]['h'], chd_cid)
+            head[i]['h'] = head[i]['h'].flatten()[~self.h_mask]
         
         # number of states
         nx  = head[0]['h'].size
@@ -104,13 +115,13 @@ class Ensemble:
                 if 'npf' in params:
                     x = np.concatenate((data[i]['cov_data'].flatten(),
                                         data[i]['npf'][:,self.pp_cid].flatten(),
-                                        head[i]['h'].flatten()))
+                                        head[i]['h']))
                 else:
                     x = np.concatenate((data[i]['cov_data'].flatten(),
-                                        head[i]['h'].flatten()))
+                                        head[i]['h']))
             else:
                 x = np.concatenate((data[i]['npf'][:,self.pp_cid].flatten(),
-                                    head[i]['h'].flatten()))
+                                    head[i]['h']))
                     
             X[:,i] = x
 

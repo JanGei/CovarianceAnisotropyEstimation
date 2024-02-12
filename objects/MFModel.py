@@ -1,5 +1,8 @@
 import flopy
-
+import warnings
+# Suppress DeprecationWarning temporarily
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore")
 class MFModel:
     
     def __init__(self, direc,  mname, cov_data):

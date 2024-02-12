@@ -8,6 +8,7 @@ from dependencies.load_observations import load_observations
 from dependencies.get_transient_data import get_transient_data
 from dependencies.plot import plot_fields, plot_POI, plot_k_fields, plot
 from dependencies.intersect_with_grid import intersect_with_grid
+from dependencies.generate_mask import chd_mask
 from objects.Ensemble import Ensemble
 from objects.MFModel import MFModel
 from objects.EnsembleKalmanFilter import EnsembleKalmanFilter
@@ -48,6 +49,7 @@ if __name__ == '__main__':
     # plot_fields(gwf, pars,  k_fields[0], k_fields[1])
     # plot_k_fields(gwf, pars,  k_fields)
     # plot(gwf, ['logK','h'], bc=True)
+    mask_chd = chd_mask(gwf)
     
     # generate model instances  
     models = Parallel(n_jobs=nprocs)(delayed(MFModel)(
@@ -58,7 +60,7 @@ if __name__ == '__main__':
         )
     
     # add the models to the ensemble
-    MF_Ensemble     = Ensemble(models, nprocs, pp_cid, pp_xy, obs_cid)
+    MF_Ensemble     = Ensemble(models, nprocs, pp_cid, pp_xy, obs_cid, mask_chd)
     
     # set their respective k-fields
     MF_Ensemble.set_field(k_fields, ['npf'])
