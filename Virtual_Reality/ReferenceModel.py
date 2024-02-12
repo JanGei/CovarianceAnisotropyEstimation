@@ -217,6 +217,6 @@ sim.write_simulation()
 
 #%% Plotting the necessary fields for comparison
 
-# plot(gwf, ['logK', 'rch'])
-plot(gwf, ['logK', 'rch', 'h'], pars, bc = True)
+plot(gwf, ['logK', 'rch'])
+# plot(gwf, ['logK', 'rch', 'h'], bc = True)
 # plot(gwf, ['logK','h'], bc=False)

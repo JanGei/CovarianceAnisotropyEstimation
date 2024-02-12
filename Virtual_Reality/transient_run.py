@@ -50,8 +50,8 @@ if __name__ == '__main__':
             obs[j]['h_obs'][0,i] = heads[i,0,obs[j]['cellid']]
     
 
-    np.save('model_data/head_ref.npy', heads)
-    np.save('model_data/obs_ref.npy', obs)
+    np.save(pars['vr_h_d'], heads)
+    np.save(pars['vr_o_d'], obs, allow_pickle=True)
     
     # movie(gwf, diff = False, contour = True)
  

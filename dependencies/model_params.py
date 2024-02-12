@@ -3,7 +3,7 @@ import os
 
 def get():
     
-    # Changing the working directory to the parent directory to have consistent access
+    # Changing the working directory to the parent directory to have consisten access
     current_directory = os.path.dirname(os.path.abspath(__file__))
     parent_directory = os.path.dirname(current_directory)
     Vrdir = parent_directory + '/Virtual_Reality'
@@ -18,8 +18,8 @@ def get():
     well_loc    = np.zeros((col_well*row_well,2))
     for i in range(row_well):
         for j in range(col_well):
-            well_loc[i*col_well + j, 0] = (20 + 10*j) *dx[0]
-            well_loc[i*col_well + j, 1] = (9 + 10*i) *dx[1]
+            well_loc[i*col_well + j, 0] = (19.5 + 10*j) *dx[0] 
+            well_loc[i*col_well + j, 1] = (8.5 + 10*i) *dx[1]
     # pumping wells should be at (5, 9, 15, 27, 31)
     q_idx       = [5, 9, 15, 27, 31]
     mask        = np.full(len(well_loc),True,dtype=bool)
@@ -41,11 +41,16 @@ def get():
     sim_ws      = Vrdir + '/model_files'
     gg_ws       = Vrdir + '/gridgen_files'
     trs_ws      = Vrdir + '/transient_model'
-    temp_m_ws   = parent_directory + '/Ensemble/template_model'
-    member_ws   = parent_directory + '/Ensemble/member'
-    
+    ensemb_dir  = parent_directory + '/Ensemble'
+    temp_m_ws   = ensemb_dir + '/template_model'
+    member_ws   = ensemb_dir + '/member'
+    vr_h_dir    = Vrdir + '/model_data/head_ref.npy'
+    vr_obs_dir  = Vrdir + '/model_data/obs_ref.npy'
 
     pars    = {
+        'office': True,
+        'iclust': False,
+        'binnac': False,
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
         'lx'    : np.array([[600, 2000], [500, 5000]]),     # corellation lengths
@@ -72,12 +77,17 @@ def get():
         'mname' : "Reference",
         'sname' : "Reference",
         'sim_ws': sim_ws,
+        'vr_h_d': vr_h_dir,
+        'vr_o_d': vr_obs_dir,
         'gg_ws' : gg_ws,
+        'ens_ws': ensemb_dir,
         'mem_ws': member_ws,
         'timuni': timuni,                                   # time unit
         'lenuni': lenuni,                                   # length unit
-        'k_ref' : np.flip(k_ref, axis  = 0),
-        'r_ref' : np.flip(r_ref, axis  = 0),
+        'k_ref' : k_ref,
+        'kmin'  : np.min(np.log(k_ref)),
+        'kmax'  : np.max(np.log(k_ref)),
+        'r_ref' : r_ref,
         'rivh'  : rivh,
         'sfac'  : sfac,
         'n_mem' : 2,

@@ -87,7 +87,7 @@ def generator(nx, dx, lx, ang, sigma2, mu, cov, random = True):
     
     return X, Y, ran
 
-def gsgenerator(nx, dx, lx, ang, sigma, cov, random = True):
+def gsgenerator(gwf, nx, dx, lx, ang, sigma, cov, random = True):
     
     dim = 2
     ang = np.radians(ang)
@@ -101,24 +101,18 @@ def gsgenerator(nx, dx, lx, ang, sigma, cov, random = True):
     else:
         raise JibberishWarning('You just entered a jibberish covariance model')
         
-    # x = np.arange(-nx[0] / 2 * dx[0], (nx[0] - 1) / 2 * dx[0] + dx[0], dx[0])
-    # y = np.arange(-nx[1] / 2 * dx[1], (nx[1] - 1) / 2 * dx[1] + dx[1], dx[1])
-    
-    # Generating coordinates for cell midpoints
-    x = np.arange(-nx[0] / 2 * dx[0] + dx[0] / 2, (nx[0] - 1) / 2 * dx[0] + dx[0] / 2, dx[0])
-    y = np.arange(-nx[1] / 2 * dx[1] + dx[1] / 2, (nx[1] - 1) / 2 * dx[1] + dx[1] / 2, dx[1])
-    
-    # Grid in Physical Coordinates
-    X, Y = np.meshgrid(x, y)
+    modelgrid = gwf.modelgrid
+    xyz = modelgrid.xyzcellcenters
     
     if random:
         srf = gs.SRF(model)
     else:
+        # TODO: change the model
         srf = gs.SRF(model, seed=6)
     
-    field = srf.structured([x,y])
+    field = srf.unstructured(([xyz[0],xyz[1]]))
     
-    return X, Y, field
+    return field
 
 
 
