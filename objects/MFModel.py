@@ -1,14 +1,15 @@
 import flopy
-import warnings
-# Suppress DeprecationWarning temporarily
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore")
+import gstools as gs
+from gstools import krige
+import numpy as np
+
 class MFModel:
     
-    def __init__(self, direc,  mname, cov_data):
+    def __init__(self, direc,  mname, cov_data, cov_model):
         self.direc      = direc
         self.mname      = mname
         self.cov_data   = cov_data
+        self.cov_model  = cov_model
         self.sim        = flopy.mf6.modflow.MFSimulation.load(
                                 version             = 'mf6', 
                                 exe_name            = 'mf6',
@@ -22,12 +23,13 @@ class MFModel:
         self.wel        = self.gwf.wel
         self.ic         = self.gwf.ic
         self.chd        = self.gwf.chd
+        self.cell_xy    = self.gwf.modelgrid.xyzcellcenters
         
         
     def set_field(self, field, pkg_name: list):
         for i, name in enumerate(pkg_name):
             if name == 'npf':
-                self.npf.k.set_data(field[i])
+                self.npf.k.set_data(np.reshape(field[i],self.npf.k.array.shape))
             elif name == 'rch':
                 # rch_spd = self.rch.stress_period_data.get_data()
                 # rch_spd[0]['recharge'] = field[i]
@@ -40,6 +42,8 @@ class MFModel:
                 # wel_spd = self.wel.stress_period_data.get_data()
                 # wel_spd[0]['q'] = field[i]
                 self.wel.stress_period_data.set_data(field[i])
+            elif name == 'h':
+                self.ic.strt.set_data(field[i])
             else:
                 print(f'The package {name} that you requested is not part ofthe model')
             
@@ -75,7 +79,23 @@ class MFModel:
         self.sim.write_simulation()
         
         
+    def kriging(self, params, data, pp_xy):
         
+        if 'cov_data' in params:
+            self.cov_model.len_scale = [data[0][0], data[0][1]]
+            self.cov_model.angles = data[0][2]
+            self.cov_model.var = data[0][3]
+
+            pp_k = data[1]
+                
+        else:
+            pp_k = data[0]
+                
+        
+        krig = krige.Ordinary(self.cov_model, cond_pos=(pp_xy[:,0], pp_xy[:,1]), cond_val = np.log(pp_k))
+        field = krig((self.cell_xy[0], self.cell_xy[1]))
+        
+        self.set_field([np.exp(field[0])], ['npf'])
         
         
         

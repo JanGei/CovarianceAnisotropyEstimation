@@ -20,6 +20,7 @@ def create_k_fields(gwf, pars: dict, pp_xy, pp_cid: np.ndarray, covtype = 'rando
     
     k_fields = []
     cov_data = []
+    models = []
     for i in range(n_mem):
         if covtype == 'random':
             lx = np.array([np.random.randint(100, 2000), np.random.randint(100, 2000)])
@@ -49,8 +50,9 @@ def create_k_fields(gwf, pars: dict, pp_xy, pp_cid: np.ndarray, covtype = 'rando
         
         cov_data.append(np.array([lx[0], lx[1], ang, sigma]))
         k_fields.append(np.exp(field[0]))
+        models.append(model)
     
-    return k_fields, cov_data
+    return k_fields, cov_data, models
     
         
 

@@ -12,15 +12,26 @@ from dependencies.generate_mask import chd_mask
 from objects.Ensemble import Ensemble
 from objects.MFModel import MFModel
 from objects.EnsembleKalmanFilter import EnsembleKalmanFilter
+import time
 import numpy as np
 from joblib import Parallel, delayed
-import warnings
 
-# Suppress DeprecationWarning temporarily
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore")
+import warnings
+from joblib import parallel
+
+# Define a filter function to suppress specific warnings
+def joblib_warning_filter(message, category, filename, lineno, file=None, line=None):
+    if "joblib" in str(filename):
+        return None  # Suppress the warning
+    else:
+        return message, category, filename, lineno, None, None
+
 
 if __name__ == '__main__':
+
+    # Register the filter function with the warnings module
+    warnings.showwarning = joblib_warning_filter
+    
     pars        = get()
     n_mem       = pars['n_mem']
 
@@ -35,57 +46,100 @@ if __name__ == '__main__':
     if pars['up_tem']:
         temp_sim = convert_to_transient(pars['tm_ws'], pars)
     
+    print(f'Joblib initiated with {nprocs} processors')
+    print(f'The template model is located in {pars["tm_ws"]}')
+    #%% loading necessary data
+    start_time = time.time()
+    
     # copy template model to ene
     model_dir   = create_Ensemble(pars)
     sim, gwf = load_template_model(pars)
     
-    
+
     pp_cid, pp_xy = create_pilot_points(gwf, pars)
+    
     obs_cid = intersect_with_grid(gwf, pars['obsxy'])
     obs_val = load_observations(pars)
     # plot_POI(gwf, pp_xy, pars, bc = True)
 
-    k_fields, cov_data = create_k_fields(gwf, pars, pp_xy, pp_cid, covtype = 'random', valtype = 'random')
+    k_fields, cov_data, cov_models = create_k_fields(gwf, pars, pp_xy, pp_cid, covtype = 'random', valtype = 'random')
     # plot_fields(gwf, pars,  k_fields[0], k_fields[1])
     # plot_k_fields(gwf, pars,  k_fields)
     # plot(gwf, ['logK','h'], bc=True)
     mask_chd = chd_mask(gwf)
     
-    # generate model instances  
+    print(f'The model has {len(obs_cid)} observation points')
+    print(f'The model has {len(pp_cid)} pilot points points')
+    print(f'Loading of data and creating k_fields took {(time.time() - start_time):.2f} seconds')
+    
+    #%% generate model instances  
+    start_time = time.time()
     models = Parallel(n_jobs=nprocs)(delayed(MFModel)(
         model_dir[idx],
         pars['mname'],
-        cov_data[idx]) 
+        cov_data[idx],
+        cov_models[idx]) 
         for idx in range(n_mem)
         )
     
-    # add the models to the ensemble
+    print(f'{n_mem} models are initiated in {(time.time() - start_time):.2f} seconds')
+    #%% add the models to the ensemble
+    start_time = time.time()
+    
     MF_Ensemble     = Ensemble(models, nprocs, pp_cid, pp_xy, obs_cid, mask_chd)
     
     # set their respective k-fields
     MF_Ensemble.set_field(k_fields, ['npf'])
+    print(f'Ensemble is initiated and respective k-fields are set in {(time.time() - start_time):.2f} seconds')
+    #%% Running each model 10 times
+    start_time = time.time()
     
-    # Running each model 10 times, setting the results as initial conidition to
-    # improve initial accuracy
-    for idx in range(10):
+    n_pre_run = 1
+    for idx in range(n_pre_run):
         MF_Ensemble.propagate()
         MF_Ensemble.update_initial_heads()
-        
+    # print(MF_Ensemble.get_mean_var())
+    
+    print(f'Each model is run and updated {n_pre_run} times which took {(time.time() - start_time):.2f} seconds')
+    print(f'That makes {((time.time() - start_time)/(n_pre_run * n_mem)):.2f} seconds per model run')
+    #%%
     X, Ysim = MF_Ensemble.get_Kalman_X_Y(['cov_data', 'npf'])
     EnKF = EnsembleKalmanFilter(X, Ysim, damp = 0.75, eps = 0.05)
     
+    k_means = []
     # for t_step in range(pars['nsteps']):
-    for t_step in range(2):
-        
+    for t_step in range(5):
+        print('--------')
+        print(f'time step {t_step}')
+        start_time = time.time()
         rch_data, wel_data, riv_data, Y_obs = get_transient_data(pars, t_step, obs_val)
         MF_Ensemble.update_transient_data(rch_data, wel_data, riv_data)
+        print(f'transient data loaded and applied in {(time.time() - start_time):.2f} seconds')
         
+        print('---')
+        start_time = time.time()
         MF_Ensemble.propagate()
+        EnKF.update_X_Y(
+            MF_Ensemble.get_Kalman_X_Y(
+                ['cov_data', 'npf']
+                )
+            )
+        print(f'ensemble propagated in {(time.time() - start_time):.2f} seconds')
         
+        print('---')
+        start_time = time.time()
         EnKF.analysis()
-        # X = EnKF.Kalman_update(Y_obs)
+        EnKF.Kalman_update(Y_obs)
+        print(f'Ensemble Kalman Filter performed in  {(time.time() - start_time):.2f} seconds')
         
-        MF_Ensemble.apply_X(['cov_data', 'npf'],X)
+        print('---')
+        start_time = time.time()
+        MF_Ensemble.apply_X(['cov_data', 'npf'], EnKF.X)
+        print(f'application of results plus kriging took {(time.time() - start_time):.2f} seconds')
+        
+        
+        k_means.append(np.mean(MF_Ensemble.members[0].npf.k.array))
+        # function to catch errors
 
 
 

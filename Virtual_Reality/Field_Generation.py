@@ -56,7 +56,7 @@ rech        = (rech.T + mu[1])  # [mm/d]
 # Anmerkung des Übersetzers: Beim generieren dieser Felder ist die Varianz per se dimensionslos
 # Wenn wir also die Felder von Erdal und Cirpka nachbilden wollen, müssen wir überhaupt nicht
 # die Varianz mitscalieren, wenn die Einheiten geändert werden, sonder nur der mean
-inspection = False
+inspection = True
 if inspection:
     plt.scatter(xyz[0], xyz[1], c=logK)
     plt.show()

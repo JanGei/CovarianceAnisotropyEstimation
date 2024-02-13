@@ -33,11 +33,11 @@ class EnsembleKalmanFilter:
         self.X_prime    = np.zeros(np.shape(X))
         self.Y_prime    = np.zeros(np.shape(Ysim))
         self.n_obs      = np.shape(Ysim)[0]
-        self.Cyy        = np.zeros(np.shape((self.n_obs, self.n_obs)))
+        self.Cyy        = np.zeros((self.n_obs, self.n_obs))
     
-    def update_X_Y(self, X, Ysim):
-        self.X      = X
-        self.Ysim   = Ysim
+    def update_X_Y(self, XY):
+        self.X      = XY[0]
+        self.Ysim   = XY[1]
     
     def analysis(self):
         
@@ -61,7 +61,7 @@ class EnsembleKalmanFilter:
     
     
     def Kalman_update(self,  Y_obs):
-        # ValueError: operands could not be broadcast together with shapes (40,) (40,2)
+        Y_obs = np.tile(Y_obs, (self.n_mem, 1)).T
         self.X += 1/(self.n_mem-1) * (self.damp *
                     np.matmul(
                         self.X_prime, np.matmul(
