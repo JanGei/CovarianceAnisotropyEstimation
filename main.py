@@ -4,7 +4,7 @@ from dependencies.convert_transient import convert_to_transient
 from dependencies.create_pilot_points import create_pilot_points
 from dependencies.create_k_fields import create_k_fields
 from dependencies.load_template_model import load_template_model
-from dependencies.load_observations import load_observations
+from dependencies.load_observations import load_observations, load_true_h_field
 from dependencies.get_transient_data import get_transient_data
 from dependencies.plot import plot_fields, plot_POI, plot_k_fields, plot
 from dependencies.intersect_with_grid import intersect_with_grid
@@ -59,10 +59,11 @@ if __name__ == '__main__':
     pp_cid, pp_xy = create_pilot_points(gwf, pars)
     
     obs_cid = intersect_with_grid(gwf, pars['obsxy'])
-    obs_val = load_observations(pars)
-    # plot_POI(gwf, pp_xy, pars, bc = True)
-
+    # obs_val = load_observations(pars) # not needed here, but will be needed in non synthetic cases
+    true_h =  load_true_h_field(pars)
+    
     k_fields, cov_data, cov_models = create_k_fields(gwf, pars, pp_xy, pp_cid, covtype = 'random', valtype = 'random')
+    # plot_POI(gwf, pp_xy, pars, bc = True)
     # plot_fields(gwf, pars,  k_fields[0], k_fields[1])
     # plot_k_fields(gwf, pars,  k_fields)
     # plot(gwf, ['logK','h'], bc=True)
@@ -94,7 +95,7 @@ if __name__ == '__main__':
     #%% Running each model 10 times
     start_time = time.time()
     
-    n_pre_run = 1
+    n_pre_run = 120
     for idx in range(n_pre_run):
         MF_Ensemble.propagate()
         MF_Ensemble.update_initial_heads()
@@ -108,15 +109,15 @@ if __name__ == '__main__':
     
     k_means = []
     # for t_step in range(pars['nsteps']):
-    for t_step in range(5):
+    for t_step in range(25):
         print('--------')
         print(f'time step {t_step}')
         start_time = time.time()
-        rch_data, wel_data, riv_data, Y_obs = get_transient_data(pars, t_step, obs_val)
+        rch_data, wel_data, riv_data, Y_obs = get_transient_data(pars, t_step, true_h[0], obs_cid)
         MF_Ensemble.update_transient_data(rch_data, wel_data, riv_data)
-        print(f'transient data loaded and applied in {(time.time() - start_time):.2f} seconds')
+        # print(f'transient data loaded and applied in {(time.time() - start_time):.2f} seconds')
         
-        print('---')
+        # print('---')
         start_time = time.time()
         MF_Ensemble.propagate()
         EnKF.update_X_Y(
@@ -124,18 +125,22 @@ if __name__ == '__main__':
                 ['cov_data', 'npf']
                 )
             )
-        print(f'ensemble propagated in {(time.time() - start_time):.2f} seconds')
+        MF_Ensemble.model_error(true_h[t_step])
+        print(f'Observvation Location Error: {(MF_Ensemble.ole[-1]):.2f}')
+        print(f'Total Error 1: {(MF_Ensemble.te1[-1]):.2f}')
+        print(f'Total Error 2: {(MF_Ensemble.te2[-1]):.2f}')
+        # print(f'ensemble propagated in {(time.time() - start_time):.2f} seconds')
         
-        print('---')
+        # print('---')
         start_time = time.time()
         EnKF.analysis()
         EnKF.Kalman_update(Y_obs)
-        print(f'Ensemble Kalman Filter performed in  {(time.time() - start_time):.2f} seconds')
+        # print(f'Ensemble Kalman Filter performed in  {(time.time() - start_time):.2f} seconds')
         
-        print('---')
+        # print('---')
         start_time = time.time()
         MF_Ensemble.apply_X(['cov_data', 'npf'], EnKF.X)
-        print(f'application of results plus kriging took {(time.time() - start_time):.2f} seconds')
+        # print(f'application of results plus kriging took {(time.time() - start_time):.2f} seconds')
         
         
         k_means.append(np.mean(MF_Ensemble.members[0].npf.k.array))

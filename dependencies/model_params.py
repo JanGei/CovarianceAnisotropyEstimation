@@ -90,7 +90,7 @@ def get():
         'r_ref' : r_ref,
         'rivh'  : rivh,
         'sfac'  : sfac,
-        'n_mem' : 2,
+        'n_mem' : 24,
         'tm_ws' : temp_m_ws,
         'trs_ws': trs_ws ,
         'up_tem': False,

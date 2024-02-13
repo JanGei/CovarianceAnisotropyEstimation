@@ -1,6 +1,6 @@
 import numpy as np
 
-def get_transient_data(pars: dict, t_step: int, obs_val):
+def get_transient_data(pars: dict, t_step: int, true_h, obs_cid):
     
     sfac = pars['sfac']
     r_ref = pars['r_ref']
@@ -17,8 +17,8 @@ def get_transient_data(pars: dict, t_step: int, obs_val):
             wel_data[i] = -welq[i]
     riv_data = rivh[t_step]
     
-    Y_obs = np.ones(len(obs_val))
-    for key in  obs_val.keys():
-        Y_obs[key] = obs_val[key]['h_obs'][0,t_step]
+    # Y_obs = np.ones(len(obs_cid))
+    for key in  obs_cid:
+        Y_obs = np.array(true_h).flatten()[obs_cid.tolist()]
         
     return rch_data, wel_data, riv_data, Y_obs
