@@ -33,14 +33,7 @@ if __name__ == '__main__':
     
     pars        = get()
     n_mem       = pars['n_mem']
-
-    if pars['office']:
-        nprocs = np.min([n_mem, 6])
-        # nprocs = 1
-    elif pars['iclust']:
-        nprocs = 12
-    elif pars['binnac']:
-        nprocs = 12
+    nprocs      = pars['nprocs']
     
     if pars['up_tem']:
         temp_sim = convert_to_transient(pars['tm_ws'], pars)

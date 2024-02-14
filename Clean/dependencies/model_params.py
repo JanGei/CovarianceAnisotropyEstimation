@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import psutil
 
 def get():
     
@@ -47,11 +48,30 @@ def get():
     vr_h_dir    = Vrdir + '/model_data/head_ref.npy'
     vr_obs_dir  = Vrdir + '/model_data/obs_ref.npy'
     output_dir  = parent_directory + '/output'
-
+    
+    computer = ['office', 'icluster', 'binnac']
+    setup = computer[0]
+    if setup == 'office':
+        n_mem  = 2
+        nprocs = np.min([n_mem, 8])
+        # nprocs = 1
+        up_temp = False
+    elif setup == 'icluster':
+        n_mem  = 160
+        nprocs = psutil.cpu_count()
+        up_temp = True
+    elif setup == 'binnac':
+        n_mem  = 240
+        nprocs = psutil.cpu_count()
+        up_temp = True
+    variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
+    
+   
     pars    = {
-        'office': True,
-        'iclust': False,
-        'binnac': False,
+        'nprocs': nprocs,
+        'EnKF_p': variants[0], 
+        'n_PP'  : 50,
+        'up_tem': up_temp,
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
         'lx'    : np.array([[600, 2000], [500, 5000]]),     # corellation lengths
@@ -91,14 +111,11 @@ def get():
         'r_ref' : r_ref,
         'rivh'  : rivh,
         'sfac'  : sfac,
-        'n_mem' : 2,
+        'n_mem' : n_mem,
         'tm_ws' : temp_m_ws,
         'trs_ws': trs_ws ,
         'resdir': output_dir,
-        'up_tem': False,
         'nsteps': int(365*24/6),
-        'n_PP'  : 50,
-        'EnKF_p': ['npf']                       # ['cov_data', 'npf'] available 
         }
     
     return pars
