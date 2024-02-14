@@ -86,14 +86,13 @@ if __name__ == '__main__':
     #%% Running each model 10 times
     start_time = time.time()
     
-    n_pre_run = 1
-    for idx in range(n_pre_run):
+    for idx in range(pars['nprern']):
         MF_Ensemble.propagate()
         MF_Ensemble.update_initial_heads()
     # print(MF_Ensemble.get_mean_var())
     
-    print(f'Each model is run and updated {n_pre_run} times which took {(time.time() - start_time):.2f} seconds')
-    print(f'That makes {((time.time() - start_time)/(n_pre_run * n_mem)):.2f} seconds per model run')
+    print(f'Each model is run and updated {pars["nprern"]} times which took {(time.time() - start_time):.2f} seconds')
+    print(f'That makes {((time.time() - start_time)/(pars["nprern"] * n_mem)):.2f} seconds per model run')
     #%%
     X, Ysim = MF_Ensemble.get_Kalman_X_Y(pars['EnKF_p'])
     EnKF = EnsembleKalmanFilter(X, Ysim, damp = 0.75, eps = 0.05)

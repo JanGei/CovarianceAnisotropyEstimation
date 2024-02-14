@@ -56,14 +56,17 @@ def get():
         nprocs = np.min([n_mem, 8])
         # nprocs = 1
         up_temp = False
+        n_pre_run = 1
     elif setup == 'icluster':
         n_mem  = 160
         nprocs = psutil.cpu_count()
         up_temp = True
+        n_pre_run = 40
     elif setup == 'binnac':
         n_mem  = 240
         nprocs = psutil.cpu_count()
         up_temp = True
+        n_pre_run = 40
     variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     
    
@@ -116,6 +119,7 @@ def get():
         'trs_ws': trs_ws ,
         'resdir': output_dir,
         'nsteps': int(365*24/6),
+        'nprern': n_pre_run
         }
     
     return pars
