@@ -46,6 +46,7 @@ def get():
     member_ws   = ensemb_dir + '/member'
     vr_h_dir    = Vrdir + '/model_data/head_ref.npy'
     vr_obs_dir  = Vrdir + '/model_data/obs_ref.npy'
+    output_dir  = parent_directory + '/output'
 
     pars    = {
         'office': True,
@@ -90,12 +91,14 @@ def get():
         'r_ref' : r_ref,
         'rivh'  : rivh,
         'sfac'  : sfac,
-        'n_mem' : 24,
+        'n_mem' : 2,
         'tm_ws' : temp_m_ws,
         'trs_ws': trs_ws ,
+        'resdir': output_dir,
         'up_tem': False,
-        'nsteps': 365*24/6,
+        'nsteps': int(365*24/6),
         'n_PP'  : 50,
+        'EnKF_p': ['npf']                       # ['cov_data', 'npf'] available 
         }
     
     return pars

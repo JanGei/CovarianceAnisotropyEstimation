@@ -48,11 +48,11 @@ def create_k_fields(gwf, pars: dict, pp_xy, pp_cid: np.ndarray, covtype = 'rando
         krig = krige.Ordinary(model, cond_pos=(pp_xy[:,0], pp_xy[:,1]), cond_val = np.log(pp_k))
         field = krig((xyz[0], xyz[1]))
         
-        cov_data.append(np.array([lx[0], lx[1], ang, sigma]))
+        # cov_data.append(np.array([lx[0], lx[1], ang, sigma]))
         k_fields.append(np.exp(field[0]))
         models.append(model)
     
-    return k_fields, cov_data, models
+    return k_fields,  models
     
         
 

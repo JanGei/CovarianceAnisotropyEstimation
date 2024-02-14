@@ -5,10 +5,9 @@ import numpy as np
 
 class MFModel:
     
-    def __init__(self, direc,  mname, cov_data, cov_model):
+    def __init__(self, direc: str,  mname:str , cov_model):
         self.direc      = direc
         self.mname      = mname
-        self.cov_data   = cov_data
         self.cov_model  = cov_model
         self.sim        = flopy.mf6.modflow.MFSimulation.load(
                                 version             = 'mf6', 
@@ -65,7 +64,10 @@ class MFModel:
             elif name == 'h':
                 fields.update({name:self.gwf.output.head().get_data()})
             elif name == 'cov_data':
-                fields.update({name:self.cov_data})
+                fields.update({name:np.array([self.cov_model.len_scale_vec[0],
+                                              self.cov_model.len_scale_vec[1],
+                                              self.cov_model.angles[0],
+                                              self.cov_model.var])})
             else:
                 print(f'The package {name} that you requested is not part ofthe model')
                 
@@ -82,14 +84,16 @@ class MFModel:
     def kriging(self, params, data, pp_xy):
         
         if 'cov_data' in params:
-            self.cov_model.len_scale = [data[0][0], data[0][1]]
-            self.cov_model.angles = data[0][2]
+            # Here, an eflection method is used to prevent negative corrl
+            self.cov_model.len_scale = [abs(data[0][0]), abs(data[0][1])]
+            # angle is taken mod 360
+            self.cov_model.angles = data[0][2]%360
             self.cov_model.var = data[0][3]
 
             pp_k = data[1]
                 
         else:
-            pp_k = data[0]
+            pp_k = data
                 
         
         krig = krige.Ordinary(self.cov_model, cond_pos=(pp_xy[:,0], pp_xy[:,1]), cond_val = np.log(pp_k))

@@ -1,5 +1,6 @@
 from joblib import Parallel, delayed
 import numpy as np
+import os
     
 class Ensemble:
     
@@ -18,6 +19,8 @@ class Ensemble:
         self.te1_nsq    = []
         self.te2        = []
         self.te2_nsq    = []
+        self.mean_cov   = []
+        self.mean_ppk   = []
         
         
     def set_field(self, field, pkg_name: list):
@@ -41,11 +44,12 @@ class Ensemble:
     
     def apply_X(self, params: list, X):
         # get head file, identify chd cells and put new 
-        head =  Parallel(n_jobs=self.nprocs)(delayed(self.members[idx].get_field)(
-            ['h']
-            ) 
-            for idx in range(self.n_mem)
-            )
+        # head =  Parallel(n_jobs=self.nprocs)(delayed(self.members[idx].get_field)(
+        #     ['h']
+        #     ) 
+        #     for idx in range(self.n_mem)
+        #     )
+        head = self.get_member_fields(['h'])
         
         data = []
         
@@ -57,19 +61,25 @@ class Ensemble:
                     head[i]['h'][~self.h_mask] = X[4+len(self.pp_cid):,i]
                     
                     data.append([X[0:4,i], X[4:len(self.pp_cid)+4,i]])
-
+                    
                 else:
                     head[i]['h'] = head[i]['h'].flatten()
                     head[i]['h'][~self.h_mask] = X[4:,i]
 
-                    data.append([X[0:4,i], self.npf.k.array.flatten()[self.pp_cid]])
-
+                    data.append([X[0:4,i], self.members[0].npf.k.array.flatten()[self.pp_cid]])
+                    
             else:
                 head[i]['h'] = head[i]['h'].flatten()
                 head[i]['h'][~self.h_mask] = X[len(self.pp_cid):,i]
                 
                 data.append(X[:len(self.pp_cid),i])
-
+            
+        if 'cov_data' in params:
+            self.mean_cov = np.mean(X[0:4], axis = 1)
+            if 'npf' in params:
+                self.mean_ppk = np.mean(X[4:len(self.pp_cid)+4,:], axis = 1)
+        else:
+            self.mean_ppk = np.mean(X[:len(self.pp_cid),:], axis = 1)
         
         Parallel(n_jobs=self.nprocs, backend="threading")(delayed(self.members[idx].set_field)(
             [head[idx]['h']], ['h']
@@ -86,17 +96,10 @@ class Ensemble:
      
     
     def get_Kalman_X_Y(self, params: list):   
-        head =  Parallel(n_jobs=self.nprocs)(delayed(self.members[idx].get_field)(
-            ['h']
-            ) 
-            for idx in range(self.n_mem)
-            )
-        
-        data = Parallel(n_jobs=self.nprocs)(delayed(self.members[idx].get_field)(
-            params
-            ) 
-            for idx in range(self.n_mem)
-            )
+
+        head = self.get_member_fields(['h'])
+        data = self.get_member_fields(params)
+
         
         Ysim = np.zeros((self.ny,self.n_mem))
         # account for fixed head cells --> need to be ommited
@@ -181,8 +184,8 @@ class Ensemble:
         var_h = var_h[~self.h_mask]
         var_te2 = (true_h + mean_h)/2
         
-        self.te1_nsq.append(np.sum(np.square(true_h - mean_h)/var_h)/mean_h.size)
-        self.te2_nsq.append(np.sum(np.square(true_h - mean_h)/var_te2)/mean_h.size)
+        self.te1_nsq.append(np.sum(np.square(true_h - mean_h)/var_h))
+        self.te2_nsq.append(np.sum(np.square(true_h - mean_h)/var_te2))
         
         te1 = 0
         te2 = 0
@@ -191,8 +194,18 @@ class Ensemble:
             te2 += self.te2_nsq[i]
         
         # nrmse for the model up until the current time step
-        self.te1.append(np.sqrt(te1/len(self.te1_nsq)))
-        self.te2.append(np.sqrt(te1/len(self.te2_nsq)))
+        self.te1.append(np.sqrt(te1/len(self.te1_nsq)/mean_h.size))
+        self.te2.append(np.sqrt(te2/len(self.te2_nsq)/mean_h.size))
+    
+    def get_member_fields(self, params):
+        
+        data = Parallel(n_jobs=self.nprocs)(delayed(self.members[idx].get_field)(
+            params
+            ) 
+            for idx in range(self.n_mem)
+            )
+        
+        return data
         
 
     def get_mean_var(self):
@@ -213,6 +226,65 @@ class Ensemble:
         var_h = (var_h / count) - np.square(mean_h)
         
         return mean_h, var_h
+    
+    def record_state(self, pars: dict, params: list):
+        
+        direc = pars['resdir']
+        
+        f = open(direc +  '/errors.dat','a')
+        f.write("{:.4f} ".format(self.ole[-1]))
+        f.write("{:.4f} ".format(self.te1[-1]))
+        f.write("{:.4f} ".format(self.te2[-1]))
+        f.write('\n')
+        f.close()
+        
+        cov_data = self.get_member_fields(['cov_data'])
+        # also store covariance data for all models
+        if 'cov_data' in params:
+            f = open(direc +  '/covariance_data.dat','a')
+            f.write("{:.4f} ".format(self.mean_cov[0]))
+            f.write("{:.4f} ".format(self.mean_cov[1]))
+            f.write("{:.4f} ".format(self.mean_cov[2]))
+            f.write("{:.4f} ".format(self.mean_cov[3]))
+            f.write('\n')
+            f.close()
+            
+            for i in range(self.n_mem):
+                f = open(direc + f'/covariance_model_{i}.dat', 'a')
+                for j in range(len(cov_data[i]['cov_data'])):
+                    f.write("{:.4f} ".format(cov_data[i]['cov_data'][j]))
+                f.write('\n')
+                f.close()
+                
+
+        if 'npf' in params:
+            f = open(direc +  '/pilot_point_k.dat','a')
+            for i in range(len(self.mean_ppk)):
+                f.write("{:.4f} ".format(np.log(self.mean_ppk[i])))
+            f.write('\n')
+            f.close()
+        
+    def remove_current_files(self, pars):
+        
+        file_paths = [pars['resdir'] + '/errors.dat',
+                      pars['resdir'] + '/covariance_data.dat',
+                      pars['resdir'] + '/pilot_point_k.dat']
+        
+        for file_path in file_paths:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        
+        for filename in os.listdir(pars['resdir']):
+            # Check if the surname is in the filename
+            if 'covariance_model_' in filename:
+                # Construct the full file path
+                file_path = os.path.join(pars['resdir'], filename)
+                # Remove the file
+                os.remove(file_path)
+
+        
+
+
         
         
         
