@@ -5,8 +5,8 @@ import numpy as np
 def create_k_fields(gwf, pars: dict, pp_xy, pp_cid: np.ndarray, covtype = 'random', valtype = 'good'):
     dim = 2
     cov = pars['cov']
-    lx      = pars['lx']
-    ang     = pars['ang']
+    clx     = pars['lx']
+    angles  = pars['ang']
     sigma   = pars['sigma'][0]
     mu      = pars['mu'][0]
     cov     = pars['cov']
@@ -19,7 +19,7 @@ def create_k_fields(gwf, pars: dict, pp_xy, pp_cid: np.ndarray, covtype = 'rando
     xyz = mg.xyzcellcenters
     
     k_fields = []
-    cov_data = []
+    # cov_data = []
     models = []
     for i in range(n_mem):
         if covtype == 'random':
@@ -27,9 +27,8 @@ def create_k_fields(gwf, pars: dict, pp_xy, pp_cid: np.ndarray, covtype = 'rando
             ang = np.random.randint(0, 360)
             sigma = np.random.uniform(1, 5)
         elif covtype == 'good':
-            lx = lx[0]
-            ang = ang[0]
-            pass
+            lx = clx[0]
+            ang = angles[0]
         
         
         if cov == 'Matern':

@@ -52,7 +52,7 @@ def get():
     computer = ['office', 'icluster', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 2
+        n_mem  = 24
         nprocs = np.min([n_mem, 8])
         # nprocs = 1
         up_temp = False
@@ -72,7 +72,7 @@ def get():
    
     pars    = {
         'nprocs': nprocs,
-        'EnKF_p': variants[0], 
+        'EnKF_p': variants[1], 
         'n_PP'  : 50,
         'up_tem': up_temp,
         'nx'    : np.array([100, 50]),                      # number of cells

@@ -54,7 +54,16 @@ if __name__ == '__main__':
     # obs_val = load_observations(pars) # not needed here, but will be needed in non synthetic cases
     true_h =  load_true_h_field(pars)
     
-    k_fields,  cov_models = create_k_fields(gwf, pars, pp_xy, pp_cid, covtype = 'random', valtype = 'random')
+    if 'cov_data' in pars['EnKF_p']:
+        covtype = "random"
+    else:
+        covtype = "good"
+    if 'npf' in pars['EnKF_p']:
+        valtype = "random"
+    else:
+        valtype = "good"
+    
+    k_fields,  cov_models = create_k_fields(gwf, pars, pp_xy, pp_cid, covtype = covtype, valtype = valtype)
     # plot_POI(gwf, pp_xy, pars, bc = True)
     # plot_fields(gwf, pars,  k_fields[0], k_fields[1])
     # plot_k_fields(gwf, pars,  k_fields)
@@ -140,11 +149,11 @@ if __name__ == '__main__':
         
         
         # visualize covariance structures
-        # ellipsis(
-        #     MF_Ensemble.get_member_fields(['cov_data']),
-        #     MF_Ensemble.mean_cov,
-        #     pars
-        #     )
+        ellipsis(
+            MF_Ensemble.get_member_fields(['cov_data']),
+            MF_Ensemble.mean_cov,
+            pars
+            )
     
     
     
