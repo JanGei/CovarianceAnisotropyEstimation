@@ -11,7 +11,7 @@ if __name__ == '__main__':
     cwd = os.getcwd()
     # specify which folder to investigate
     # target_folder = '/n280_cov_npf_binnac'
-    target_folder = '/280_control_binnac'
+    target_folder = '/n280_cov_npf_binnac'
     target_directory = cwd + target_folder + '/output'
     
     ellipsis_data, mean_ellipsis = prepare_ellipsis_data(target_directory)

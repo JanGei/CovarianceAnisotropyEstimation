@@ -185,7 +185,7 @@ def ellipsis(cov_data, mean_cov, pars, save_dir, filename_prefix='ellipsis_plot'
     for j in range(len(mean_cov)):
         fig, ax = plt.subplots(figsize=(9,9))
         
-        for i in range(len(cov_data)):
+        for i in range(len(cov_data[1])):
             ellipse = patches.Ellipse(center,
                                       cov_data[j,i,0],
                                       cov_data[j,i,1],
