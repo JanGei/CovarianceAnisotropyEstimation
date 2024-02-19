@@ -52,7 +52,7 @@ def get():
     computer = ['office', 'icluster', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 24
+        n_mem  = 2
         nprocs = np.min([n_mem, 8])
         # nprocs = 1
         up_temp = False
