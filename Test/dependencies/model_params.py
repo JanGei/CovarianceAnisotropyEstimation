@@ -59,7 +59,7 @@ def get():
         n_mem  = 24
         nprocs = np.min([n_mem, 4])
         # nprocs = 1
-        up_temp = False
+        up_temp = True
         n_pre_run = 1
     elif setup == 'icluster':
         n_mem  = 160
@@ -73,6 +73,7 @@ def get():
         n_pre_run = 40
     variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     
+    #[291, 17]
    
     pars    = {
         'nprocs': nprocs,
@@ -82,7 +83,10 @@ def get():
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
         'lx'    : np.array([[600, 2000], [500, 5000]]),     # corellation lengths
-        'ang'   : np.deg2rad(np.array([291, 17])),          # angle in rad (logK, recharge)
+        # IMPORTANT NOTE: GSTOOLS IS WORKING WITH DEGREES, NOT RADIANS 
+        # ROTATION IS HAPPENNING COUNTER-CLOCKWISE. FURTHERMORE WE NEED TO ADD 90°
+        # AS ERDAL AND CIRPKA HAVE A DIFFERENT REFERENCE
+        'ang'   : np.array([291, 17])+90,                   # angle in ° (logK, recharge)
         'sigma' : np.array([1.7, 0.1]),                     # variance (logK, recharge)
         'mu'    : np.array([-8.5, -0.7]),                   # mean (log(ms-1), (mm/d))
         'cov'   : cov_mods[0],                              # Covariance models

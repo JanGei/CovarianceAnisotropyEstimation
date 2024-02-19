@@ -128,10 +128,6 @@ def plot_k_fields(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pars,  k_fields: list
     plt.tight_layout()
     
     
-    
-    
-    
-    
 
 def plot_fields(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pars,  logk_proposal, rech_proposal: np.ndarray):
     
@@ -146,23 +142,22 @@ def plot_fields(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pars,  logk_proposal, r
   
     fig, axes   = plt.subplots(nrows=2, ncols=1, figsize=(8,6), sharex=True)
 
-    ax0          = flopy.plot.PlotMapView(model=gwf, ax=axes[0])
+    ax0         = flopy.plot.PlotMapView(model=gwf, ax=axes[0])
     c           = ax0.plot_array(np.log(logk_proposal), cmap=cm.bilbao_r, alpha=1)
     divider     = make_axes_locatable(axes[0])
     cax         = divider.append_axes("right", size="3%", pad=pad)
-    cbar0        = fig.colorbar(c, cax=cax)
+    cbar0       = fig.colorbar(c, cax=cax)
     cbar0.mappable.set_clim(kmin, kmax)
     cbar0.set_label('Log-Conductivity (log(m/s))')
     axes[0].set_aspect('equal')
     axes[0].set_ylabel('Y-axis')
     
-    gwf.npf.k.set_data(np.log(logk_proposal))
-    ax1          = flopy.plot.PlotMapView(model=gwf, ax=axes[1])
-    c           = ax1.plot_array(gwf.npf.k.array, cmap=cm.turku_r, alpha=1)
+    ax1         = flopy.plot.PlotMapView(model=gwf, ax=axes[1])
+    c           = ax1.plot_array(gwf.rch.stress_period_data.get_data()[0]['recharge'], cmap=cm.turku_r, alpha=1)
     divider     = make_axes_locatable(axes[1])
-    cax         = divider.append_axes("right", size="3%", pad=pad)
-    cbar1        = fig.colorbar(c, cax=cax)
-    cbar1.mappable.set_clim(kmin, kmax)
+    cax1        = divider.append_axes("right", size="3%", pad=pad)
+    cbar1       = fig.colorbar(c, cax=cax1)
+    # cbar1.mappable.set_clim(kmin, kmax)
     cbar1.set_label('Recharge (m/s)')
     axes[1].set_aspect('equal')
     axes[1].set_ylabel('Y-axis')
@@ -202,7 +197,7 @@ def ellipsis(cov_data, mean_cov, pars):
     ellipse = patches.Ellipse(center,
                               pars['lx'][0][0]*2,
                               pars['lx'][0][1]*2,
-                              angle=np.rad2deg(pars['ang'][0]+90),
+                              angle=np.rad2deg(pars['ang'][0]),
                               fill=False,
                               color='red')
     ax.add_patch(ellipse)

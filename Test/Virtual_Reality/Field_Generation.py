@@ -5,6 +5,7 @@ Created on Tue Dec 12 10:01:12 2023
 @author: Janek
 """
 import numpy as np
+import os
 from cmcrameri import cm
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -58,14 +59,14 @@ rech        = (rech.T + mu[1])  # [mm/d]
 # die Varianz mitscalieren, wenn die Einheiten geändert werden, sonder nur der mean
 inspection = True
 if inspection:
-    plt.scatter(xyz[0], xyz[1], c=logK)
-    plt.show()
+    # plt.scatter(xyz[0], xyz[1], c=logK)
+    # plt.show()
     
-    plot_fields(gwf, logK, rech)
+    plot_fields(gwf, pars, np.exp(logK), rech)
 #%% plotting
 
 print(mu)
 print(np.mean(logK), np.mean(rech))
 #%% Saving the fields - Übergabe in (m/s)
-np.savetxt('model_data/logK_ref.csv', np.exp(logK), delimiter = ',')
-np.savetxt('model_data/rech_ref.csv', rech/1000/86400, delimiter = ',')
+np.savetxt(os.path.join('model_data', 'logK_ref.csv'), np.exp(logK), delimiter = ',')
+np.savetxt(os.path.join('model_data', 'rech_ref.csv'), rech/1000/86400, delimiter = ',')
