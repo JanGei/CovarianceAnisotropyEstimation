@@ -4,7 +4,7 @@ import os
     
 class Ensemble:
     
-    def __init__(self, members: list, nprocs: int, pp_cid, pp_xy, obs_cid: list, mask):
+    def __init__(self, members: list, mean_cov, nprocs: int, pp_cid, pp_xy, obs_cid: list, mask):
         self.members    = members
         self.nprocs     = nprocs
         self.n_mem      = len(self.members)
@@ -19,8 +19,9 @@ class Ensemble:
         self.te1_nsq    = []
         self.te2        = []
         self.te2_nsq    = []
-        self.mean_cov   = []
+        self.mean_cov   = mean_cov
         self.mean_ppk   = []
+        self.obs        = []
         
         
     def set_field(self, field, pkg_name: list):
@@ -41,14 +42,22 @@ class Ensemble:
             ) 
             for idx in range(self.n_mem)
             )
+        
+    def get_damp(self, X, val, params):
+        damp = np.zeros((X[:,0].size)) + val[0]
+        if 'cov_data' in params:
+            cl = len(np.unique(self.members[0].ellips_mat))
+            damp[:cl] = val[1]
+            if 'npf' in params:
+                damp[cl:cl+len(self.pp_cid)] = val[2]
+        else:
+            damp[:len(self.pp_cid)] = val[1]
+            
+        return damp
+        
     
     def apply_X(self, params: list, X):
-        # get head file, identify chd cells and put new 
-        # head =  Parallel(n_jobs=self.nprocs)(delayed(self.members[idx].get_field)(
-        #     ['h']
-        #     ) 
-        #     for idx in range(self.n_mem)
-        #     )
+
         head = self.get_member_fields(['h'])
         
         data = []
@@ -56,7 +65,7 @@ class Ensemble:
         # Sort the corrected data
         for i in range(self.n_mem):
             if 'cov_data' in params:
-                cl = len(np.unique(self.members[0].ellips_mat))
+                cl = 3
                 if 'npf' in params:
                     head[i]['h'] = head[i]['h'].flatten()
                     head[i]['h'][~self.h_mask] = X[cl+len(self.pp_cid):,i]
@@ -169,8 +178,9 @@ class Ensemble:
         true_h = np.array(true_h).flatten()
         
         # analogous for ole
-        mean_obs = mean_h[self.pp_cid]
-        true_obs = true_h[self.pp_cid]
+        mean_obs = mean_h[self.obs_cid]
+        true_obs = true_h[self.obs_cid]
+        self.obs = [true_obs, mean_obs]
         
         self.ole_nsq.append(np.sum(np.square(true_obs - mean_obs)/0.1)/mean_obs.size)
         
@@ -241,42 +251,39 @@ class Ensemble:
         f.write('\n')
         f.close()
         
+        f = open(os.path.join(direc,  'obs_true.dat'),'a')
+        g = open(os.path.join(direc,  'obs_mean.dat'),'a')
+        for i in range(len(self.obs[0])):
+            f.write("{:.5f} ".format(self.obs[0][i]))
+            g.write("{:.5f} ".format(self.obs[1][i]))
+        f.write('\n')
+        g.write('\n')
+        f.close()
+        g.close()
+        
+        
         cov_data = self.get_member_fields(['cov_data'])
         # also store covariance data for all models
         if 'cov_data' in params:
-            # f = open(direc +  '/covariance_data.dat','a')
-            # f.write("{:.4f} ".format(self.mean_cov[0]))
-            # f.write("{:.4f} ".format(self.mean_cov[1]))
-            # f.write("{:.4f} ".format(self.mean_cov[2]))
-            # f.write("{:.4f} ".format(self.mean_cov[3]))
-            # f.write('\n')
-            # f.close()
-            
-            # for i in range(self.n_mem):
-            #     f = open(direc + f'/covariance_model_{i}.dat', 'a')
-            #     for j in range(len(cov_data[i]['cov_data'])):
-            #         f.write("{:.4f} ".format(cov_data[i]['cov_data'][j]))
-            #     f.write('\n')
-            #     f.close()
             
             f = open(os.path.join(direc, 'covariance_data.dat'),'a')
-            f.write("{:.4f} ".format(self.mean_cov[0]))
-            f.write("{:.4f} ".format(self.mean_cov[1]))
-            f.write("{:.4f} ".format(self.mean_cov[2]))
+            f.write("{:.10f} ".format(self.mean_cov[0]))
+            f.write("{:.10f} ".format(self.mean_cov[1]))
+            f.write("{:.10f} ".format(self.mean_cov[2]))
             f.write('\n')
             f.close()
             
             for i in range(self.n_mem):
                 f = open(os.path.join(direc, f'covariance_model_{i}.dat'), 'a')
                 for j in range(len(cov_data[i]['cov_data'])):
-                    f.write("{:.4f} ".format(cov_data[i]['cov_data'][j]))
+                    f.write("{:.10f} ".format(cov_data[i]['cov_data'][j]))
                 f.write('\n')
                 f.close()
 
         if 'npf' in params:
             f = open(os.path.join(direc,  'pilot_point_k.dat'),'a')
             for i in range(len(self.mean_ppk)):
-                f.write("{:.4f} ".format(np.log(self.mean_ppk[i])))
+                f.write("{:.8f} ".format(np.log(self.mean_ppk[i])))
             f.write('\n')
             f.close()
         
@@ -284,7 +291,9 @@ class Ensemble:
         
         file_paths = [os.path.join(pars['resdir'], 'errors.dat'),
                       os.path.join(pars['resdir'], 'covariance_data.dat'),
-                      os.path.join(pars['resdir'], 'pilot_point_k.dat')]
+                      os.path.join(pars['resdir'], 'pilot_point_k.dat'),
+                      os.path.join(pars['resdir'], 'obs_true.dat'),
+                      os.path.join(pars['resdir'], 'obs_mean.dat')]
         
         for file_path in file_paths:
             if os.path.exists(file_path):

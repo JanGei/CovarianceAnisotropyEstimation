@@ -16,7 +16,7 @@ def create_k_fields(gwf, pars: dict, pp_xy, pp_cid: np.ndarray, covtype = 'rando
     xyz = mg.xyzcellcenters
     
     if covtype == 'random':
-        lx = np.array([np.random.randint(100, 1500), np.random.randint(100, 3000)])
+        lx = np.array([np.random.randint(500, 3000), np.random.randint(250, 1500)])
         ang = np.random.uniform(0, 360)
         sigma = np.random.uniform(1, 5)
     elif covtype == 'good':

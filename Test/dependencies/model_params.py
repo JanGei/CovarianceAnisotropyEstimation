@@ -71,23 +71,26 @@ def get():
         nprocs = psutil.cpu_count()
         up_temp = True
         n_pre_run = 40
-    variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     
-    #[291, 17]
+    h_damp = 0.5
+    cov_damp = 0.1
+    npf_damp = 0.25
+    variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
+    damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
+    
+    choice = 1
    
     pars    = {
         'nprocs': nprocs,
-        'EnKF_p': variants[1], 
+        'setup' : setup,
+        'EnKF_p': variants[choice], 
+        'damp'  : damp[choice],
         'n_PP'  : 50,
+        'eps'   : 0.01,
         'up_tem': up_temp,
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
-        # CHANGE THIS TO 2000, 600 --> see Erdal Cirpka script??
         'lx'    : np.array([[2000,600], [5000,500]]),     # corellation lengths
-        # IMPORTANT NOTE: GSTOOLS IS WORKING WITH DEGREES, NOT RADIANS 
-        # ROTATION IS HAPPENNING COUNTER-CLOCKWISE. FURTHERMORE WE NEED TO ADD 90°
-        # AS ERDAL AND CIRPKA HAVE A DIFFERENT REFERENCE
-        # NOW I THINK THAT ERDAL AND CIRPKA ALSO ROTATE COUNTER-COCKWISE
         'ang'   : np.array([291, 17]),                      # angle in ° (logK, recharge)
         'sigma' : np.array([1.7, 0.1]),                     # variance (logK, recharge)
         'mu'    : np.array([-8.5, -0.7]),                   # mean (log(ms-1), (mm/d))

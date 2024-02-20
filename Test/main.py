@@ -82,10 +82,6 @@ if __name__ == '__main__':
         k_fields.append(field)
         cov_models.append(covmod)
         cor_ellips.append(ellips)
-        
-    # next steps: sort the corrl nach länge bevor matrix gemacht wird
-    # put matrix coefficients into X --> plot them
-    # plot vergleich zwischen feld in modflow un eigenemfeld
     
     # plot_POI(gwf, pp_xy, pars, bc = True)
     # plot_fields(gwf, pars,  k_fields[0], k_fields[1])
@@ -112,7 +108,13 @@ if __name__ == '__main__':
     #%% add the models to the ensemble
     start_time = time.time()
     
-    MF_Ensemble     = Ensemble(models, nprocs, pp_cid, pp_xy, obs_cid, mask_chd)
+    MF_Ensemble     = Ensemble(models,
+                               np.mean(np.array(cor_ellips), axis = 0),
+                               nprocs,
+                               pp_cid,
+                               pp_xy,
+                               obs_cid,
+                               mask_chd)
     
     # set their respective k-fields
     MF_Ensemble.set_field(k_fields, ['npf'])
@@ -130,14 +132,25 @@ if __name__ == '__main__':
     print(f'That makes {((time.time() - start_time)/(pars["nprern"] * n_mem)):.2f} seconds per model run')
     #%%
     X, Ysim = MF_Ensemble.get_Kalman_X_Y(pars['EnKF_p'])
-    EnKF = EnsembleKalmanFilter(X, Ysim, damp = 0.75, eps = 0.05)
+    damp = MF_Ensemble.get_damp(X, pars['damp'],pars['EnKF_p'])
+    EnKF = EnsembleKalmanFilter(X, Ysim, damp = damp, eps = pars['eps'])
     
     k_means = []
     Assimilate = True
     # for t_step in range(pars['nsteps']):
     for t_step in range(pars['nsteps']):
+        if t_step == 0:
+            MF_Ensemble.remove_current_files(pars)
         if t_step == 1200:
             Assimilate = False
+        
+        # visualize covariance structures
+        if pars['setup'] == 'office':
+            ellipsis(
+                MF_Ensemble.get_member_fields(['cov_data']),
+                MF_Ensemble.mean_cov,
+                pars
+                )
             
         print('--------')
         print(f'time step {t_step}')
@@ -150,6 +163,7 @@ if __name__ == '__main__':
         start_time = time.time()
         MF_Ensemble.propagate()
         MF_Ensemble.model_error(true_h[t_step])
+        MF_Ensemble.record_state(pars, pars['EnKF_p'])
         print(f'ensemble propagated in {(time.time() - start_time):.2f} seconds')
         
         if Assimilate:
@@ -168,26 +182,6 @@ if __name__ == '__main__':
             MF_Ensemble.apply_X(pars['EnKF_p'], EnKF.X)
             print(f'application of results plus kriging took {(time.time() - start_time):.2f} seconds')
         
-        
-        
-        if t_step == 0:
-            MF_Ensemble.remove_current_files(pars)
-            
-        MF_Ensemble.record_state(pars, pars['EnKF_p'])
-        
-        
-        
-        # visualize covariance structures
-        ellipsis(
-            MF_Ensemble.get_member_fields(['cov_data']),
-            MF_Ensemble.mean_cov,
-            pars
-            )
-    
-    
-    
-    
-    
     
     
     
