@@ -89,7 +89,7 @@ if __name__ == '__main__':
     
     # plot_POI(gwf, pp_xy, pars, bc = True)
     # plot_fields(gwf, pars,  k_fields[0], k_fields[1])
-    # plot_k_fields(gwf, pars,  k_fields)
+    plot_k_fields(gwf, pars,  k_fields)
     # plot(gwf, ['logK','h'], bc=True)
     
     mask_chd = chd_mask(gwf)

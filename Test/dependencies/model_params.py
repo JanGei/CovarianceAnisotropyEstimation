@@ -56,11 +56,11 @@ def get():
     computer = ['office', 'icluster', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 24
-        nprocs = np.min([n_mem, 4])
+        n_mem  = 4
+        nprocs = np.min([n_mem, psutil.cpu_count()])
         # nprocs = 1
         up_temp = False
-        n_pre_run = 4
+        n_pre_run = 1
     elif setup == 'icluster':
         n_mem  = 160
         nprocs = psutil.cpu_count()
@@ -82,11 +82,13 @@ def get():
         'up_tem': up_temp,
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
-        'lx'    : np.array([[600, 2000], [500, 5000]]),     # corellation lengths
+        # CHANGE THIS TO 2000, 600 --> see Erdal Cirpka script??
+        'lx'    : np.array([[2000,600], [5000,500]]),     # corellation lengths
         # IMPORTANT NOTE: GSTOOLS IS WORKING WITH DEGREES, NOT RADIANS 
         # ROTATION IS HAPPENNING COUNTER-CLOCKWISE. FURTHERMORE WE NEED TO ADD 90°
         # AS ERDAL AND CIRPKA HAVE A DIFFERENT REFERENCE
-        'ang'   : np.array([291, 17])+90,                   # angle in ° (logK, recharge)
+        # NOW I THINK THAT ERDAL AND CIRPKA ALSO ROTATE COUNTER-COCKWISE
+        'ang'   : np.array([291, 17]),                      # angle in ° (logK, recharge)
         'sigma' : np.array([1.7, 0.1]),                     # variance (logK, recharge)
         'mu'    : np.array([-8.5, -0.7]),                   # mean (log(ms-1), (mm/d))
         'cov'   : cov_mods[0],                              # Covariance models
