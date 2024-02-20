@@ -59,8 +59,8 @@ def get():
         n_mem  = 24
         nprocs = np.min([n_mem, 4])
         # nprocs = 1
-        up_temp = True
-        n_pre_run = 1
+        up_temp = False
+        n_pre_run = 4
     elif setup == 'icluster':
         n_mem  = 160
         nprocs = psutil.cpu_count()

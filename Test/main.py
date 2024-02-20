@@ -116,6 +116,7 @@ if __name__ == '__main__':
     
     # set their respective k-fields
     MF_Ensemble.set_field(k_fields, ['npf'])
+    
     print(f'Ensemble is initiated and respective k-fields are set in {(time.time() - start_time):.2f} seconds')
     #%% Running each model 10 times
     start_time = time.time()
@@ -153,7 +154,7 @@ if __name__ == '__main__':
         
         if Assimilate:
             # print('---')
-            # start_time = time.time()
+            start_time = time.time()
             EnKF.update_X_Y(
                 MF_Ensemble.get_Kalman_X_Y(
                     pars['EnKF_p']
@@ -161,8 +162,11 @@ if __name__ == '__main__':
                 )
             EnKF.analysis()
             EnKF.Kalman_update(Y_obs)
-            MF_Ensemble.apply_X(pars['EnKF_p'], EnKF.X)
             print(f'Ensemble Kalman Filter performed in  {(time.time() - start_time):.2f} seconds')
+            
+            start_time = time.time()
+            MF_Ensemble.apply_X(pars['EnKF_p'], EnKF.X)
+            print(f'application of results plus kriging took {(time.time() - start_time):.2f} seconds')
         
         
         
@@ -170,10 +174,10 @@ if __name__ == '__main__':
             MF_Ensemble.remove_current_files(pars)
             
         MF_Ensemble.record_state(pars, pars['EnKF_p'])
-        print(f'application of results plus kriging took {(time.time() - start_time):.2f} seconds')
         
         
-    #     # visualize covariance structures
+        
+        # visualize covariance structures
         ellipsis(
             MF_Ensemble.get_member_fields(['cov_data']),
             MF_Ensemble.mean_cov,

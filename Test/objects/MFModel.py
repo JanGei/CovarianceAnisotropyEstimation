@@ -69,7 +69,7 @@ class MFModel:
                                               self.ellips_mat[0,1],
                                               self.ellips_mat[1,1]])})
             else:
-                print(f'The package {name} that you requested is not part ofthe model')
+                print(f'The package {name} that you requested is not part of the model')
                 
         return fields
                 
@@ -83,43 +83,73 @@ class MFModel:
         
     def kriging(self, params, data, pp_xy):
         
-        if 'cov_data' in params:
-            # catch if matrix is non-positive definite
-            if True:
-                pass
+        if 'cov_data' in params:   
+            # variant 0 takes the absolute of the eigenvalues and
+            variant = 1
+            eigenvalues, eigenvectors, mat, pos_def = self.check_new_matrix(data[0])
             
-            self.update_ellips_mat(data[0])
-            # get elipsis main directions and angle from matrix notation
-            # Compute eigenvalues and eigenvectors
-            eigenvalues, eigenvectors = np.linalg.eig(self.ellips_mat)
-            l1 = 1 / np.sqrt(eigenvalues[0])
-            l2 = 1 / np.sqrt(eigenvalues[1])
-            # Get the rotation angle
-            angle = np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0])
+            if variant == 0 and pos_def == False:
+                # Variant 1: Take absolte of eigenvalues
+                # This wont do anything to already positivel definite matrices
+                eigenvalues = abs(eigenvalues)
+                mat = eigenvectors @ np.diag(eigenvalues) @ eigenvectors.T
+                pos_def = True
             
-            # Here, an eflection method is used to prevent negative corrl
-            self.cov_model.len_scale = [abs(l1), abs(l2)]
-            # angle is must be in radians
-            self.cov_model.angles = angle
-
-            pp_k = data[1]
+            if pos_def:
+                self.update_ellips_mat(mat)
+            
+                l1 = 1 / np.sqrt(eigenvalues[0])
+                l2 = 1 / np.sqrt(eigenvalues[1])
+                # Get the rotation angle
+                angle = np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0])
+                # Here, an eflection method is used to prevent negative corrl
+                self.cov_model.len_scale = [l1, l2]
+                # angle is must be in radians
+                self.cov_model.angles = angle
+                
+                pp_k = data[1]
+                
+                krig = krige.Ordinary(self.cov_model,
+                                      cond_pos = (pp_xy[:,0],
+                                                  pp_xy[:,1]),
+                                      cond_val = np.log(pp_k))
+                field = krig((self.cell_xy[0],
+                              self.cell_xy[1]))
+                
+                self.set_field([np.exp(field[0])], ['npf'])
                 
         else:
             pp_k = data
-                
+            
+            krig = krige.Ordinary(self.cov_model,
+                                  cond_pos = (pp_xy[:,0],
+                                              pp_xy[:,1]),
+                                  cond_val = np.log(pp_k))
+            field = krig((self.cell_xy[0],
+                          self.cell_xy[1]))
+            
+            self.set_field([np.exp(field[0])], ['npf'])
         
-        krig = krige.Ordinary(self.cov_model, cond_pos=(pp_xy[:,0], pp_xy[:,1]), cond_val = np.log(pp_k))
-        field = krig((self.cell_xy[0], self.cell_xy[1]))
         
-        self.set_field([np.exp(field[0])], ['npf'])
+    def update_ellips_mat(self, mat):
+        self.ellips_mat = mat
         
-    def update_ellips_mat(self, data):
-        self.ellips_mat[0,0] = data[0]
-        self.ellips_mat[0,1] = data[1]
-        self.ellips_mat[1,0] = data[1]
-        self.ellips_mat[1,1] = data[2]
+    def check_new_matrix(self, data):
+        mat = np.zeros((2,2))
+        mat[0,0] = data[0]
+        mat[0,1] = data[1]
+        mat[1,0] = data[1]
+        mat[1,1] = data[2]
         
-
+        eigenvalues, eigenvectors = np.linalg.eig(mat)
+        
+        #check for positive definiteness
+        if np.all(eigenvalues > 0):
+            pos_def = True
+        else:
+            pos_def = False
+            
+        return eigenvalues, eigenvectors, mat, pos_def
 
 
         
