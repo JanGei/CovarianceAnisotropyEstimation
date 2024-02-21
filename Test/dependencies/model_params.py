@@ -56,11 +56,11 @@ def get():
     computer = ['office', 'icluster', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 20
+        n_mem  = 16
         nprocs = np.min([n_mem, psutil.cpu_count()])
         # nprocs = 1
-        up_temp = True
-        n_pre_run = 16
+        up_temp = False
+        n_pre_run = 1
     elif setup == 'icluster':
         n_mem  = 160
         nprocs = psutil.cpu_count()
@@ -85,7 +85,7 @@ def get():
         'setup' : setup,
         'EnKF_p': variants[choice], 
         'damp'  : damp[choice],
-        'n_PP'  : 50,
+        'n_PP'  : 100,
         'eps'   : 0.05,
         'up_tem': up_temp,
         'nx'    : np.array([100, 50]),                      # number of cells
