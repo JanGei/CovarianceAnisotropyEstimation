@@ -20,14 +20,6 @@ if __name__ == '__main__':
 
     ellipsis(ellipsis_data, mean_ellipsis, pars, target_directory, movie = True)
     
-    
-
-
-
-
-
-
-
 
 
 # (cov_data, mean_cov, pars)

@@ -84,12 +84,6 @@ class Ensemble:
                 
                 data.append(X[:len(self.pp_cid),i])
             
-        if 'cov_data' in params:
-            self.mean_cov = np.mean(X[:cl], axis = 1)
-            if 'npf' in params:
-                self.mean_ppk = np.mean(X[cl:len(self.pp_cid)+cl,:], axis = 1)
-        else:
-            self.mean_ppk = np.mean(X[:len(self.pp_cid),:], axis = 1)
         
         Parallel(n_jobs=self.nprocs, backend="threading")(delayed(self.members[idx].set_field)(
             [head[idx]['h']], ['h']
@@ -97,14 +91,22 @@ class Ensemble:
             for idx in range(self.n_mem)
             )
         
-        Parallel(n_jobs=self.nprocs, backend="threading")(delayed(self.members[idx].kriging)(
-            params, 
-            data[idx], 
-            self.pp_xy
-            ) 
-            for idx in range(self.n_mem)
-            )
-
+        result = Parallel(n_jobs=self.nprocs,
+                          backend="threading")(
+                              delayed(self.members[idx].kriging)(
+                                  params, 
+                                  data[idx], 
+                                  self.pp_xy
+                                  ) 
+                              for idx in range(self.n_mem)
+                              )
+        
+        if 'cov_data' in params:
+            self.mean_cov = np.mean(np.array(result), axis = 0)
+            if 'npf' in params:
+                self.mean_ppk = np.mean(X[cl:len(self.pp_cid)+cl,:], axis = 1)
+        else:
+            self.mean_ppk = np.mean(X[:len(self.pp_cid),:], axis = 1)
      
     
     def get_Kalman_X_Y(self, params: list):   

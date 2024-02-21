@@ -100,7 +100,7 @@ class MFModel:
             
                 l1 = 1 / np.sqrt(eigenvalues[0])
                 l2 = 1 / np.sqrt(eigenvalues[1])
-                # Get the rotation angle
+                # Get the rotation angle in radians
                 angle = np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0])
                 # Here, an eflection method is used to prevent negative corrl
                 self.cov_model.len_scale = [l1, l2]
@@ -117,6 +117,8 @@ class MFModel:
                               self.cell_xy[1]))
                 
                 self.set_field([np.exp(field[0])], ['npf'])
+                
+            return [l1, l2,angle]
                 
         else:
             pp_k = data

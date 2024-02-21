@@ -181,18 +181,18 @@ def ellipsis(cov_data, mean_cov, pars):
         res = X**2 * M[0,0] + X*Y*(M[0,1] + M[1,0]) + Y**2 * M[1,1] - 1
         ax.contour(X, Y, res, levels=[0], colors='black', alpha=0.5)
 
-    M = np.array(([mean_cov[0], mean_cov[1]],
-                  [mean_cov[1], mean_cov[2]]))
-    res = X**2 * M[0,0] + X*Y*(M[0,1] + M[1,0]) + Y**2 * M[1,1] - 1
-    ax.contour(X, Y, res, levels=[0], colors='blue', alpha=0.5)
+    # M = np.array(([mean_cov[0], mean_cov[1]],
+    #               [mean_cov[1], mean_cov[2]]))
+    # res = X**2 * M[0,0] + X*Y*(M[0,1] + M[1,0]) + Y**2 * M[1,1] - 1
+    # ax.contour(X, Y, res, levels=[0], colors='blue', alpha=0.5)
     
-    # ellipse = patches.Ellipse(center,
-    #                           mean_cov[0],
-    #                           mean_cov[1],
-    #                           angle=mean_cov[2],
-    #                           fill=False,
-    #                           color='blue')
-    # ax.add_patch(ellipse)
+    ellipse = patches.Ellipse(center,
+                              mean_cov[0]*2,
+                              mean_cov[1]*2,
+                              angle=mean_cov[2],
+                              fill=False,
+                              color='blue')
+    ax.add_patch(ellipse)
     
     ellipse = patches.Ellipse(center,
                               pars['lx'][0][0]*2,
