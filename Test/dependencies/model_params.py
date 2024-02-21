@@ -56,11 +56,11 @@ def get():
     computer = ['office', 'icluster', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 4
+        n_mem  = 20
         nprocs = np.min([n_mem, psutil.cpu_count()])
         # nprocs = 1
-        up_temp = False
-        n_pre_run = 1
+        up_temp = True
+        n_pre_run = 16
     elif setup == 'icluster':
         n_mem  = 160
         nprocs = psutil.cpu_count()
@@ -73,7 +73,7 @@ def get():
         n_pre_run = 40
     
     h_damp = 0.5
-    cov_damp = 0.1
+    cov_damp = 0.2
     npf_damp = 0.25
     variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
@@ -86,7 +86,7 @@ def get():
         'EnKF_p': variants[choice], 
         'damp'  : damp[choice],
         'n_PP'  : 50,
-        'eps'   : 0.01,
+        'eps'   : 0.05,
         'up_tem': up_temp,
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
@@ -94,7 +94,7 @@ def get():
         'ang'   : np.array([291, 17]),                      # angle in ° (logK, recharge)
         'sigma' : np.array([1.7, 0.1]),                     # variance (logK, recharge)
         'mu'    : np.array([-8.5, -0.7]),                   # mean (log(ms-1), (mm/d))
-        'cov'   : cov_mods[0],                              # Covariance models
+        'cov'   : cov_mods[1],                              # Covariance models
         'nlay'  : np.array([1]),                            # Number of layers
         'bot'   : np.array([0]),                            # Bottom of aquifer
         'top'   : np.array([50]),                           # Top of aquifer

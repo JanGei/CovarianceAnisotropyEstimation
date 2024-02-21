@@ -93,7 +93,7 @@ def gsgenerator(gwf, nx, dx, lx, ang, sigma, cov, random = True):
     ang = np.radians(ang)
     
     if cov == 'Matern':
-        model = gs.Matern(dim=dim, var=sigma, angles = ang, len_scale=lx)
+        model = gs.Matern(nu = 1.5, dim=dim, var=sigma, angles = ang, len_scale=lx)
     elif cov == 'Exponential':
         model = gs.Exponential(dim = dim, var = sigma, len_scale=lx, angles = ang)
     elif cov == 'Gaussian':
@@ -107,8 +107,12 @@ def gsgenerator(gwf, nx, dx, lx, ang, sigma, cov, random = True):
     if random:
         srf = gs.SRF(model)
     else:
-        # TODO: change the model
-        srf = gs.SRF(model, seed=6)
+
+        # Good choice for Exponential
+        # srf = gs.SRF(model, seed=6)
+        
+        # Good choice for Matern 3/2
+        srf = gs.SRF(model, seed=12)
     
     field = srf.unstructured(([xyz[0],xyz[1]]))
     

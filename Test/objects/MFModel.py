@@ -85,7 +85,7 @@ class MFModel:
         
         if 'cov_data' in params:   
             # variant 0 takes the absolute of the eigenvalues and
-            variant = 0
+            variant = 1
             eigenvalues, eigenvectors, mat, pos_def = self.check_new_matrix(data[0])
             
             if variant == 0 and pos_def == False:
