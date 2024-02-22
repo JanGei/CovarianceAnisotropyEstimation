@@ -151,7 +151,11 @@ if __name__ == '__main__':
                 MF_Ensemble.mean_cov,
                 pars
                 )
-            
+            if t_step%5 == 4:
+                k_fields_dict = MF_Ensemble.get_member_fields(['npf'])
+                k_fields = [d['npf'] for d in k_fields_dict]
+                plot_k_fields(gwf, pars,  k_fields)
+                
         print('--------')
         print(f'time step {t_step}')
         start_time = time.time()

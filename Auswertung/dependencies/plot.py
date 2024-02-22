@@ -51,7 +51,7 @@ def ellipsis(cov_data, mean_cov, pars, save_dir, filename_prefix='ellipsis_plot'
                 filename = os.path.join(plot_dir, f"{filename_prefix}_{j}.png")
                 writer.append_data(imageio.imread(filename))
 
-        # shutil.rmtree(plot_dir)
+        shutil.rmtree(plot_dir)
 
 
 

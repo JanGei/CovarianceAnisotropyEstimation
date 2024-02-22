@@ -118,6 +118,13 @@ class MFModel:
                 
                 self.set_field([np.exp(field[0])], ['npf'])
                 
+            else:
+                eigenvalues, eigenvectors = np.linalg.eig(self.ellips_mat)
+                l1 = 1 / np.sqrt(eigenvalues[0])
+                l2 = 1 / np.sqrt(eigenvalues[1])
+                # Get the rotation angle in radians
+                angle = np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0])
+                
             return [l1, l2,angle]
                 
         else:

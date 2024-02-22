@@ -189,7 +189,7 @@ def ellipsis(cov_data, mean_cov, pars):
     ellipse = patches.Ellipse(center,
                               mean_cov[0]*2,
                               mean_cov[1]*2,
-                              angle=mean_cov[2],
+                              angle=np.rad2deg(mean_cov[2]),
                               fill=False,
                               color='blue')
     ax.add_patch(ellipse)

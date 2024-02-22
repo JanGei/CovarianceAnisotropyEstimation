@@ -56,18 +56,18 @@ def get():
     computer = ['office', 'icluster', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 16
+        n_mem  = 8
         nprocs = np.min([n_mem, psutil.cpu_count()])
         # nprocs = 1
         up_temp = False
         n_pre_run = 1
     elif setup == 'icluster':
-        n_mem  = 160
+        n_mem  = 120
         nprocs = psutil.cpu_count()
         up_temp = True
         n_pre_run = 40
     elif setup == 'binnac':
-        n_mem  = 240
+        n_mem  = 180
         nprocs = psutil.cpu_count()
         up_temp = True
         n_pre_run = 40
