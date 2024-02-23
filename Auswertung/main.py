@@ -11,14 +11,13 @@ if __name__ == '__main__':
     cwd = os.getcwd()
     # specify which folder to investigate
     # target_folder = '/n280_cov_npf_binnac'
-    target_folder = 'Matern140v1e002_binac'
+    target_folder = 'Matern196sortpp50d025_binac'
     target_directory = os.path.join(cwd, target_folder, 'output')
     
-    ellipsis_data, mean_ellipsis = prepare_ellipsis_data(target_directory)
+    ellipsis_data, mean_ellipsis, errors = prepare_ellipsis_data(target_directory)
     
 
-
-    ellipsis(ellipsis_data, mean_ellipsis, pars, target_directory, movie = True)
+    ellipsis(ellipsis_data, mean_ellipsis, errors, pars, target_directory, movie = True)
     
 
 

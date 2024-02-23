@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import imageio.v2 as imageio
 
-def ellipsis(cov_data, mean_cov, pars, save_dir, filename_prefix='ellipsis_plot', movie=False):
+def ellipsis(cov_data, mean_cov, errors, pars, save_dir, filename_prefix='ellipsis_plot', movie=False):
     plot_dir = os.path.join(save_dir, 'plots')
     if os.path.exists(plot_dir):
         shutil.rmtree(plot_dir)
@@ -38,6 +38,8 @@ def ellipsis(cov_data, mean_cov, pars, save_dir, filename_prefix='ellipsis_plot'
         # Remove axis labels
         ax.set_xlabel('')
         ax.set_ylabel('')
+        ax.set_title(f'time step {j}')
+        ax.text(l/4*3, l/4*3, f'OLE  {errors[j,0]} \nTE-1 {errors[j,1]}\nTE-2 {errors[j,2]}', fontsize=9, color='black')
 
         # Save the plot as an image
         filename = f"{filename_prefix}_{j}.png"
