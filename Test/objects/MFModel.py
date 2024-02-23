@@ -85,15 +85,15 @@ class MFModel:
         
         if 'cov_data' in params:   
             # variant 0 takes the absolute of the eigenvalues and
-            variant = 1
+            # variant = 1
             eigenvalues, eigenvectors, mat, pos_def = self.check_new_matrix(data[0])
             
-            if variant == 0 and pos_def == False:
-                # Variant 1: Take absolte of eigenvalues
-                # This wont do anything to already positivel definite matrices
-                eigenvalues = abs(eigenvalues)
-                mat = eigenvectors @ np.diag(eigenvalues) @ eigenvectors.T
-                pos_def = True
+            # if variant == 0 and pos_def == False:
+            #     # Variant 1: Take absolte of eigenvalues
+            #     # This wont do anything to already positivel definite matrices
+            #     eigenvalues = abs(eigenvalues)
+            #     mat = eigenvectors @ np.diag(eigenvalues) @ eigenvectors.T
+            #     pos_def = True
             
             if pos_def:
                 self.update_ellips_mat(mat)
@@ -119,13 +119,30 @@ class MFModel:
                 self.set_field([np.exp(field[0])], ['npf'])
                 
             else:
-                eigenvalues, eigenvectors = np.linalg.eig(self.ellips_mat)
-                l1 = 1 / np.sqrt(eigenvalues[0])
-                l2 = 1 / np.sqrt(eigenvalues[1])
-                # Get the rotation angle in radians
-                angle = np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0])
+                # Ansatz Olaf: Update so lange verkleinern, bis es passt und
+                # die Matrix positiv definit ist
+                difmat = mat - self.ellips_mat
+                reduction = 0.9
+                while reduction > 0:
+                    test_mat = self.ellips_mat + reduction * difmat
+                    eigenvalues, eigenvectors = np.linalg.eig(test_mat)
+                    if np.all(eigenvalues > 0):
+                        self.update_ellips_mat(test_mat)
+                        l1 = 1 / np.sqrt(eigenvalues[0])
+                        l2 = 1 / np.sqrt(eigenvalues[1])
+                        # Get the rotation angle in radians
+                        angle = np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0])
+                    else:
+                        reduction -= 0.05
+                if reduction == 0:   
+                    eigenvalues, eigenvectors = np.linalg.eig(self.ellips_mat)
+                    l1 = 1 / np.sqrt(eigenvalues[0])
+                    l2 = 1 / np.sqrt(eigenvalues[1])
+                    # Get the rotation angle in radians
+                    angle = np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0])
                 
-            return [l1, l2,angle]
+                
+            return [l1, l2, angle]
                 
         else:
             pp_k = data
