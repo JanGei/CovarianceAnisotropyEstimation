@@ -139,7 +139,7 @@ if __name__ == '__main__':
     k_means = []
     Assimilate = True
     # for t_step in range(pars['nsteps']):
-    for t_step in range(24):
+    for t_step in range(pars['nsteps']):
         if t_step == 0:
             MF_Ensemble.remove_current_files(pars)
         if t_step == 1200:
@@ -191,10 +191,6 @@ if __name__ == '__main__':
 
             print(f'Application of results plus kriging took {(time.time() - start_time):.2f} seconds')
             
-            start_time = time.time()
-            MF_Ensemble.write_simulations()
-
-            print(f'Writing all simulation files took {(time.time() - start_time):.2f} seconds')
         
     
     

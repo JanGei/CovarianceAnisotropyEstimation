@@ -30,20 +30,19 @@ class MFModel:
         for i, name in enumerate(pkg_name):
             if name == 'npf':
                 self.npf.k.set_data(np.reshape(field[i],self.npf.k.array.shape))
+                self.npf.write()
             elif name == 'rch':
-                # rch_spd = self.rch.stress_period_data.get_data()
-                # rch_spd[0]['recharge'] = field[i]
                 self.rch.stress_period_data.set_data(field[i])
+                self.rch.write()
             elif name == 'riv':
-                # riv_spd = self.riv.stress_period_data.get_data()
-                # riv_spd[0]['stage'] = field[i]
                 self.riv.stress_period_data.set_data(field[i])
+                self.riv.write()
             elif name == 'wel':
-                # wel_spd = self.wel.stress_period_data.get_data()
-                # wel_spd[0]['q'] = field[i]
                 self.wel.stress_period_data.set_data(field[i])
+                self.wel.write()
             elif name == 'h':
                 self.ic.strt.set_data(field[i])
+                self.ic.write()
             else:
                 print(f'The package {name} that you requested is not part ofthe model')
             
@@ -77,22 +76,38 @@ class MFModel:
         
     def update_ic(self):
         self.ic.strt.set_data(self.get_field('h')['h'])
-        self.sim.write_simulation()
+        self.ic.write()
         
         
     def kriging(self, params, data, pp_xy):
         
         if 'cov_data' in params:   
-
+            
+            # The normalized (unit “length”) eigenvectors, such that the column
+            # eigenvectors[:,i] is the eigenvector corresponding to the eigenvalue eigenvalues[i].
             eigenvalues, eigenvectors, mat, pos_def = self.check_new_matrix(data[0])
-
+            
+            if not pos_def:
+                # Ansatz Olaf: Update so lange verkleinern, bis es passt und
+                # die Matrix positiv definit ist
+                difmat = mat - self.ellips_mat
+                reduction = 0.96
+                while reduction > 0:
+                    test_mat = self.ellips_mat + reduction * difmat
+                    eigenvalues, eigenvectors = np.linalg.eig(test_mat)
+                    if np.all(eigenvalues > 0):
+                        pos_def = True
+                        break
+                    else:
+                        reduction -= 0.05
+            
             if pos_def:
                 self.update_ellips_mat(mat)
             
                 l1 = 1 / np.sqrt(eigenvalues[0])
                 l2 = 1 / np.sqrt(eigenvalues[1])
                 # Get the rotation angle in radians
-                angle = np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0])
+                angle = np.arccos(np.dot(np.array([1,0]), eigenvectors[:,0]))
                 # Here, an eflection method is used to prevent negative corrl
                 self.cov_model.len_scale = [l1, l2]
                 # angle is must be in radians
@@ -110,28 +125,12 @@ class MFModel:
                 self.set_field([np.exp(field[0])], ['npf'])
                 
             else:
-                # Ansatz Olaf: Update so lange verkleinern, bis es passt und
-                # die Matrix positiv definit ist
-                difmat = mat - self.ellips_mat
-                reduction = 0.9
-                while reduction > 0:
-                    test_mat = self.ellips_mat + reduction * difmat
-                    eigenvalues, eigenvectors = np.linalg.eig(test_mat)
-                    if np.all(eigenvalues > 0):
-                        self.update_ellips_mat(test_mat)
-                        l1 = 1 / np.sqrt(eigenvalues[0])
-                        l2 = 1 / np.sqrt(eigenvalues[1])
-                        # Get the rotation angle in radians
-                        angle = np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0])
-                        reduction = 0
-                    else:
-                        reduction -= 0.05
-                if reduction <=  0:   
-                    eigenvalues, eigenvectors = np.linalg.eig(self.ellips_mat)
-                    l1 = 1 / np.sqrt(eigenvalues[0])
-                    l2 = 1 / np.sqrt(eigenvalues[1])
-                    # Get the rotation angle in radians
-                    angle = np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0])
+                # If nothing works, keep old solution
+                eigenvalues, eigenvectors = np.linalg.eig(self.ellips_mat)
+                l1 = 1 / np.sqrt(eigenvalues[0])
+                l2 = 1 / np.sqrt(eigenvalues[1])
+                # Get the rotation angle in radians
+                angle = np.arccos(np.dot(np.array([1,0]), eigenvectors[:,0]))
                 
                 
             return [l1, l2, angle]
@@ -148,10 +147,7 @@ class MFModel:
             
             self.set_field([np.exp(field[0])], ['npf'])
         
-    def write_sim(self):
-        self.ic.write()
-        self.npf.write()
-        
+
     def update_ellips_mat(self, mat):
         self.ellips_mat = mat
         

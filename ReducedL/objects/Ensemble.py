@@ -109,6 +109,7 @@ class Ensemble:
                               for idx in range(self.n_mem)
                               )
         
+        # CHECK THIS
         if 'cov_data' in params:
             self.mean_cov = np.mean(np.array(result), axis = 0)
             if 'npf' in params:

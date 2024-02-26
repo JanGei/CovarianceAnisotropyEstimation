@@ -18,17 +18,17 @@ def create_k_fields(gwf, pars: dict, pp_xy, pp_cid: np.ndarray, covtype = 'rando
     if covtype == 'random':
         lx = np.array([np.random.randint(pars['dx'][0], clx[0][0]),
                        np.random.randint(pars['dx'][1], clx[0][1])])
-        ang = np.random.uniform(0, 2 * np.pi)
+        ang = np.random.uniform(-np.pi, np.pi)
         sigma = np.random.uniform(1, 5)
         if lx[0] < lx[1]:
             lx = np.flip(lx)
-            if ang > np.pi:
+            if ang > 0:
                 ang -= np.pi/2
             else:
                 ang += np.pi/2
     elif covtype == 'good':
         lx = clx[0]
-        ang = angles[0]
+        ang = np.deg2rad(angles[0])
     
     if cov == 'Matern':
         model = gs.Matern(dim=dim, var=sigma, angles = ang, len_scale=lx)
