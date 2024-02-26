@@ -12,4 +12,11 @@ Test/Virtual_Reality/model_data/head_ref.npy
 Test/Virtual_Reality/transient_model/Reference.hds
 Test/Virtual_Reality/transient_model/Reference.rch
 Test/Ensemble/
+ReducedL/Virtual_Reality/transient_model/Reference.lst
+ReducedL/Virtual_Reality/transient_model/Reference.cbb
+ReducedL/Virtual_Reality/Transient.gif
+ReducedL/Virtual_Reality/model_data/head_ref.npy
+ReducedL/Virtual_Reality/transient_model/Reference.hds
+ReducedL/Virtual_Reality/transient_model/Reference.rch
+ReducedL/Ensemble/
 

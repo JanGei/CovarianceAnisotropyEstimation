@@ -134,7 +134,7 @@ class MFModel:
                         angle = np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0])
                     else:
                         reduction -= 0.05
-                if reduction == 0:   
+                if reduction <= 0:   
                     eigenvalues, eigenvectors = np.linalg.eig(self.ellips_mat)
                     l1 = 1 / np.sqrt(eigenvalues[0])
                     l2 = 1 / np.sqrt(eigenvalues[1])
