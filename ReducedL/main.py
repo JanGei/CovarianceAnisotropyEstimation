@@ -64,7 +64,7 @@ if __name__ == '__main__':
     else:
         valtype = "good"
     
-    result = Parallel(n_jobs=nprocs)(delayed(create_k_fields)(
+    result = Parallel(n_jobs=nprocs, backend = "threading")(delayed(create_k_fields)(
         gwf,
         pars, pp_xy,
         pp_cid,
@@ -76,16 +76,17 @@ if __name__ == '__main__':
     k_fields = []
     cov_models = []
     cor_ellips = []
+    l_angs = []
     # sorting the results
     for tup in result:
-        field, covmod, ellips = tup
+        field, covmod, ellips, l_ang = tup
         k_fields.append(field)
         cov_models.append(covmod)
         cor_ellips.append(ellips)
+        l_angs.append(l_ang)
     
     # plot_POI(gwf, pp_xy, pars, bc = True)
     # plot_fields(gwf, pars,  k_fields[0], k_fields[1])
-    plot_k_fields(gwf, pars,  k_fields)
     # plot(gwf, ['logK','h'], bc=True)
     
     mask_chd = chd_mask(gwf)
@@ -109,7 +110,7 @@ if __name__ == '__main__':
     start_time = time.time()
     
     MF_Ensemble     = Ensemble(models,
-                               np.mean(np.array(cor_ellips), axis = 0),
+                               np.array(l_angs),
                                nprocs,
                                pp_cid,
                                pp_xy,
@@ -118,7 +119,7 @@ if __name__ == '__main__':
     
     # set their respective k-fields
     MF_Ensemble.set_field(k_fields, ['npf'])
-    
+    plot_k_fields(gwf, pars,  k_fields, np.rad2deg(MF_Ensemble.ellipses[:,2]))
     print(f'Ensemble is initiated and respective k-fields are set in {(time.time() - start_time):.2f} seconds')
     #%% Running each model 10 times
     start_time = time.time()
@@ -139,7 +140,7 @@ if __name__ == '__main__':
     k_means = []
     Assimilate = True
     # for t_step in range(pars['nsteps']):
-    for t_step in range(pars['nsteps']):
+    for t_step in range(3):
         if t_step == 0:
             MF_Ensemble.remove_current_files(pars)
         if t_step == 1200:
@@ -149,14 +150,14 @@ if __name__ == '__main__':
         if pars['setup'] == 'office':
             covl.append(MF_Ensemble.get_member_fields(['cov_data'])[0])
             ellipsis(
-                MF_Ensemble.get_member_fields(['cov_data']),
+                MF_Ensemble.ellipses,
                 MF_Ensemble.mean_cov,
                 pars
                 )
-            # if t_step%5 == 4:
-            #     k_fields_dict = MF_Ensemble.get_member_fields(['npf'])
-            #     k_fields = [d['npf'] for d in k_fields_dict]
-            #     plot_k_fields(gwf, pars,  k_fields)
+            if t_step%1 == 0:
+                k_fields_dict = MF_Ensemble.get_member_fields(['npf'])
+                k_fields = [d['npf'] for d in k_fields_dict]
+                plot_k_fields(gwf, pars,  k_fields, np.rad2deg(MF_Ensemble.ellipses[:,2]))
                 
         print('--------')
         print(f'time step {t_step}')

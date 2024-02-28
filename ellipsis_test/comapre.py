@@ -15,6 +15,9 @@ ellipse_y = l2 * np.sin(theta)
 rot_matrix = np.array([[np.cos(ang), -np.sin(ang)], [np.sin(ang), np.cos(ang)]])
 rotated_ellipse = np.dot(rot_matrix, np.array([ellipse_x, ellipse_y])) 
 
+D = np.array([[np.cos(ang), -np.sin(ang)], [np.sin(ang), np.cos(ang)]]) 
+M = D @ np.array([[1/l1**2, 0],[0, 1/l2**2]]) @ D.T
+
 #%% ellipsis 2
 a = 8.95190282074998e-07
 m = 1.352869866626093e-06

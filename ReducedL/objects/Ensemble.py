@@ -4,10 +4,11 @@ import os
     
 class Ensemble:
     
-    def __init__(self, members: list, mean_cov, nprocs: int, pp_cid, pp_xy, obs_cid: list, mask):
+    def __init__(self, members: list, ellipses, nprocs: int, pp_cid, pp_xy, obs_cid: list, mask):
         self.members    = members
         self.nprocs     = nprocs
         self.n_mem      = len(self.members)
+        self.ellipses   = ellipses
         self.pp_cid     = pp_cid
         self.pp_xy      = pp_xy
         self.obs_cid    = [int(i) for i in obs_cid]
@@ -19,7 +20,7 @@ class Ensemble:
         self.te1_nsq    = []
         self.te2        = []
         self.te2_nsq    = []
-        self.mean_cov   = mean_cov
+        self.mean_cov   = np.mean(ellipses, axis = 0)
         self.mean_ppk   = []
         self.obs        = []
         
@@ -109,10 +110,10 @@ class Ensemble:
                               for idx in range(self.n_mem)
                               )
         
-        # CHECK THIS
+
         if 'cov_data' in params:
+            self.ellipses = np.array(result)
             self.mean_cov = self.sort_ellipses(result)
-            # self.mean_cov = np.mean(np.array(result), axis = 0)
             if 'npf' in params:
                 self.mean_ppk = np.mean(X[cl:len(self.pp_cid)+cl,:], axis = 1)
         else:
@@ -139,7 +140,7 @@ class Ensemble:
             sorted_data.append(placeholder.copy())        
             
         
-        return np.mean(np.array(sorted_data), axis = 1)
+        return np.mean(np.array(sorted_data), axis = 0)
     
 
                     

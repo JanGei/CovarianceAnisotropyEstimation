@@ -90,10 +90,10 @@ def generator(nx, dx, lx, ang, sigma2, mu, cov, random = True):
 def gsgenerator(gwf, nx, dx, lx, ang, sigma, cov, random = True):
     
     dim = 2
-    ang = np.radians(ang)
+    ang = np.deg2rad(ang)
     
     if cov == 'Matern':
-        model = gs.Matern(nu = 1.5, dim=dim, var=sigma, angles = ang, len_scale=lx)
+        model = gs.Matern(dim=dim, var=sigma, angles = ang, len_scale=lx)
     elif cov == 'Exponential':
         model = gs.Exponential(dim = dim, var = sigma, len_scale=lx, angles = ang)
     elif cov == 'Gaussian':

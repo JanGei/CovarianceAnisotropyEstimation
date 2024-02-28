@@ -100,7 +100,9 @@ def plot_POI(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pp_xy, pars, bc = False):
     axes.set_aspect('equal')
     axes.set_ylabel('Y-axis')
     
-def plot_k_fields(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pars,  k_fields: list):
+
+
+def plot_k_fields(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pars,  k_fields: list, angle):
     
     assert len(k_fields)%2 == 0, "You should provide an even number of fields"
     
@@ -119,6 +121,7 @@ def plot_k_fields(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pars,  k_fields: list
             axf = flopy.plot.PlotMapView(model=gwf, ax=ax)
             c = axf.plot_array(np.log(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1)
             ax.set_aspect('equal')
+            ax.set_title("{:.2f}".format(angle[i*2+j]))
     
     gwf.npf.k.set_data(np.mean(k_fields, axis=0))   
     ax = axes['b']
@@ -175,11 +178,20 @@ def ellipsis(cov_data, mean_cov, pars):
     # Create a figure and axis
     fig, ax = plt.subplots()
     
-    for i in range(len(cov_data)):
-        M = np.array(([cov_data[i]['cov_data'][0], cov_data[i]['cov_data'][1]],
-                      [cov_data[i]['cov_data'][1], cov_data[i]['cov_data'][2]]))
-        res = X**2 * M[0,0] + X*Y*(M[0,1] + M[1,0]) + Y**2 * M[1,1] - 1
-        ax.contour(X, Y, res, levels=[0], colors='black', alpha=0.5)
+    for i, data in enumerate(cov_data):
+        # M = np.array(([cov_data[i]['cov_data'][0], cov_data[i]['cov_data'][1]],
+        #               [cov_data[i]['cov_data'][1], cov_data[i]['cov_data'][2]]))
+        # res = X**2 * M[0,0] + X*Y*(M[0,1] + M[1,0]) + Y**2 * M[1,1] - 1
+        # ax.contour(X, Y, res, levels=[0], colors='black', alpha=0.5, zorder = 0)
+        ellipse = patches.Ellipse(center,
+                                  data[0]*2,
+                                  data[1]*2,
+                                  angle=np.rad2deg(data[2]),
+                                  fill=False,
+                                  color='black',
+                                  alpha = 0.5,
+                                  zorder = 1)
+        ax.add_patch(ellipse)
 
     # M = np.array(([mean_cov[0], mean_cov[1]],
     #               [mean_cov[1], mean_cov[2]]))
@@ -191,7 +203,8 @@ def ellipsis(cov_data, mean_cov, pars):
                               mean_cov[1]*2,
                               angle=np.rad2deg(mean_cov[2]),
                               fill=False,
-                              color='blue')
+                              color='blue',
+                              zorder = 1)
     ax.add_patch(ellipse)
     
     ellipse = patches.Ellipse(center,
@@ -199,7 +212,8 @@ def ellipsis(cov_data, mean_cov, pars):
                               pars['lx'][0][1]*2,
                               angle=np.rad2deg(pars['ang'][0]),
                               fill=False,
-                              color='red')
+                              color='red',
+                              zorder = 2)
     ax.add_patch(ellipse)
     
     # Set equal aspect ratio for the axis
