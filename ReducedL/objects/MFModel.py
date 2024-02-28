@@ -24,11 +24,13 @@ class MFModel:
         self.ic         = self.gwf.ic
         self.chd        = self.gwf.chd
         self.cell_xy    = self.gwf.modelgrid.xyzcellcenters
+        self.old_npf    = []
         
         
     def set_field(self, field, pkg_name: list):
         for i, name in enumerate(pkg_name):
             if name == 'npf':
+                self.old_npf =  self.npf.k.get_data()
                 self.npf.k.set_data(np.reshape(field[i],self.npf.k.array.shape))
                 self.npf.write()
             elif name == 'rch':
@@ -72,7 +74,12 @@ class MFModel:
         return fields
                 
     def simulation(self):
-        self.sim.run_simulation()
+        # TODO: catch erroneous runs and reset them!
+        success, buff = self.sim.run_simulation()
+        if not success:
+            self.set_field([self.old_npf], ['npf'])
+            self.sim.run_simulation()
+
         
     def update_ic(self):
         self.ic.strt.set_data(self.get_field('h')['h'])

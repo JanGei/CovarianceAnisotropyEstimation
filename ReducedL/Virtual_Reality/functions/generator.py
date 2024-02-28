@@ -115,7 +115,10 @@ def gsgenerator(gwf, nx, dx, lx, ang, sigma, cov, random = True):
         # srf = gs.SRF(model, seed=12)
         
         # Good choice for Matern 3/2 with l_red = 10
-        srf = gs.SRF(model, seed=8)
+        # srf = gs.SRF(model, seed=8)
+        
+        # Good choice for Matern 3/2 with l_red = 5
+        srf = gs.SRF(model, seed=805)
         
         
     

@@ -111,13 +111,38 @@ class Ensemble:
         
         # CHECK THIS
         if 'cov_data' in params:
-            self.mean_cov = np.mean(np.array(result), axis = 0)
+            self.mean_cov = self.sort_ellipses(result)
+            # self.mean_cov = np.mean(np.array(result), axis = 0)
             if 'npf' in params:
                 self.mean_ppk = np.mean(X[cl:len(self.pp_cid)+cl,:], axis = 1)
         else:
             self.mean_ppk = np.mean(X[:len(self.pp_cid),:], axis = 1)
-     
     
+    def sort_ellipses(self, data):
+        placeholder = np.ones(3)
+        data = np.array(data)
+        sorted_data = []
+        # Step 1 - allign on major axis
+        for i in range(data.shape[0]):
+            if data[i,0] < data[i,1]:
+                placeholder[0] = data[i,1]
+                placeholder[1] = data[i,0]
+                placeholder[2] = data[i,2] + np.pi/2
+            else:
+                placeholder[0] = data[i,0]
+                placeholder[1] = data[i,1]
+                placeholder[2] = data[i,2] 
+                
+        # Step 2 - allign on upper two quadran
+            placeholder[2] = placeholder[2]%np.pi
+
+            sorted_data.append(placeholder.copy())        
+            
+        
+        return np.mean(np.array(sorted_data), axis = 1)
+    
+
+                    
     def get_Kalman_X_Y(self, params: list):   
 
         head = self.get_member_fields(['h'])
