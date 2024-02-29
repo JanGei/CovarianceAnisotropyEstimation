@@ -5,7 +5,44 @@ import gstools as gs
 class JibberishWarning(Warning):
     pass
 
+def gsgenerator(gwf, nx, dx, lx, ang, sigma, cov, random = True):
+    
+    dim = 2
+    ang = np.deg2rad(ang)
+    
+    if cov == 'Matern':
+        model = gs.Matern(dim=dim, var=sigma, angles = ang, len_scale=lx)
+    elif cov == 'Exponential':
+        model = gs.Exponential(dim = dim, var = sigma, len_scale=lx, angles = ang)
+    elif cov == 'Gaussian':
+        model = gs.Gaussian(dim = dim, var = sigma, len_scale=lx, angles = ang)
+    else:
+        raise JibberishWarning('You just entered a jibberish covariance model')
+        
+    modelgrid = gwf.modelgrid
+    xyz = modelgrid.xyzcellcenters
+    
+    if random:
+        srf = gs.SRF(model)
+    else:
 
+        # Good choice for Exponential
+        # srf = gs.SRF(model, seed=6)
+        
+        # Good choice for Matern 3/2
+        # srf = gs.SRF(model, seed=12)
+        
+        # Good choice for Matern 3/2 with l_red = 10
+        # srf = gs.SRF(model, seed=8)
+        
+        # Good choice for Matern 3/2 with l_red = 5
+        srf = gs.SRF(model, seed=44)
+        
+        
+    
+    field = srf.unstructured(([xyz[0],xyz[1]]))
+    
+    return field
 
 
 def generator(nx, dx, lx, ang, sigma2, mu, cov, random = True):
@@ -87,44 +124,7 @@ def generator(nx, dx, lx, ang, sigma2, mu, cov, random = True):
     
     return X, Y, ran
 
-def gsgenerator(gwf, nx, dx, lx, ang, sigma, cov, random = True):
-    
-    dim = 2
-    ang = np.deg2rad(ang)
-    
-    if cov == 'Matern':
-        model = gs.Matern(dim=dim, var=sigma, angles = ang, len_scale=lx)
-    elif cov == 'Exponential':
-        model = gs.Exponential(dim = dim, var = sigma, len_scale=lx, angles = ang)
-    elif cov == 'Gaussian':
-        model = gs.Gaussian(dim = dim, var = sigma, len_scale=lx, angles = ang)
-    else:
-        raise JibberishWarning('You just entered a jibberish covariance model')
-        
-    modelgrid = gwf.modelgrid
-    xyz = modelgrid.xyzcellcenters
-    
-    if random:
-        srf = gs.SRF(model)
-    else:
 
-        # Good choice for Exponential
-        # srf = gs.SRF(model, seed=6)
-        
-        # Good choice for Matern 3/2
-        # srf = gs.SRF(model, seed=12)
-        
-        # Good choice for Matern 3/2 with l_red = 10
-        # srf = gs.SRF(model, seed=8)
-        
-        # Good choice for Matern 3/2 with l_red = 5
-        srf = gs.SRF(model, seed=805)
-        
-        
-    
-    field = srf.unstructured(([xyz[0],xyz[1]]))
-    
-    return field
 
 
 

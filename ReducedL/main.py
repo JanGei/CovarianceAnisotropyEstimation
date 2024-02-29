@@ -119,7 +119,7 @@ if __name__ == '__main__':
     
     # set their respective k-fields
     MF_Ensemble.set_field(k_fields, ['npf'])
-    plot_k_fields(gwf, pars,  k_fields, np.rad2deg(MF_Ensemble.ellipses[:,2]))
+    # plot_k_fields(gwf, pars,  k_fields, np.rad2deg(MF_Ensemble.ellipses[:,2]))
     print(f'Ensemble is initiated and respective k-fields are set in {(time.time() - start_time):.2f} seconds')
     #%% Running each model 10 times
     start_time = time.time()
@@ -140,7 +140,7 @@ if __name__ == '__main__':
     k_means = []
     Assimilate = True
     # for t_step in range(pars['nsteps']):
-    for t_step in range(3):
+    for t_step in range(pars['nsteps']):
         if t_step == 0:
             MF_Ensemble.remove_current_files(pars)
         if t_step == 1200:
@@ -154,10 +154,10 @@ if __name__ == '__main__':
                 MF_Ensemble.mean_cov,
                 pars
                 )
-            if t_step%1 == 0:
-                k_fields_dict = MF_Ensemble.get_member_fields(['npf'])
-                k_fields = [d['npf'] for d in k_fields_dict]
-                plot_k_fields(gwf, pars,  k_fields, np.rad2deg(MF_Ensemble.ellipses[:,2]))
+            # if t_step%10 == 0:
+            #     k_fields_dict = MF_Ensemble.get_member_fields(['npf'])
+            #     k_fields = [d['npf'] for d in k_fields_dict]
+            #     plot_k_fields(gwf, pars,  k_fields, np.rad2deg(MF_Ensemble.ellipses[:,2]))
                 
         print('--------')
         print(f'time step {t_step}')

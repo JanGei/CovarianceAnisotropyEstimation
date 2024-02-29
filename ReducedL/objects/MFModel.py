@@ -110,14 +110,11 @@ class MFModel:
             
             if pos_def:
                 self.update_ellips_mat(mat)
-            
-                l1 = 1 / np.sqrt(eigenvalues[0])
-                l2 = 1 / np.sqrt(eigenvalues[1])
-                # Get the rotation angle in radians
-                angle = np.arccos(np.dot(np.array([1,0]), eigenvectors[:,0]))
-                # Here, an eflection method is used to prevent negative corrl
+                
+                l1, l2, angle = self.extract_truth(eigenvalues, eigenvectors)
+                
                 self.cov_model.len_scale = [l1, l2]
-                # angle is must be in radians
+
                 self.cov_model.angles = angle
                 
                 pp_k = data[1]
@@ -131,16 +128,15 @@ class MFModel:
                 
                 self.set_field([np.exp(field[0])], ['npf'])
                 
+                return [l1, l2, angle%np.pi]
+                
             else:
                 # If nothing works, keep old solution
                 eigenvalues, eigenvectors = np.linalg.eig(self.ellips_mat)
-                l1 = 1 / np.sqrt(eigenvalues[0])
-                l2 = 1 / np.sqrt(eigenvalues[1])
-                # Get the rotation angle in radians
-                angle = np.arccos(np.dot(np.array([1,0]), eigenvectors[:,0]))
                 
+                l1, l2, angle = self.extract_truth(eigenvalues, eigenvectors)
                 
-            return [l1, l2, angle]
+            return [l1, l2, angle%np.pi]
                 
         else:
             pp_k = data
@@ -154,7 +150,27 @@ class MFModel:
             
             self.set_field([np.exp(field[0])], ['npf'])
         
+    
+    def extract_truth(self, eigenvalues, eigenvectors):
+        
+        lxmat = 1/np.sqrt(eigenvalues)
+        
+        if lxmat[0] < lxmat[1]:
+            lxmat = np.flip(lxmat)
+            eigenvectors = np.flip(eigenvectors, axis = 1)
+        
+        if eigenvectors[0,0] > 0:
+            ang = np.pi/2 -np.arccos(np.dot(eigenvectors[:,0],np.array([0,1])))    
 
+        else:
+            if eigenvectors[1,0] > 0:
+                ang = np.arccos(np.dot(eigenvectors[:,0],np.array([1,0])))
+
+            else:
+                ang = np.pi -np.arccos(np.dot(eigenvectors[:,0],np.array([1,0])))
+
+        return lxmat[0], lxmat[1], ang
+    
     def update_ellips_mat(self, mat):
         self.ellips_mat = mat
         

@@ -56,7 +56,7 @@ def get():
     computer = ['office', 'icluster', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 4
+        n_mem  = 48
         # nprocs = np.min([n_mem, psutil.cpu_count()])
         nprocs = 1
         up_temp = False
@@ -73,7 +73,7 @@ def get():
         n_pre_run = 40
     
     h_damp = 0.5
-    cov_damp = 0.01
+    cov_damp = 0.1
     npf_damp = 0.25
     l_red = 5
     variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
