@@ -75,7 +75,7 @@ def get():
     h_damp = 0.5
     cov_damp = 0.1
     npf_damp = 0.25
-    l_red = 5
+    l_red = 10
     variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
     
