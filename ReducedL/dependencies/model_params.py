@@ -56,9 +56,9 @@ def get():
     computer = ['office', 'icluster', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 48
+        n_mem  = 2
         # nprocs = np.min([n_mem, psutil.cpu_count()])
-        nprocs = 1
+        nprocs = 4
         up_temp = False
         n_pre_run = 1
     elif setup == 'icluster':

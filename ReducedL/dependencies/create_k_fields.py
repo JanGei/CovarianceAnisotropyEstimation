@@ -2,6 +2,61 @@ import gstools as gs
 from gstools import krige
 import numpy as np
 
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from randomK import randomK
+
+def create_conditional_k_fields(gwf, pars: dict, pp_xy, pp_cid: np.ndarray, covtype = 'random', valtype = 'good'):
+    dim = 2
+    cov = pars['cov']
+    clx     = pars['lx']
+    nx      = pars['nx']
+    dx      = pars['dx']
+    angles  = pars['ang']
+    sigma   = pars['sigma'][0]
+    mu      = pars['mu'][0]
+    cov     = pars['cov']
+    k_ref   = pars['k_ref']
+
+    mg = gwf.modelgrid
+    xcell,ycell, _ = mg.xyzcellcenters
+    
+    if covtype == 'random':
+        lx = np.array([np.random.randint(pars['dx'][0], clx[0][0]),
+                       np.random.randint(pars['dx'][1], clx[0][1])])
+        ang = np.random.uniform(0, 2 * np.pi)
+        sigma = np.random.uniform(1, 5)
+        if lx[0] > lx[1]:
+            lx = np.flip(lx)
+            if ang > 0:
+                ang -= np.pi/2
+            else:
+                ang += np.pi/2
+        elif lx[0] == lx[1]:
+            lx[0] += 1
+    elif covtype == 'good':
+        lx = clx[0]
+        ang = np.deg2rad(angles[0])
+        
+    # starting k values at pilot points
+    if valtype == 'good':
+        pp_k = k_ref[pp_cid.astype(int)]
+        Kg = np.mean(np.mean(k_ref))
+    elif valtype == 'random':
+        smeas = k_ref[pp_cid.astype(int)]
+        sig_meas = 0.1 # standard deviation of measurement error
+        smeas = smeas + sig_meas * np.random.randn(*smeas.shape)
+        Kg = np.random.uniform(mu-mu/2, mu+mu/2)
+        
+    # generating a random field with defined variogram
+    K = randomK(nx, dx, lx, ang, sigma, cov, Kg)
+    
+    # generating a conditional realisation
+    
+    
+    
+
 def create_k_fields(gwf, pars: dict, pp_xy, pp_cid: np.ndarray, covtype = 'random', valtype = 'good'):
     dim = 2
     cov = pars['cov']

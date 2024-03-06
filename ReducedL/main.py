@@ -2,7 +2,7 @@ from dependencies.model_params import get
 from dependencies.copy import create_Ensemble
 from dependencies.convert_transient import convert_to_transient
 from dependencies.create_pilot_points import create_pilot_points
-from dependencies.create_k_fields import create_k_fields
+from dependencies.create_k_fields import create_k_fields, create_conditional_k_fields
 from dependencies.load_template_model import load_template_model
 from dependencies.load_observations import load_true_h_field
 from dependencies.get_transient_data import get_transient_data
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     #%% loading necessary data
     start_time = time.time()
     
-    # copy template model to ene
+    # copy template model to ensemble folder
     model_dir   = create_Ensemble(pars)
     sim, gwf = load_template_model(pars)
     
@@ -64,6 +64,11 @@ if __name__ == '__main__':
     else:
         valtype = "good"
     
+    create_conditional_k_fields(gwf,
+                                pars, pp_xy,
+                                pp_cid,
+                                covtype = covtype,
+                                valtype = valtype)
     result = Parallel(n_jobs=nprocs, backend = "threading")(delayed(create_k_fields)(
         gwf,
         pars, pp_xy,
