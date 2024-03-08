@@ -4,6 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import imageio.v2 as imageio
+import flopy
+from cmcrameri import cm
+from matplotlib.gridspec import GridSpec
 
 def ellipsis(cov_data, mean_cov, errors, pars, save_dir, filename_prefix='ellipsis_plot', movie=False):
     plot_dir = os.path.join(save_dir, 'plots')
@@ -56,7 +59,128 @@ def ellipsis(cov_data, mean_cov, errors, pars, save_dir, filename_prefix='ellips
         shutil.rmtree(plot_dir)
 
 
+def plot_k_fields(gwf, k_fields):
+    
+    kmin = np.min(np.log(k_fields[1]))
+    kmax = np.max(np.log(k_fields[1]))
+    
+    fig, axes = plt.subplots(nrows=3, ncols=1, sharex='col', sharey=True, figsize= (16,6))
+    # gs = GridSpec(3, 1, height_ratios=[1, 1, 1], hspace=0.3)
 
+    # Plot upper left
+    ax0 = axes[0]
+    gwf.npf.k.set_data(k_fields[1])
+    axf0 = flopy.plot.PlotMapView(model=gwf, ax=ax0)
+    c0 = axf0.plot_array(np.log(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1,vmin=kmin, vmax=kmax)
+    ax0.set_aspect('equal')
+
+
+    # Plot upper right
+    ax1 = axes[1]
+    gwf.npf.k.set_data(k_fields[0])
+    axf1 = flopy.plot.PlotMapView(model=gwf, ax=ax1)
+    c1 = axf1.plot_array(np.log(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1,vmin=kmin, vmax=kmax)
+    ax1.set_aspect('equal')
+
+
+    # Plot lower
+    ax2 = axes[2]
+    gwf.npf.k.set_data(k_fields[0]/ (k_fields[1]))
+    axf2 = flopy.plot.PlotMapView(model=gwf, ax=ax2)
+    c2 = axf2.plot_array((gwf.npf.k.array), cmap=cm.bam, alpha=1)
+    ax2.set_aspect('equal')
+
+
+    # Add colorbars
+    cbar0 = fig.colorbar(c0, ax=[ax0, ax1], fraction=0.1, pad=0.01)
+    cbar0.set_label('Log(K)')
+    cbar1 = fig.colorbar(c2, ax=ax2, fraction=0.1, pad=0.01, aspect=10)
+    cbar1.set_label('Ratio')
+
+    
+    # Set custom bounds for colorbars
+    cbar0.mappable.set_clim(vmin=kmin, vmax=kmax)
+    cbar1.mappable.set_clim(vmin=0, vmax=2)
+
+    plt.show()
+
+
+
+
+
+# def plot_k_fields(gwf, k_fields):
+#     assert len(k_fields) % 2 == 0, "You should provide an even number of fields"
+
+#     pad = 0.1
+
+#     layout = [[f'l{i}', f'r{i}'] for i in range(int(len(k_fields) / 2))]
+#     low_plot = ['b', 'b']
+#     layout.append(low_plot)
+#     layout.append(low_plot)
+#     kmin = np.min(np.log(k_fields[1]))
+#     kmax = np.max(np.log(k_fields[1]))
+
+#     fig, axes = plt.subplot_mosaic(layout, figsize=(4, len(k_fields) / 2 + 2), sharex=True, sharey=True)
+#     sm = None
+#     for i in range(int(len(k_fields) / 2)):
+#         for j, letter in enumerate(['r', 'l']):
+#             gwf.npf.k.set_data(k_fields[i * 2 + j])
+#             ax = axes[letter + str(i)]
+#             axf = flopy.plot.PlotMapView(model=gwf, ax=ax)
+#             c = axf.plot_array(np.log(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1)
+#             if sm is None:
+#                 sm = plt.cm.ScalarMappable(cmap=cm.bilbao_r, norm=plt.Normalize(vmin=kmin, 
+#                                                                                  vmax=kmax))
+#                 sm._A = []
+#             ax.set_aspect('equal')
+#             # ax.set_title("{:.2f}".format(angle[i*2+j]))
+
+#     gwf.npf.k.set_data(np.log(k_fields[0]) - np.log(k_fields[1]))
+#     ax = axes['b']
+#     axf = flopy.plot.PlotMapView(model=gwf, ax=ax)
+#     c = axf.plot_array(np.log(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1)
+#     ax.set_aspect('equal')
+    
+#     # Set custom bounds for colorbar
+#     # sm.set_clim(vmin=np.min(np.log(k_fields[0])), vmax=np.max(np.log(k_fields[0])))
+
+#     # Add colorbar
+#     cbar = fig.colorbar(sm, ax=axes.values(), fraction=0.05, pad=0.02)
+#     cbar.mappable.set_clim(kmin, kmax)
+#     cbar.set_label('Log(K)')
+
+
+
+#     plt.show()
+# def plot_k_fields(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, k_fields: list):
+    
+#     assert len(k_fields)%2 == 0, "You should provide an even number of fields"
+    
+#     pad = 0.1
+    
+#     layout = [[f'l{i}', f'r{i}'] for i in range(int(len(k_fields)/2))]
+#     low_plot = ['b', 'b']
+#     layout.append(low_plot)
+#     layout.append(low_plot)
+    
+#     fig, axes = plt.subplot_mosaic(layout, figsize=(4,len(k_fields)/2+2), sharex=True, sharey = True)    
+#     for i in range(int(len(k_fields)/2)):
+#         for j, letter in enumerate(['r', 'l']):
+#             gwf.npf.k.set_data(k_fields[i*2+j])
+#             ax = axes[letter+str(i)]
+#             axf = flopy.plot.PlotMapView(model=gwf, ax=ax)
+#             c = axf.plot_array(np.log(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1)
+#             ax.set_aspect('equal')
+#             # ax.set_title("{:.2f}".format(angle[i*2+j]))
+    
+#     gwf.npf.k.set_data(k_fields[0] - k_fields[1])   
+#     ax = axes['b']
+#     axf = flopy.plot.PlotMapView(model=gwf, ax=ax)
+#     c = axf.plot_array(np.log(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1)
+#     ax.set_aspect('equal')
+#     plt.tight_layout()
+    
+#     plt.show()
 
 
 
