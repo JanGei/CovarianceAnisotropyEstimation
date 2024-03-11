@@ -108,7 +108,7 @@ if __name__ == '__main__':
             pp_xy, pp_cid = [], []
         
     # save original fields
-    np.save(os.path.join('output' ,'k_ensemble_ini.npy'), k_fields)
+    np.save(os.path.join(pars['resdir'] ,'k_ensemble_ini.npy'), k_fields)
     k_ref = np.loadtxt(pars['k_r_d'], delimiter = ',')
     
     # plot_POI(gwf, pp_xy, pars, bc = True)
@@ -224,7 +224,7 @@ if __name__ == '__main__':
         start_time = time.time()
         MF_Ensemble.model_error(true_h[t_step])
         MF_Ensemble.record_state(pars, pars['EnKF_p'])
-        # compare_mean_true(gwf, [k_ref, MF_Ensemble.meanlogk])  
+        compare_mean_true(gwf, [k_ref, MF_Ensemble.meanlogk])  
         # print(MF_Ensemble.members[0].npf.k.array[0][0])
         print(f'Plotting and recording took {(time.time() - start_time):.2f} seconds')
     

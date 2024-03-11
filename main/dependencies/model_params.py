@@ -73,7 +73,7 @@ def get():
         up_temp = True
         n_pre_run = 40
     elif setup == 'binnac':
-        n_mem  = 180
+        n_mem  = 560
         nprocs = psutil.cpu_count()
         up_temp = True
         n_pre_run = 40
@@ -96,7 +96,7 @@ def get():
         valtype = "good"
         
     elif choice == 2:
-        covtype = "random"
+        covtype = "good"
         if pp_flag:
             valtype = "random"
         else:

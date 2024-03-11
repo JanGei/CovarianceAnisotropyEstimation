@@ -26,7 +26,8 @@ class Ensemble:
             self.pp_cid     = pp_cid
             self.pp_xy      = pp_xy
             self.mean_cov   = np.mean(ellipses, axis = 0)
-            self.mean_ppk   = []
+            self.meanlogppk = []
+            self.logmeanppk = []
         
         
     def set_field(self, field, pkg_name: list):
@@ -357,29 +358,36 @@ class Ensemble:
 
         if 'npf' in params:
             if self.pilotp_flag:
-                f = open(os.path.join(direc,  'pilot_point_k.dat'),'a')
-                for i in range(len(self.mean_ppk)):
-                    f.write("{:.8f} ".format(np.log(self.mean_ppk[i])))
-                f.write('\n')
-                f.close()
-            else:
-                f = open(os.path.join(direc,  'meanlogk.dat'),'a')
-                for i in range(len(self.meanlogk)):
-                    f.write("{:.8f} ".format(self.meanlogk[i]))
+                f = open(os.path.join(direc,  'meanlogppk.dat'),'a')
+                for i in range(len(self.meanlogppk)):
+                    f.write("{:.8f} ".format(self.meanlogppk[i]))
                 f.write('\n')
                 f.close()
                 
-                f = open(os.path.join(direc,  'logmeank.dat'),'a')
-                for i in range(len(self.logmeank)):
-                    f.write("{:.8f} ".format(self.logmeank[i]))
+                f = open(os.path.join(direc,  'logmeanppk.dat'),'a')
+                for i in range(len(self.logmeanppk)):
+                    f.write("{:.8f} ".format(self.logmeanppk[i]))
                 f.write('\n')
                 f.close()
+            
+            f = open(os.path.join(direc,  'meanlogk.dat'),'a')
+            for i in range(len(self.meanlogk)):
+                f.write("{:.8f} ".format(self.meanlogk[i]))
+            f.write('\n')
+            f.close()
+            
+            f = open(os.path.join(direc,  'logmeank.dat'),'a')
+            for i in range(len(self.logmeank)):
+                f.write("{:.8f} ".format(self.logmeank[i]))
+            f.write('\n')
+            f.close()
         
     def remove_current_files(self, pars):
         
         file_paths = [os.path.join(pars['resdir'], 'errors.dat'),
                       os.path.join(pars['resdir'], 'covariance_data.dat'),
-                      os.path.join(pars['resdir'], 'pilot_point_k.dat'),
+                      os.path.join(pars['resdir'], 'logmeanppk.dat'),
+                      os.path.join(pars['resdir'], 'meanlogppk.dat'),
                       os.path.join(pars['resdir'], 'obs_true.dat'),
                       os.path.join(pars['resdir'], 'logmeank.dat'),
                       os.path.join(pars['resdir'], 'meanlogk.dat'),

@@ -17,11 +17,13 @@ if __name__ == '__main__':
     # models = ['np560l1d01',
     #            'np560l01d01',
     #            'np560l02d025']
-    models = ['np560l01d01']
+    folder = '3types'
+    models = ['nPP560l1d05']
     
     # folders = ['dependencies', 'model_data', 'output', 'template_model']
-    for target_folder in models:
-        model_directory = os.path.join(cwd, target_folder, 'output')
+    for model in models:
+        target_folder = os.path.join(cwd, folder, model)
+        model_directory = os.path.join(target_folder, 'output')
         
         # Import module dynamically based on folder name
         module_name = f"{target_folder}.dependencies.model_params"
@@ -33,12 +35,12 @@ if __name__ == '__main__':
         pars = module.get()
         sim, gwf = load_template_model(pars, model_dir)
         
-        k_mean = np.genfromtxt(os.path.join(target_folder, 'output', 'k_mean.dat'), delimiter=' ')
+        k_mean = np.genfromtxt(os.path.join(target_folder, 'output', 'meanlogk.dat'), delimiter=' ')
         k_dir = pars['k_r_d'].replace('Virtual_Reality/', '')
         k_true = np.loadtxt(k_dir, delimiter = ',')
         
-        for i in range(50):
-            plot_k_fields(gwf, [k_mean[i*2], k_true])
+        for i in range(100):
+            plot_k_fields(gwf, [k_mean[i*10], k_true])
         # ellipsis_data, mean_ellipsis, errors = prepare_ellipsis_data(target_directory)
         
     

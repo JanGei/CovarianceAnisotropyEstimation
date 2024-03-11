@@ -79,15 +79,15 @@ def plot_k_fields(gwf, k_fields):
     ax1 = axes[1]
     gwf.npf.k.set_data(k_fields[0])
     axf1 = flopy.plot.PlotMapView(model=gwf, ax=ax1)
-    c1 = axf1.plot_array(np.log(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1,vmin=kmin, vmax=kmax)
+    c1 = axf1.plot_array(gwf.npf.k.array, cmap=cm.bilbao_r, alpha=1,vmin=kmin, vmax=kmax)
     ax1.set_aspect('equal')
 
 
     # Plot lower
     ax2 = axes[2]
-    gwf.npf.k.set_data(k_fields[0]/ (k_fields[1]))
+    gwf.npf.k.set_data(k_fields[0]/ np.log(k_fields[1]))
     axf2 = flopy.plot.PlotMapView(model=gwf, ax=ax2)
-    c2 = axf2.plot_array((gwf.npf.k.array), cmap=cm.bam, alpha=1)
+    c2 = axf2.plot_array((gwf.npf.k.array), cmap=cm.roma, alpha=1)
     ax2.set_aspect('equal')
 
 
@@ -100,93 +100,54 @@ def plot_k_fields(gwf, k_fields):
     
     # Set custom bounds for colorbars
     cbar0.mappable.set_clim(vmin=kmin, vmax=kmax)
-    cbar1.mappable.set_clim(vmin=0, vmax=2)
+    cbar1.mappable.set_clim(vmin=0.5, vmax=1.5)
 
     plt.show()
 
 
 
+def ellipsis_test(cov_data, mean_cov, errors, pars):
 
 
-# def plot_k_fields(gwf, k_fields):
-#     assert len(k_fields) % 2 == 0, "You should provide an even number of fields"
-
-#     pad = 0.1
-
-#     layout = [[f'l{i}', f'r{i}'] for i in range(int(len(k_fields) / 2))]
-#     low_plot = ['b', 'b']
-#     layout.append(low_plot)
-#     layout.append(low_plot)
-#     kmin = np.min(np.log(k_fields[1]))
-#     kmax = np.max(np.log(k_fields[1]))
-
-#     fig, axes = plt.subplot_mosaic(layout, figsize=(4, len(k_fields) / 2 + 2), sharex=True, sharey=True)
-#     sm = None
-#     for i in range(int(len(k_fields) / 2)):
-#         for j, letter in enumerate(['r', 'l']):
-#             gwf.npf.k.set_data(k_fields[i * 2 + j])
-#             ax = axes[letter + str(i)]
-#             axf = flopy.plot.PlotMapView(model=gwf, ax=ax)
-#             c = axf.plot_array(np.log(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1)
-#             if sm is None:
-#                 sm = plt.cm.ScalarMappable(cmap=cm.bilbao_r, norm=plt.Normalize(vmin=kmin, 
-#                                                                                  vmax=kmax))
-#                 sm._A = []
-#             ax.set_aspect('equal')
-#             # ax.set_title("{:.2f}".format(angle[i*2+j]))
-
-#     gwf.npf.k.set_data(np.log(k_fields[0]) - np.log(k_fields[1]))
-#     ax = axes['b']
-#     axf = flopy.plot.PlotMapView(model=gwf, ax=ax)
-#     c = axf.plot_array(np.log(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1)
-#     ax.set_aspect('equal')
-    
-#     # Set custom bounds for colorbar
-#     # sm.set_clim(vmin=np.min(np.log(k_fields[0])), vmax=np.max(np.log(k_fields[0])))
-
-#     # Add colorbar
-#     cbar = fig.colorbar(sm, ax=axes.values(), fraction=0.05, pad=0.02)
-#     cbar.mappable.set_clim(kmin, kmax)
-#     cbar.set_label('Log(K)')
-
-
-
-#     plt.show()
-# def plot_k_fields(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, k_fields: list):
-    
-#     assert len(k_fields)%2 == 0, "You should provide an even number of fields"
-    
-#     pad = 0.1
-    
-#     layout = [[f'l{i}', f'r{i}'] for i in range(int(len(k_fields)/2))]
-#     low_plot = ['b', 'b']
-#     layout.append(low_plot)
-#     layout.append(low_plot)
-    
-#     fig, axes = plt.subplot_mosaic(layout, figsize=(4,len(k_fields)/2+2), sharex=True, sharey = True)    
-#     for i in range(int(len(k_fields)/2)):
-#         for j, letter in enumerate(['r', 'l']):
-#             gwf.npf.k.set_data(k_fields[i*2+j])
-#             ax = axes[letter+str(i)]
-#             axf = flopy.plot.PlotMapView(model=gwf, ax=ax)
-#             c = axf.plot_array(np.log(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1)
-#             ax.set_aspect('equal')
-#             # ax.set_title("{:.2f}".format(angle[i*2+j]))
-    
-#     gwf.npf.k.set_data(k_fields[0] - k_fields[1])   
-#     ax = axes['b']
-#     axf = flopy.plot.PlotMapView(model=gwf, ax=ax)
-#     c = axf.plot_array(np.log(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1)
-#     ax.set_aspect('equal')
-#     plt.tight_layout()
-    
-#     plt.show()
-
-
-
-
+    l = np.max(pars['lx'][0] * 1.5)
+    x = np.linspace(-l, l, 300)
+    y = np.linspace(-l, l, 300)
+    X, Y = np.meshgrid(x, y)
 
     
+    for j in range(120):
+        fig, ax = plt.subplots(figsize=(9, 9))
+        for i in range(int(len(cov_data[j])/10)):
+            cov = cov_data[j*10, i*10]
+            
+            M = np.array(([cov[0], cov[1]], [cov[1], cov[2]]))
+            res = X**2 * M[0,0] + X*Y*(M[0,1] + M[1,0]) + Y**2 * M[1,1] - 1
+            ax.contour(X, Y, res, levels=[0], colors='black', alpha=0.2)
+        # print(cov[0])
+        
+        mean = mean_cov[j*10]
+        M = np.array(([mean[0], mean[1]], [mean[1], mean[2]]))
+        res = X**2 * M[0,0] + X*Y*(M[0,1] + M[1,0]) + Y**2 * M[1,1] - 1
+        ax.contour(X, Y, res, levels=[0], colors='blue', alpha=0.5)
+
+        ellipse = patches.Ellipse((0, 0), pars['lx'][0][0]*2, pars['lx'][0][1]*2, angle=pars['ang'][0], fill=False, color='red')
+        ax.add_patch(ellipse)
+
+        ax.set_aspect('equal', 'box')
+        ax.set_xlim(-l, l)
+        ax.set_ylim(-l, l)
+        plt.grid(True)
+
+        # Remove axis labels
+        ax.set_xlabel('')
+        ax.set_ylabel('')
+        ax.set_title(f'time step {j*10}')
+        ax.text(l/4*3, l/4*3, f'OLE  {errors[j,0]} \nTE-1 {errors[j,1]}\nTE-2 {errors[j,2]}', fontsize=9, color='black')
+
+        # Save the plot as an image
+        plt.show()
+        # ax.clear()
+
 
 
 
