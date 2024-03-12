@@ -3,24 +3,19 @@ import sys
 import importlib.util
 sys.path.append('..')
 from dependencies.load_template_model import load_template_model
+from dependencies.plotFH import  plot_k_fields
+from dependencies.prepare_data import prepare_data
 import numpy as np
-from dependencies.plot import  plot_k_fields
+# from dependencies.plot import  plot_k_fields
 # from dependencies.prepare_data import prepare_ellipsis_data
 # from Clean.dependencies.model_params import get
 
 if __name__ == '__main__':
-    
-    # pars = get()
     cwd = os.getcwd()
     # specify which folder to investigate
-    # target_folder = '/n280_cov_npf_binnac'
-    # models = ['np560l1d01',
-    #            'np560l01d01',
-    #            'np560l02d025']
     folder = '3types'
     models = ['nPP560l1d05']
     
-    # folders = ['dependencies', 'model_data', 'output', 'template_model']
     for model in models:
         target_folder = os.path.join(cwd, folder, model)
         model_directory = os.path.join(target_folder, 'output')
@@ -35,12 +30,20 @@ if __name__ == '__main__':
         pars = module.get()
         sim, gwf = load_template_model(pars, model_dir)
         
-        k_mean = np.genfromtxt(os.path.join(target_folder, 'output', 'meanlogk.dat'), delimiter=' ')
-        k_dir = pars['k_r_d'].replace('Virtual_Reality/', '')
-        k_true = np.loadtxt(k_dir, delimiter = ',')
-        
-        for i in range(100):
-            plot_k_fields(gwf, [k_mean[i*10], k_true])
+
+        if pars['pilotp']:
+            if 'cov_data' in pars['EnKF_p']:
+                ellipsis_data, mean_data, errors, ppk, k_mean, k_true, true_obs, mean_obs = prepare_data(target_folder, pars, krig = True, ellips = True)
+            else:
+                _, _, errors, ppk, k_mean, k_true, true_obs, mean_obs = prepare_data(target_folder, pars, krig = True, ellips = False)
+        else:
+            if 'cov_data' in pars['EnKF_p']:
+                ellipsis_data, mean_data, errors, _, k_mean, k_true, true_obs, mean_obs = prepare_data(target_folder, pars, krig = False, ellips = True)
+            else:
+                _, _, errors, _, k_mean, k_true, true_obs, mean_obs = prepare_data(target_folder, pars, krig = False, ellips = False)
+                
+
+        plot_k_fields(gwf, [k_mean, k_true], true_obs, mean_obs, model_directory)
         # ellipsis_data, mean_ellipsis, errors = prepare_ellipsis_data(target_directory)
         
     

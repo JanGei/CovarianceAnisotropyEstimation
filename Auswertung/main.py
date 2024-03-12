@@ -3,7 +3,7 @@ import sys
 sys.path.append('..')
 from dependencies.plot import ellipsis, ellipsis_test
 import importlib.util
-from dependencies.prepare_data import prepare_ellipsis_data
+from dependencies.prepare_data import prepare_data
 from dependencies.krig_field import krig
 # from Clean.dependencies.model_params import get
 import flopy
@@ -39,10 +39,10 @@ if __name__ == '__main__':
             _ , gwf = module2.load_template_model(pars)
             
             
-            ellipsis_data, mean_ellipsis, errors, ppk = prepare_ellipsis_data(target_folder, krig = krig)
+            ellipsis_data, mean_ellipsis, errors, ppk = prepare_data(target_folder, krig = krig)
             ellipsis(ellipsis_data, mean_ellipsis, errors, pars, model_directory, movie = True)
         elif test:
-            ellipsis_data, mean_ellipsis, errors, _ = prepare_ellipsis_data(target_folder, krig = krig)
+            ellipsis_data, mean_ellipsis, errors, _ = prepare_data(target_folder, krig = krig)
             ellipsis_test(ellipsis_data, mean_ellipsis, errors, pars)
         else:
             ellipsis(ellipsis_data, mean_ellipsis, errors, pars, model_directory, movie = True)

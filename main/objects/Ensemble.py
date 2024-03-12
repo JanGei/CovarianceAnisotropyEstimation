@@ -60,7 +60,7 @@ class Ensemble:
             if self.pilotp_flag:
                 damp[:len(self.pp_cid)] = val[1]
             else:
-                damp[:len(self.members[0].npf.k.array)] = val[1]
+                damp[:len(self.members[0].npf.k.array.squeeze())] = val[1]
             
         return damp
         

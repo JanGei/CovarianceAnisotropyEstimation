@@ -174,7 +174,7 @@ if __name__ == '__main__':
     for t_step in range(pars['nsteps']):
         if t_step == 0:
             MF_Ensemble.remove_current_files(pars)
-        if t_step == 1200:
+        if t_step == 10:
             Assimilate = False
         
         # visualize covariance structures
@@ -220,7 +220,10 @@ if __name__ == '__main__':
             MF_Ensemble.apply_X(pars['EnKF_p'], EnKF.X)
 
             print(f'Application of results plus kriging took {(time.time() - start_time):.2f} seconds')
-        
+        else:
+            # Very important: update initial conditions if youre not assimilating
+            MF_Ensemble.update_initial_heads()
+
         start_time = time.time()
         MF_Ensemble.model_error(true_h[t_step])
         MF_Ensemble.record_state(pars, pars['EnKF_p'])
