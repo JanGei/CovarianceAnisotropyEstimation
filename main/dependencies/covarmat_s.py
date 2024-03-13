@@ -16,7 +16,7 @@ def rotate_coordinates(coordinates, ang):
 def covarmat_s(Xint, Xmeas, Ctype, theta):
     # Xint: (n x dim) array of interpolation locations
     # Xmeas: (m x dim) array of measurement locations
-    # Ctype: type of covariance model (1: exponential, 2: Gaussian, 3: cubic)
+    # Ctype: type of covariance model (1: exponential, 2: Gaussian, 3: Matern)
     # theta: (n_theta x 1) array of structural parameters
     #        first: variance
     #        following: correlation lengths
@@ -24,7 +24,7 @@ def covarmat_s(Xint, Xmeas, Ctype, theta):
     
     m, dim = Xmeas.shape
     n = Xint.shape[0]
-    ang = np.deg2rad(theta[2])
+    ang = theta[2]
     sigma2 = np.array(theta[0])
     lx = np.array(theta[1]).flatten()
     if len(lx) == 1:
@@ -49,8 +49,8 @@ def covarmat_s(Xint, Xmeas, Ctype, theta):
     elif Ctype == 2:
         Q_ssm = sigma2 * np.exp(-H ** 2)
     elif Ctype == 3:
-        Q_ssm = sigma2 * (1 - 1.5 * H + 0.5 * H ** 3)
-        Q_ssm[H > 1] = 0
+        Q_ssm = sigma2 * np.multiply((1+np.sqrt(3)*H), np.exp(-np.sqrt(3)*H))
+        # Q_ssm[H > 1] = 0
     else:
         raise ValueError("Invalid Ctype value. Must be 1, 2, or 3.")
 

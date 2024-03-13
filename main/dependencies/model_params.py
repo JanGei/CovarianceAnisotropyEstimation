@@ -61,7 +61,7 @@ def get():
     computer = ['office', 'icluster', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 2
+        n_mem  = 16
         nprocs = np.min([n_mem, psutil.cpu_count()])
         if n_mem == 2:
             nprocs = 1
@@ -105,7 +105,7 @@ def get():
     h_damp = 0.5
     cov_damp = 0.1
     npf_damp = 1
-    l_red = 1
+    l_red = 5
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
     
     pars    = {
@@ -114,7 +114,7 @@ def get():
         'setup' : setup,
         'EnKF_p': variants[choice], 
         'damp'  : damp[choice],
-        'n_PP'  : 50,
+        'n_PP'  : 100,
         'eps'   : 0.05,
         'covt'  : covtype,
         'valt'  : valtype,

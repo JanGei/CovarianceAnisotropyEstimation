@@ -1,20 +1,24 @@
 import flopy
-# import gstools as gs
-from gstools import krige
 import numpy as np
+import os
+import sys
+sys.path.append('..')
+from dependencies.randomK_points import randomK_points
+from dependencies.covarmat_s import covarmat_s
 
 class MFModel:
     
-    def __init__(self, direc: str,  mname:str, cov_model = [], ellips = [], pilotp_flag = True):
+    def __init__(self, direc: str,  pars, l_angs = [], ellips = []):
         self.direc      = direc
-        self.mname      = mname
+        self.mname      = pars['mname']
+        self.pars       = pars
         self.sim        = flopy.mf6.modflow.MFSimulation.load(
                                 version             = 'mf6', 
                                 exe_name            = 'mf6',
                                 sim_ws              = direc, 
                                 verbosity_level     = 0
                                 )
-        self.gwf        = self.sim.get_model(mname)
+        self.gwf        = self.sim.get_model(self.mname)
         self.npf        = self.gwf.npf
         self.rch        = self.gwf.rch
         self.riv        = self.gwf.riv
@@ -23,8 +27,9 @@ class MFModel:
         self.chd        = self.gwf.chd
         self.cell_xy    = self.gwf.modelgrid.xyzcellcenters
         self.old_npf    = []
-        if pilotp_flag:
-            self.cov_model  = cov_model
+        self.lx         = [l_angs[0], l_angs[1]]
+        self.ang        = l_angs[2]
+        if pars['mname']:
             self.ellips_mat = np.array([[ellips[0], ellips[1]], [ellips[1], ellips[2]]])
             
         
@@ -88,7 +93,7 @@ class MFModel:
         self.ic.write()
         
         
-    def kriging(self, params, data, pp_xy):
+    def kriging(self, params, data, pp_xy, pp_cid):
         
         if 'cov_data' in params:   
             
@@ -114,22 +119,15 @@ class MFModel:
                 self.update_ellips_mat(mat)
                 
                 l1, l2, angle = self.extract_truth(eigenvalues, eigenvectors)
-                
-                self.cov_model.len_scale = [l1, l2]
-
-                self.cov_model.angles = angle
+                self.lx = [l1, l2]
+                self.angle = angle
                 
                 # Is ppk really without a logarithm
                 pp_k = data[1]
+    
+                field = self.conditional_field(pp_xy, pp_cid, pp_k)
                 
-                krig = krige.Ordinary(self.cov_model,
-                                      cond_pos = (pp_xy[:,0],
-                                                  pp_xy[:,1]),
-                                      cond_val = pp_k)
-                field = krig((self.cell_xy[0],
-                              self.cell_xy[1]))
-                
-                self.set_field([np.exp(field[0])], ['npf'])
+                self.set_field([np.exp(field)], ['npf'])
                 
                 return [l1, l2, angle%np.pi]
                 
@@ -143,15 +141,10 @@ class MFModel:
                 
         else:
             pp_k = data
+          
+            field = self.conditional_field(pp_xy, pp_cid, pp_k)
             
-            krig = krige.Ordinary(self.cov_model,
-                                  cond_pos = (pp_xy[:,0],
-                                              pp_xy[:,1]),
-                                  cond_val = pp_k)
-            field = krig((self.cell_xy[0],
-                          self.cell_xy[1]))
-            
-            self.set_field([np.exp(field[0])], ['npf'])
+            self.set_field([np.exp(field)], ['npf'])
         
     
     def extract_truth(self, eigenvalues, eigenvectors):
@@ -194,5 +187,75 @@ class MFModel:
             
         return eigenvalues, eigenvectors, mat, pos_def
 
-
+    def conditional_field(self, pp_xy, pp_cid, pp_k):
+        
+        cov     = self.pars['cov']
+        sigma   = self.pars['sigma'][0]
+        cov     = self.pars['cov']
+        k_ref   = np.loadtxt(self.pars['k_r_d'], delimiter = ',')
+        
+        mg = self.gwf.modelgrid
+        xyz = mg.xyzcellcenters
+        cxy = np.vstack((xyz[0], xyz[1])).T
+        dxmin = np.min([max(sublist) - min(sublist) for sublist in mg.xvertices])
+        dymin = np.min([max(sublist) - min(sublist) for sublist in mg.yvertices])
+        dx = [dxmin, dymin]
+        sig_meas = 0.1 # standard deviation of measurement error
+        
+        # random, unconditional field for the given variogram
+        Kg = np.mean(np.exp(pp_k))
+        Kflat = randomK_points(mg.extent, cxy, dx,  self.lx, self.ang, sigma, cov, Kg) 
+        
+        # Construct covariance matrix of measurement error
+        m = len(pp_k)
+        n = cxy.shape[0]
+        # Discretized trend functions (for constant mean)
+        X = np.ones((n,1))
+        Xm = np.ones((m,1))        
+        
+        R = np.eye(m)* sig_meas**2
+        
+        Ctype = 2
+        # Construct the necessary covariance matrices
+        Qssm = covarmat_s(cxy,pp_xy,Ctype,[sigma,self.lx,self.ang]) 
+        Qsmsm = covarmat_s(pp_xy,pp_xy,Ctype,[sigma,self.lx, self.ang])
+            
+        # kriging matrix and its inverse
+        krigmat = np.vstack((np.hstack((Qsmsm+R, Xm)), np.append(Xm.T, 0)))
+        # ikrigmat = np.linalg.inv(krigmat)
+        
+        # generating a conditional realisation
+        sunc_at_meas = np.zeros(m)
+        for ii in range(m):
+            sunc_at_meas[ii] = Kflat[int(pp_cid[ii])] 
+        
+        # Perturb the measurements and subtract the unconditional realization
+        spert = np.squeeze(pp_k) + np.squeeze(sig_meas * np.random.randn(*pp_k.shape)) - np.squeeze(sunc_at_meas)
+        
+        # Solve the kriging equation
+        sol = np.linalg.lstsq(krigmat, np.append(spert.flatten(), 0), rcond=None)[0]
+        
+        # Separate the trend coefficient(s) from the weights of the covariance-functions in the function-estimate form
+        xi = sol[:m]
+        beta = sol[m]
+        
+        s_cond = np.squeeze(Qssm.dot(xi)) + np.squeeze(X.dot(beta)) + Kflat
+        
+        return s_cond
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         

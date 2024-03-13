@@ -2,7 +2,7 @@ from scipy.stats import qmc
 import numpy as np
 import flopy
 from shapely.geometry import MultiPoint
-
+from shapely.geometry import Point
 
     
 def create_pilot_points(gwf, pars:dict,):
@@ -32,7 +32,10 @@ def create_pilot_points(gwf, pars:dict,):
         
         pp_xy_proposal = sampler.random(n = n_test) * np.array([xyzex[1], xyzex[3]])
         
-        pp_cid_proposal = np.array(ixs.intersect(MultiPoint(pp_xy_proposal)).cellids.astype(int))
+        pp_cid_proposal = np.zeros(len(pp_xy_proposal))
+        for i, point in  enumerate(pp_xy_proposal):
+            pp_cid_proposal[i] = ixs.intersect(Point(point)).cellids.astype(int)
+        
         
         common_cells = np.intersect1d(pp_cid_proposal, blocked_cid)
         
@@ -41,7 +44,7 @@ def create_pilot_points(gwf, pars:dict,):
         # get xy coordinated from proposed cells
         
         if len(pp_cid_accepted) == nPP:
-            pp_xy_accepted = np.array([xy[i] for i in pp_cid_accepted])
+            pp_xy_accepted = np.array([xy[int(i)] for i in pp_cid_accepted])
             
 
         
@@ -52,7 +55,7 @@ def create_pilot_points(gwf, pars:dict,):
             
             
     
-    return pp_cid_accepted, pp_xy_accepted
+    return pp_cid_accepted.astype(int), pp_xy_accepted.astype(int)
 
 
 

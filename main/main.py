@@ -2,8 +2,10 @@ from dependencies.model_params import get
 from dependencies.copy import create_Ensemble
 from dependencies.convert_transient import convert_to_transient
 from dependencies.create_pilot_points import create_pilot_points
-from dependencies.create_k_fields import create_k_fields, create_conditional_k_fields
+# from dependencies.create_k_fields import create_k_fields
+from dependencies.conditional_k import conditional_k
 from dependencies.load_template_model import load_template_model
+from dependencies.write_file import write_file
 from dependencies.load_observations import load_true_h_field
 from dependencies.get_transient_data import get_transient_data
 from dependencies.plot import plot_fields, plot_POI, plot_k_fields, plot, ellipsis, compare_mean_true
@@ -60,32 +62,28 @@ if __name__ == '__main__':
     true_h = load_true_h_field(pars)
     
     k_fields = []
-    cov_models = []
     cor_ellips = []
     l_angs = []
     
+    
     if pars['pilotp']:
         pp_cid, pp_xy = create_pilot_points(gwf, pars)
-        create_conditional_k_fields(gwf,
-                                    pars, 
-                                    pp_xy,
-                                    pp_cid,
-                                    covtype = pars['covt'],
-                                    valtype = pars['valt'])
-        result = Parallel(n_jobs=nprocs, backend = "threading")(delayed(create_k_fields)(
+        write_file(pars,[pp_cid, pp_xy], ["pp_cid","pp_xy"], 0, intf = True)
+        # create_k_fields
+        result = Parallel(n_jobs=nprocs, backend = "threading")(delayed(conditional_k)(
             gwf,
             pars, 
             pp_xy,
             pp_cid,
             covtype = pars['covt'],
-            valtype = pars['valt']) 
+            valtype = pars['valt']
+            )
             for idx in range(n_mem)
-            )    
+            )
         # sorting the results
         for tup in result:
-            field, covmod, ellips, l_ang = tup
+            field, ellips, l_ang = tup
             k_fields.append(field)
-            cov_models.append(covmod)
             cor_ellips.append(ellips)
             l_angs.append(l_ang)
     else:
@@ -102,7 +100,6 @@ if __name__ == '__main__':
             for idx in range(n_mem)
             )
         for field in k_fields:
-            cov_models.append([])
             cor_ellips.append([])
             l_angs.append([])
             pp_xy, pp_cid = [], []
@@ -113,7 +110,7 @@ if __name__ == '__main__':
     
     # plot_POI(gwf, pp_xy, pars, bc = True)
     # plot_fields(gwf, pars,  k_fields[0], k_fields[1])
-    # plot_k_fields(gwf, pars,  k_fields)
+    plot_k_fields(gwf, pars,  k_fields)
     
     # plot(gwf, ['logK','h'], bc=True)
     
@@ -128,10 +125,9 @@ if __name__ == '__main__':
     start_time = time.time()
     models = Parallel(n_jobs=nprocs, backend="threading")(delayed(MFModel)(
         model_dir[idx],
-        pars['mname'],
-        cov_models[idx],
-        cor_ellips[idx],
-        pars['pilotp']) 
+        pars,
+        l_angs[idx],
+        cor_ellips[idx]) 
         for idx in range(n_mem)
         )
     
@@ -174,21 +170,8 @@ if __name__ == '__main__':
     for t_step in range(pars['nsteps']):
         if t_step == 0:
             MF_Ensemble.remove_current_files(pars)
-        if t_step == 10:
+        if t_step == 1200:
             Assimilate = False
-        
-        # visualize covariance structures
-        if pars['setup'] == 'office' and 'cov_data' in pars['EnKF_p']:
-            covl.append(MF_Ensemble.get_member_fields(['cov_data'])[0])
-            ellipsis(
-                MF_Ensemble.ellipses,
-                MF_Ensemble.mean_cov,
-                pars
-                )
-            # if t_step%10 == 0:
-            #     k_fields_dict = MF_Ensemble.get_member_fields(['npf'])
-            #     k_fields = [d['npf'] for d in k_fields_dict]
-            #     plot_k_fields(gwf, pars,  k_fields, np.rad2deg(MF_Ensemble.ellipses[:,2]))
                 
         print('--------')
         print(f'time step {t_step}')
@@ -227,8 +210,23 @@ if __name__ == '__main__':
         start_time = time.time()
         MF_Ensemble.model_error(true_h[t_step])
         MF_Ensemble.record_state(pars, pars['EnKF_p'])
-        compare_mean_true(gwf, [k_ref, MF_Ensemble.meanlogk])  
-        # print(MF_Ensemble.members[0].npf.k.array[0][0])
+        # visualize covariance structures
+        if pars['setup'] == 'office' and 'cov_data' in pars['EnKF_p'] and t_step%10 == 0:
+            # compare_mean_true(gwf, [k_ref, MF_Ensemble.meanlogk]) 
+            # covl.append(MF_Ensemble.get_member_fields(['cov_data'])[0])
+            # k_fields = MF_Ensemble.get_fields(['npf'])
+            # plot_k_fields(gwf, pars,  [field['npf'] for field in k_fields])
+            ellipsis(
+                MF_Ensemble.ellipses,
+                MF_Ensemble.mean_cov,
+                pars
+                )
+            # if t_step%10 == 0:
+            #     k_fields_dict = MF_Ensemble.get_member_fields(['npf'])
+            #     k_fields = [d['npf'] for d in k_fields_dict]
+            #     plot_k_fields(gwf, pars,  k_fields, np.rad2deg(MF_Ensemble.ellipses[:,2]))
+         
+
         print(f'Plotting and recording took {(time.time() - start_time):.2f} seconds')
     
     

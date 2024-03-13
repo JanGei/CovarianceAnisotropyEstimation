@@ -1,57 +1,31 @@
-from dependencies.randomK import randomK2, randomK
+# from dependencies.randomK import randomK2, randomK
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.tri import Triangulation
 from scipy.interpolate import griddata
+from dependencies.load_template_model import load_template_model
+from dependencies.model_params import get
+from dependencies.plot import plot_k_fields
+from dependencies.randomK_points import randomK_points
 
-lx = np.array([4250, 150])
-sigY = np.array([2])
-ang = np.array([0])
+pars = get()
+sim, gwf = load_template_model(pars)
+mg = gwf.modelgrid
+xyz = gwf.modelgrid.xyzcellcenters
+xmin, xmax, ymin, ymax = mg.extent
+dxmin = np.min([max(sublist) - min(sublist) for sublist in mg.xvertices])
+dymin = np.min([max(sublist) - min(sublist) for sublist in mg.yvertices])
+dx = [dxmin, dymin]
+
+cxy = np.vstack((xyz[0], xyz[1])).T
+
+ang = 90
 Ctype = 'Matern'
-Kg = 1e-4
-nx = np.array([300, 200])
-dx = np.array([20,20])
-# nx_ex = nx+np.round(5*lx/dx)
-x = np.arange(-nx[0] * dx[0] / 2 + dx[0]/2, nx[0] * dx[0] / 2 , dx[0])
-y = np.arange(-nx[1] * dx[1] / 2 + dx[1]/2, nx[1] * dx[1] / 2 , dx[1])
-# x = np.arange(-nx[0] / 2 * dx[0], (nx[0] - 1) / 2 * dx[0] + dx[0], dx[0])
-# y = np.arange(-nx[1] / 2 * dx[1], (nx[1] - 1) / 2 * dx[1] + dx[1], dx[1])
+sigY = 3
+lx = np.array([1500, 200])
+Kg = 2e-4
 
-# Grid in Physical Coordinates
-X, Y = np.meshgrid(x, y)
+field, K = randomK_points(mg.extent, cxy, dx,lx,ang,sigY,Ctype,Kg)
 
-coordinates = np.vstack((X.ravel(), Y.ravel())).T
-
-ncells  = 10000
-coordinates = np.zeros((ncells, 2))
-coordinates[:,0] = np.random.uniform(-nx[0] * dx[0] / 2 + dx[0]/2, nx[0] * dx[0] / 2, ncells)
-coordinates[:,1] = np.random.uniform(-nx[1] * dx[1] / 2 + dx[1]/2, nx[1] * dx[1] / 2, ncells)
-
-
-K = randomK(nx, dx,lx,ang,sigY,Ctype,Kg)
-corval, K2 = randomK2(coordinates, dx, lx, ang, sigY, Ctype, Kg)
-# 
-plt.figure()
-plt.pcolor(X,Y,np.log(K))
-plt.gca().set_aspect('equal')
-
-plt.figure()
-# triang = Triangulation(coordinates[:,0], coordinates[:,1])
-# plt.tricontourf(coordinates[:,0], coordinates[:,1], np.log(K2), levels = 100)
-plt.pcolor(X,Y,np.log(K2))
-plt.scatter(coordinates[:,0], coordinates[:,1], c='black', marker='x', s = 1)
-plt.gca().set_aspect('equal')
-
-print(np.mean(K))
-print(np.mean(K2))
-print(np.var(K))
-print(np.var(K2))
-
-if np.mean(K) > np.mean(K2):
-    print('1')
-else:
-    print('2')
-if np.var(K) > np.var(K2):
-    print('a')
-else:
-    print('b')
+plot_k_fields(gwf, pars,[field, K.flatten()])
+# corval, K2 = randomK2(coordinates, dx, lx, ang, sigY, Ctype, Kg)

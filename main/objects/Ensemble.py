@@ -1,6 +1,7 @@
 from joblib import Parallel, delayed
 import numpy as np
 import os
+import time
     
 class Ensemble:
     
@@ -107,15 +108,18 @@ class Ensemble:
             
         
         if self.pilotp_flag:
+            start_time = time.time()
             result = Parallel(n_jobs=self.nprocs,
                               backend="threading")(
                                   delayed(self.members[idx].kriging)(
                                       params, 
                                       data[idx], 
-                                      self.pp_xy
+                                      self.pp_xy,
+                                      self.pp_cid
                                       ) 
                                   for idx in range(self.n_mem)
                                   )
+            print(f'Kriging alone took {(time.time() - start_time):.2f} seconds')
             Parallel(n_jobs=self.nprocs,
                      backend="threading")(
                          delayed(self.members[idx].set_field)(
