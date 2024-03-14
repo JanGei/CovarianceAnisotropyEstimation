@@ -5,6 +5,8 @@ import sys
 sys.path.append('..')
 from dependencies.randomK_points import randomK_points
 from dependencies.covarmat_s import covarmat_s
+import time
+
 
 class MFModel:
     
@@ -25,12 +27,17 @@ class MFModel:
         self.wel        = self.gwf.wel
         self.ic         = self.gwf.ic
         self.chd        = self.gwf.chd
-        self.cell_xy    = self.gwf.modelgrid.xyzcellcenters
+        self.mg         = self.gwf.modelgrid
+        self.cxy        = np.vstack((self.mg.xyzcellcenters[0], self.mg.xyzcellcenters[1])).T
+        dxmin           = np.min([max(sublist) - min(sublist) for sublist in self.mg.xvertices])
+        dymin           = np.min([max(sublist) - min(sublist) for sublist in self.mg.yvertices])
+        self.dx         = [dxmin, dymin]
         self.old_npf    = []
-        self.lx         = [l_angs[0], l_angs[1]]
-        self.ang        = l_angs[2]
-        if pars['mname']:
+        if pars['pilotp']:
             self.ellips_mat = np.array([[ellips[0], ellips[1]], [ellips[1], ellips[2]]])
+            self.lx         = [l_angs[0], l_angs[1]]
+            self.ang        = l_angs[2]
+            
             
         
         
@@ -94,7 +101,7 @@ class MFModel:
         
         
     def kriging(self, params, data, pp_xy, pp_cid):
-        
+        start_time = time.time()
         if 'cov_data' in params:   
             
             # The normalized (unit “length”) eigenvectors, such that the column
@@ -124,8 +131,9 @@ class MFModel:
                 
                 # Is ppk really without a logarithm
                 pp_k = data[1]
-    
+                
                 field = self.conditional_field(pp_xy, pp_cid, pp_k)
+                
                 
                 self.set_field([np.exp(field)], ['npf'])
                 
@@ -146,6 +154,7 @@ class MFModel:
             
             self.set_field([np.exp(field)], ['npf'])
         
+        # print(f'Entire function took {(time.time() - start_time):.2f} seconds')
     
     def extract_truth(self, eigenvalues, eigenvectors):
         
@@ -192,23 +201,16 @@ class MFModel:
         cov     = self.pars['cov']
         sigma   = self.pars['sigma'][0]
         cov     = self.pars['cov']
-        k_ref   = np.loadtxt(self.pars['k_r_d'], delimiter = ',')
-        
-        mg = self.gwf.modelgrid
-        xyz = mg.xyzcellcenters
-        cxy = np.vstack((xyz[0], xyz[1])).T
-        dxmin = np.min([max(sublist) - min(sublist) for sublist in mg.xvertices])
-        dymin = np.min([max(sublist) - min(sublist) for sublist in mg.yvertices])
-        dx = [dxmin, dymin]
         sig_meas = 0.1 # standard deviation of measurement error
         
         # random, unconditional field for the given variogram
         Kg = np.mean(np.exp(pp_k))
-        Kflat = randomK_points(mg.extent, cxy, dx,  self.lx, self.ang, sigma, cov, Kg) 
         
+        Kflat = randomK_points(self.mg.extent, self.cxy, self.dx,  self.lx, self.ang, sigma, cov, Kg) 
+
         # Construct covariance matrix of measurement error
         m = len(pp_k)
-        n = cxy.shape[0]
+        n = self.cxy.shape[0]
         # Discretized trend functions (for constant mean)
         X = np.ones((n,1))
         Xm = np.ones((m,1))        
@@ -217,9 +219,9 @@ class MFModel:
         
         Ctype = 2
         # Construct the necessary covariance matrices
-        Qssm = covarmat_s(cxy,pp_xy,Ctype,[sigma,self.lx,self.ang]) 
+        Qssm = covarmat_s(self.cxy,pp_xy,Ctype,[sigma,self.lx,self.ang]) 
         Qsmsm = covarmat_s(pp_xy,pp_xy,Ctype,[sigma,self.lx, self.ang])
-            
+        
         # kriging matrix and its inverse
         krigmat = np.vstack((np.hstack((Qsmsm+R, Xm)), np.append(Xm.T, 0)))
         # ikrigmat = np.linalg.inv(krigmat)
@@ -240,7 +242,7 @@ class MFModel:
         beta = sol[m]
         
         s_cond = np.squeeze(Qssm.dot(xi)) + np.squeeze(X.dot(beta)) + Kflat
-        
+
         return s_cond
         
         

@@ -61,7 +61,7 @@ def get():
     computer = ['office', 'icluster', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 16
+        n_mem  = 8
         nprocs = np.min([n_mem, psutil.cpu_count()])
         if n_mem == 2:
             nprocs = 1
@@ -79,9 +79,9 @@ def get():
         n_pre_run = 40
     
     
-    choice = 0
+    choice = 2
     variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
-    pp_flag = True
+    pp_flag = False
     if not pp_flag and choice == 0 | choice == 1:
         print("You cant have a variogram with no pilotpoints - yet")
         sys.exit() 

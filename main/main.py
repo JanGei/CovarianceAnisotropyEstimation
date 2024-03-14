@@ -110,7 +110,7 @@ if __name__ == '__main__':
     
     # plot_POI(gwf, pp_xy, pars, bc = True)
     # plot_fields(gwf, pars,  k_fields[0], k_fields[1])
-    plot_k_fields(gwf, pars,  k_fields)
+    # plot_k_fields(gwf, pars,  k_fields)
     
     # plot(gwf, ['logK','h'], bc=True)
     
@@ -148,7 +148,7 @@ if __name__ == '__main__':
     MF_Ensemble.set_field(k_fields, ['npf'])
     # plot_k_fields(gwf, pars,  k_fields, np.rad2deg(MF_Ensemble.ellipses[:,2]))
     print(f'Ensemble is initiated and respective k-fields are set in {(time.time() - start_time):.2f} seconds')
-    #%% Running each model 10 times
+    #%% Running each model n times
     start_time = time.time()
     
     for idx in range(pars['nprern']):
@@ -177,6 +177,7 @@ if __name__ == '__main__':
         print(f'time step {t_step}')
         start_time = time.time()
         rch_data, wel_data, riv_data, Y_obs = get_transient_data(pars, t_step, true_h[t_step], obs_cid)
+        start_time = time.time()
         MF_Ensemble.update_transient_data(rch_data, wel_data, riv_data)
         print(f'transient data loaded and applied in {(time.time() - start_time):.2f} seconds')
         
@@ -211,16 +212,20 @@ if __name__ == '__main__':
         MF_Ensemble.model_error(true_h[t_step])
         MF_Ensemble.record_state(pars, pars['EnKF_p'])
         # visualize covariance structures
-        if pars['setup'] == 'office' and 'cov_data' in pars['EnKF_p'] and t_step%10 == 0:
-            # compare_mean_true(gwf, [k_ref, MF_Ensemble.meanlogk]) 
+        if pars['setup'] == 'office' and t_step%10 == 0:
+            if 'cov_data' in pars['EnKF_p']:
+                ellipsis(
+                    MF_Ensemble.ellipses,
+                    MF_Ensemble.mean_cov,
+                    pars
+                    )
+                
+                
+            compare_mean_true(gwf, [k_ref, MF_Ensemble.meanlogk]) 
             # covl.append(MF_Ensemble.get_member_fields(['cov_data'])[0])
-            # k_fields = MF_Ensemble.get_fields(['npf'])
-            # plot_k_fields(gwf, pars,  [field['npf'] for field in k_fields])
-            ellipsis(
-                MF_Ensemble.ellipses,
-                MF_Ensemble.mean_cov,
-                pars
-                )
+            k_fields = MF_Ensemble.get_member_fields(['npf'])
+            plot_k_fields(gwf, pars,  [field['npf'] for field in k_fields])
+            
             # if t_step%10 == 0:
             #     k_fields_dict = MF_Ensemble.get_member_fields(['npf'])
             #     k_fields = [d['npf'] for d in k_fields_dict]

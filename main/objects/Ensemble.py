@@ -237,14 +237,14 @@ class Ensemble:
         rch_spd[0]['recharge'] = rch_data
         riv_spd[0]['stage'] = rivhl * riv_data
         wel_spd[0]['q'] = wel_data
-        
+
         Parallel(n_jobs=self.nprocs)(delayed(self.members[idx].set_field)(
             [rch_spd, wel_spd, riv_spd],
             ['rch', 'wel', 'riv']
             ) 
             for idx in range(self.n_mem)
             )
-        
+
     
     def model_error(self,  true_h):
         
@@ -316,12 +316,23 @@ class Ensemble:
     
     def record_state(self, pars: dict, params: list):
         
+        mean_h, var_h = self.get_mean_var()
         k_fields = self.get_member_fields(['npf'])
         k_fields = np.array([field['npf'] for field in k_fields]).squeeze()
         self.meanlogk = np.mean(np.log(k_fields), axis = 0)
         self.logmeank = np.log(np.mean(k_fields, axis = 0))
         
         direc = pars['resdir']
+        
+        f = open(os.path.join(direc,  'h_mean.dat'),'a')
+        g = open(os.path.join(direc,  'h_var.dat'),'a')
+        for i in range(len(mean_h)):
+            f.write("{:.5f} ".format(mean_h[i]))
+            g.write("{:.5f} ".format(var_h[i]))
+        f.write('\n')
+        g.write('\n')
+        f.close()
+        g.close()
         
         f = open(os.path.join(direc,  'errors.dat'),'a')
         f.write("{:.4f} ".format(self.ole[-1]))
@@ -396,6 +407,8 @@ class Ensemble:
                       os.path.join(pars['resdir'], 'logmeank.dat'),
                       os.path.join(pars['resdir'], 'meanlogk.dat'),
                       os.path.join(pars['resdir'], 'k_mean.dat'),
+                      os.path.join(pars['resdir'], 'h_mean.dat'),
+                      os.path.join(pars['resdir'], 'h_var.dat'),
                       os.path.join(pars['resdir'], 'obs_mean.dat')]
         
         for file_path in file_paths:
