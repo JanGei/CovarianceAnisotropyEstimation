@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.interpolate import griddata
 
-def randomK_points(extent, cxy, dx,  lx, ang, sigY, Ctype, Kg):
+def randomK_points(extent, cxy, dx,  lx, ang, sigY, Ctype, Kg, random = True):
     '''
     Generate auto-correlated 2-D random hydraulic-conductivity fields using
     spectral methods.
@@ -24,7 +24,8 @@ def randomK_points(extent, cxy, dx,  lx, ang, sigY, Ctype, Kg):
     K          : Field of hydraulic Conductivity
 
     '''
-    # np.random.seed(42)
+    if not random:
+        np.random.seed(2)
     # ang = np.deg2rad(ang)
     ang = ang - np.pi/4
     # total number of nodes
@@ -34,8 +35,9 @@ def randomK_points(extent, cxy, dx,  lx, ang, sigY, Ctype, Kg):
     nx = int(np.ceil((xmax - xmin)/dx[0]))
     ny = int(np.ceil((ymax - ymin)/dx[1]))
     
-    nx_ex = np.round((np.array([xmax-xmin, ymax-ymin]) + 5*np.array(lx)) /dx).astype(int)
-    
+    nx_ex = np.round((np.array([xmax-xmin, ymax-ymin]) + 5*np.array(lx)) / dx).astype(int)
+    nx_ex = [np.max(nx_ex), np.max(nx_ex)]
+    print(nx_ex)
     x = np.arange((-nx_ex[0] +1) / 2 * dx[0], (nx_ex[0] - 1) / 2 * dx[0] + dx[0], dx[0])
     y = np.arange((-nx_ex[1] +1) / 2 * dx[1], (nx_ex[1] - 1) / 2 * dx[1] + dx[1], dx[1])
     

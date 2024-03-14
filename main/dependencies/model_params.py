@@ -96,7 +96,7 @@ def get():
         valtype = "good"
         
     elif choice == 2:
-        covtype = "good"
+        covtype = "random"
         if pp_flag:
             valtype = "random"
         else:
@@ -105,7 +105,7 @@ def get():
     h_damp = 0.5
     cov_damp = 0.1
     npf_damp = 1
-    l_red = 5
+    l_red = 1
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
     
     pars    = {

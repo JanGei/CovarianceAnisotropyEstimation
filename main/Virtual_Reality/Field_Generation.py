@@ -13,8 +13,6 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import flopy
 
 # imports from parent directory
-# import sys
-# sys.path.append('..')
 from dependencies.plot import plot_fields
 from Virtual_Reality.functions.generator import gsgenerator
 
@@ -23,7 +21,6 @@ def generate_fields(pars):
     # Watch out as first entry corresponds to y and not to x
     
     nx      = pars['nx']
-    dx      = pars['dx']
     lx      = pars['lx']
     ang     = pars['ang']
     sigma   = pars['sigma']
@@ -42,8 +39,12 @@ def generate_fields(pars):
                             )
     
     gwf = sim.get_model(mname)
-    # mg = gwf.modelgrid
+    mg = gwf.modelgrid
     # xyz = mg.xyzcellcenters
+    cxy = np.vstack((mg.xyzcellcenters[0], mg.xyzcellcenters[1])).T
+    dxmin           = np.min([max(sublist) - min(sublist) for sublist in mg.xvertices])
+    dymin           = np.min([max(sublist) - min(sublist) for sublist in mg.yvertices])
+    dx         = [dxmin, dymin]
     # xyzip = list(zip(xyz[0], xyz[1]))
     
     
@@ -54,6 +55,10 @@ def generate_fields(pars):
     rech    = gsgenerator(gwf, pars, lx[1], ang[1], sigma[1],  cov, random = False) 
     rech        = (rech.T + mu[1])  # [mm/d]
     
+    # TODO: fix this at some other time
+    # K = randomK_points(mg.extent, cxy, dx,  lx[0], np.deg2rad(ang[0]), sigma[0], cov, mu[0], random = False)
+    # R = randomK_points(mg.extent, cxy, dx,  lx[1], np.deg2rad(ang[1]), sigma[1], cov, mu[1], random = False)
+    # K = np.exp(K)
     # Anmerkung des Übersetzers: Beim generieren dieser Felder ist die Varianz per se dimensionslos
     # Wenn wir also die Felder von Erdal und Cirpka nachbilden wollen, müssen wir überhaupt nicht
     # die Varianz mitscalieren, wenn die Einheiten geändert werden, sonder nur der mean
@@ -70,3 +75,10 @@ def generate_fields(pars):
     #%% Saving the fields - Übergabe in (m/s)
     np.savetxt(os.path.join(pars['k_r_d']), np.exp(logK), delimiter = ',')
     np.savetxt(os.path.join(pars['r_r_d']), rech/1000/86400, delimiter = ',')
+
+# import sys
+# sys.path.append('..')
+# from dependencies.randomK_points import randomK_points
+# from dependencies.model_params import get
+# pars = get()
+# generate_fields(pars)
