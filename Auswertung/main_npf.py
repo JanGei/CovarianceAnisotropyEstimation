@@ -4,6 +4,7 @@ import importlib.util
 sys.path.append('..')
 from dependencies.load_template_model import load_template_model
 from dependencies.plotFH import  plot_k_fields
+from dependencies.initial_fields import plot_initial_k_fields
 from dependencies.ellips_k import  ellips_k
 from dependencies.prepare_data import prepare_data
 import numpy as np
@@ -14,8 +15,8 @@ import numpy as np
 if __name__ == '__main__':
     cwd = os.getcwd()
     # specify which folder to investigate
-    folder = '3types'
-    models = ['xl01d015d075']
+    folder = 'icnpp'
+    models = ['IC560l02d025']
     # models = ['nPP560l1d05']
     
     for model in models:
@@ -35,19 +36,19 @@ if __name__ == '__main__':
 
         if pars['pilotp']:
             if 'cov_data' in pars['EnKF_p']:
-                ellipsis_data, mean_data, errors, ppk, pp_xy, k_mean, k_true, true_obs, mean_obs = prepare_data(target_folder, pars, krig = True, ellips = True)
+                ellipsis_data, mean_data, errors, ppk, pp_xy, k_mean, k_true, true_obs, mean_obs, k_ini = prepare_data(target_folder, pars, krig = True, ellips = True)
             else:
-                _, _, errors, ppk, pp_xy, k_mean, k_true, true_obs, mean_obs = prepare_data(target_folder, pars, krig = True, ellips = False)
+                _, _, errors, ppk, pp_xy, k_mean, k_true, true_obs, mean_obs, k_ini = prepare_data(target_folder, pars, krig = True, ellips = False)
         else:
             if 'cov_data' in pars['EnKF_p']:
-                ellipsis_data, mean_data, errors, _, _, k_mean, k_true, true_obs, mean_obs = prepare_data(target_folder, pars, krig = False, ellips = True)
+                ellipsis_data, mean_data, errors, _, _, k_mean, k_true, true_obs, mean_obs, k_ini = prepare_data(target_folder, pars, krig = False, ellips = True)
             else:
-                _, _, errors, _, _,k_mean, k_true, true_obs, mean_obs = prepare_data(target_folder, pars, krig = False, ellips = False)
+                _, _, errors, _, _,k_mean, k_true, true_obs, mean_obs, k_ini = prepare_data(target_folder, pars, krig = False, ellips = False)
                 
-
+        plot_initial_k_fields(gwf, pars, k_ini)
         # plot_k_fields(gwf, pars, [k_mean, k_true], true_obs, mean_obs, model_directory, movie = True)
         # ellipsis_data, mean_ellipsis, errors = prepare_ellipsis_data(target_directory)
-        ellips_k(gwf, pars, ellipsis_data, mean_data, k_true, ppk, pp_xy, model_directory, movie=True)
+        # ellips_k(gwf, pars, ellipsis_data, mean_data, k_true, ppk, pp_xy, model_directory, movie=True)
         
     
         # ellipsis(ellipsis_data, mean_ellipsis, errors, pars, target_directory, movie = True)

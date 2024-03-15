@@ -33,16 +33,17 @@ def prepare_data(directory, pars, krig = False, ellips = True):
     
     k_dir = pars['k_r_d'].replace('Virtual_Reality/', '')
     k_true = np.loadtxt(k_dir, delimiter = ',')
+    k_ini = np.load(os.path.join(out_dir, 'k_ensemble_ini.npy'))
     
     if ellips:
         if krig:
-            return ellipsis_data, mean_data, errors, ppk, pp_xy, k_mean, k_true, true_obs, mean_obs
+            return ellipsis_data, mean_data, errors, ppk, pp_xy, k_mean, k_true, true_obs, mean_obs, k_ini
         else:
             
-            return ellipsis_data, mean_data, errors, [], [], k_mean, k_true, true_obs, mean_obs
+            return ellipsis_data, mean_data, errors, [], [], k_mean, k_true, true_obs, mean_obs, k_ini
     else:
         if krig:
-            return [], [], errors, ppk, pp_xy, k_mean, k_true, true_obs, mean_obs
+            return [], [], errors, ppk, pp_xy, k_mean, k_true, true_obs, mean_obs, k_ini
         else:
             
-            return [], [], errors, [], [], k_mean, k_true, true_obs, mean_obs
+            return [], [], errors, [], [], k_mean, k_true, true_obs, mean_obs, k_ini
