@@ -1,11 +1,12 @@
 import flopy
 import numpy as np
-import os
+# import os
 import sys
 sys.path.append('..')
 from dependencies.randomK_points import randomK_points
 from dependencies.covarmat_s import covarmat_s
-import time
+from dependencies.plot import plot_k_fields
+# import time
 
 
 class MFModel:
@@ -33,13 +34,13 @@ class MFModel:
         dymin           = np.min([max(sublist) - min(sublist) for sublist in self.mg.yvertices])
         self.dx         = [dxmin, dymin]
         self.old_npf    = []
+        self.n_failure  = 0
+        self.n_neg_def  = 0
         if pars['pilotp']:
             self.ellips_mat = np.array([[ellips[0], ellips[1]], [ellips[1], ellips[2]]])
             self.lx         = [l_angs[0], l_angs[1]]
             self.ang        = l_angs[2]
             
-            
-        
         
     def set_field(self, field, pkg_name: list):
         for i, name in enumerate(pkg_name):
@@ -60,7 +61,7 @@ class MFModel:
                 self.ic.strt.set_data(field[i])
                 self.ic.write()
             else:
-                print(f'The package {name} that you requested is not part ofthe model')
+                print(f'The package {name} that you requested is not part of the model')
             
         
     def get_field(self, pkg_name: list) -> dict:
@@ -88,11 +89,11 @@ class MFModel:
         return fields
                 
     def simulation(self):
-        # TODO: catch erroneous runs and reset them!
         success, buff = self.sim.run_simulation()
         if not success:
             self.set_field([self.old_npf], ['npf'])
             self.sim.run_simulation()
+            self.n_failure += 1
 
         
     def update_ic(self):
@@ -100,8 +101,8 @@ class MFModel:
         self.ic.write()
         
         
-    def kriging(self, params, data, pp_xy, pp_cid):
-        start_time = time.time()
+    def kriging(self, params, data, pp_xy, pp_cid, mean_cov, var_cov):
+        # start_time = time.time()
         if 'cov_data' in params:   
             
             # The normalized (unit “length”) eigenvectors, such that the column
@@ -123,29 +124,31 @@ class MFModel:
                         reduction -= 0.05
             
             if pos_def:
-                self.update_ellips_mat(mat)
-                
-                l1, l2, angle = self.extract_truth(eigenvalues, eigenvectors)
-                self.lx = [l1, l2]
-                self.angle = angle
-                
-                # Is ppk really without a logarithm
-                pp_k = data[1]
-                
-                field = self.conditional_field(pp_xy, pp_cid, pp_k)
-                
-                
-                self.set_field([np.exp(field)], ['npf'])
-                
-                return [l1, l2, angle%np.pi]
+                success = True
+                l1, l2, angle = self.pos_krig(mat, eigenvalues, eigenvectors, data, pp_cid, pp_xy)
                 
             else:
                 # If nothing works, keep old solution
                 eigenvalues, eigenvectors = np.linalg.eig(self.ellips_mat)
                 
                 l1, l2, angle = self.extract_truth(eigenvalues, eigenvectors)
-                
-            return [l1, l2, angle%np.pi]
+                success = False
+                self.n_neg_def += 1
+                # If nothing has worked for 10 consecutive timesteps, draw a new
+                # variogram from the mean variogram distribution
+                if self.n_neg_def == 10:
+                    print('Replacing covariance model')
+                    pos_def = False
+                    # TODO: THE CODE IS STUCK HERE - INVEEEEEEEEEEEEEEEEEESTIGATE
+                    while not pos_def:
+                        a = np.random.normal(mean_cov[0,0], var_cov[0,0]**2)
+                        b = np.random.normal(mean_cov[1,1], var_cov[1,1]**2)
+                        m = np.random.normal(mean_cov[0,1], var_cov[0,1]**2)
+                        eigenvalues, eigenvectors, mat, pos_def = self.check_new_matrix([a,b,m])
+                        
+                    l1, l2, angle = self.pos_krig(mat, eigenvalues, eigenvectors, data, pp_cid, pp_xy)
+                    
+            return [[l1, l2, angle%np.pi], self.ellips_mat, success]
                 
         else:
             pp_k = data
@@ -178,7 +181,25 @@ class MFModel:
     
     def update_ellips_mat(self, mat):
         self.ellips_mat = mat
+     
+    def pos_krig(self, mat, eigenvalues, eigenvectors, data, pp_cid, pp_xy):
+        self.update_ellips_mat(mat)
         
+        l1, l2, angle = self.extract_truth(eigenvalues, eigenvectors)
+        self.lx = [l1, l2]
+        self.angle = angle
+        
+        # Is ppk really without a logarithm
+        pp_k = data[1]
+        
+        field = self.conditional_field(pp_xy, pp_cid, pp_k)
+        
+        self.set_field([np.exp(field)], ['npf'])
+
+        self.n_neg_def = 0
+        
+        return l1, l2, angle
+    
     def check_new_matrix(self, data):
         mat = np.zeros((2,2))
         mat[0,0] = data[0]
@@ -204,9 +225,9 @@ class MFModel:
         sig_meas = 0.1 # standard deviation of measurement error
         
         # random, unconditional field for the given variogram
-        Kg = np.mean(np.exp(pp_k))
+        # Kg = np.mean(np.exp(pp_k))
         
-        Kflat = randomK_points(self.mg.extent, self.cxy, self.dx,  self.lx, self.ang, sigma, cov, Kg) 
+        Kflat = np.log(randomK_points(self.mg.extent, self.cxy, self.dx,  self.lx, self.ang, sigma, cov, 1)) 
 
         # Construct covariance matrix of measurement error
         m = len(pp_k)

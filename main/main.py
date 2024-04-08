@@ -54,8 +54,6 @@ if __name__ == '__main__':
     model_dir   = create_Ensemble(pars)
     sim, gwf = load_template_model(pars)
     
-    
-    
     obs_cid = intersect_with_grid(gwf, pars['obsxy'])
     # not needed here, but will be needed in non synthetic cases
     # obs_val = load_observations(pars) 
@@ -105,7 +103,8 @@ if __name__ == '__main__':
             pp_xy, pp_cid = [], []
         
     # save original fields
-    np.save(os.path.join(pars['resdir'] ,'k_ensemble_ini.npy'), k_fields)
+    if pars['setup'] == 'icluster' or pars['setup'] == 'binnac':
+        np.save(os.path.join(pars['resdir'] ,'k_ensemble_ini.npy'), k_fields)
     k_ref = np.loadtxt(pars['k_r_d'], delimiter = ',')
     
     # plot_POI(gwf, pp_xy, pars, bc = True)
@@ -141,6 +140,7 @@ if __name__ == '__main__':
                                obs_cid,
                                mask_chd,
                                np.array(l_angs),
+                               np.array(cor_ellips),
                                pp_cid,
                                pp_xy)
     
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     for t_step in range(pars['nsteps']):
         if t_step == 0:
             MF_Ensemble.remove_current_files(pars)
-        if t_step == 1200:
+        if t_step == 2750:
             Assimilate = False
                 
         print('--------')
@@ -224,7 +224,7 @@ if __name__ == '__main__':
             compare_mean_true(gwf, [k_ref, MF_Ensemble.meanlogk]) 
             # covl.append(MF_Ensemble.get_member_fields(['cov_data'])[0])
             k_fields = MF_Ensemble.get_member_fields(['npf'])
-            plot_k_fields(gwf, pars,  [field['npf'] for field in k_fields])
+            plot_k_fields(gwf, pars,  [field['npf'] for field in k_fields[0:8]])
             
             # if t_step%10 == 0:
             #     k_fields_dict = MF_Ensemble.get_member_fields(['npf'])

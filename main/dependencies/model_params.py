@@ -42,26 +42,16 @@ def get():
     temp_m_ws   = os.path.join(ensemb_dir, 'template_model')
     member_ws   = os.path.join(ensemb_dir, 'member')
 
-    # load reference data
+    # reference data paths
     k_ref_dir   = os.path.join(Vrdir, 'model_data','logK_ref.csv')
     r_ref_dir   = os.path.join(Vrdir, 'model_data','rech_ref.csv')
     rivh_dir   = os.path.join(Vrdir, 'model_data','tssl.csv')
     sfac_dir   = os.path.join(Vrdir, 'model_data','sfac.csv')
-    # k_ref       = np.loadtxt(os.path.join(Vrdir, 'model_data','logK_ref.csv'),
-    #                          delimiter = ',')
-    # r_ref       = np.loadtxt(os.path.join(Vrdir, 'model_data','rech_ref.csv'),
-    #                          delimiter = ',')
-    # rivh        = np.genfromtxt(os.path.join(Vrdir, 'model_data','tssl.csv'),
-    #                             delimiter = ',',
-    #                             names=True)['Wert']
-    # sfac        = np.genfromtxt(os.path.join(Vrdir, 'model_data','sfac.csv'),
-    #                             delimiter = ',',
-    #                             names=True)['Wert']
     
     computer = ['office', 'icluster', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 8
+        n_mem  = 24
         nprocs = np.min([n_mem, psutil.cpu_count()])
         if n_mem == 2:
             nprocs = 1
@@ -79,12 +69,20 @@ def get():
         n_pre_run = 40
     
     
-    choice = 2
+    choice = 0
     variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
-    pp_flag = False
-    if not pp_flag and choice == 0 | choice == 1:
-        print("You cant have a variogram with no pilotpoints - yet")
-        sys.exit() 
+    pp_flag = True
+    l_red = 5
+
+    if choice == 0 or choice == 1:
+        if not pp_flag:
+            print("You cant have a variogram with no pilotpoints - yet")
+            print("Exiting...")
+            sys.exit() 
+        if l_red < 5:
+            print("Your system must not be dominated by the correlation length, if you want to estimate it")
+            print("Exiting...")
+            sys.exit()
         
         
     if choice == 0:
@@ -105,7 +103,6 @@ def get():
     h_damp = 0.5
     cov_damp = 0.1
     npf_damp = 1
-    l_red = 1
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
     
     pars    = {
@@ -114,7 +111,7 @@ def get():
         'setup' : setup,
         'EnKF_p': variants[choice], 
         'damp'  : damp[choice],
-        'n_PP'  : 100,
+        'n_PP'  : 150,
         'eps'   : 0.05,
         'covt'  : covtype,
         'valt'  : valtype,
@@ -154,8 +151,6 @@ def get():
         'timuni': timuni,                                   # time unit
         'lenuni': lenuni,                                   # length unit
         'k_r_d' : k_ref_dir,
-        # 'kmin'  : np.min(np.log(k_ref)),
-        # 'kmax'  : np.max(np.log(k_ref)),
         'r_r_d' : r_ref_dir,
         'rh_d'  : rivh_dir,
         'sf_d'  : sfac_dir,
@@ -163,7 +158,7 @@ def get():
         'tm_ws' : temp_m_ws,
         'trs_ws': trs_ws ,
         'resdir': output_dir,
-        'nsteps': int(365*24/6),
+        'nsteps': int(2*365*24/6),
         'nprern': n_pre_run
         }
     

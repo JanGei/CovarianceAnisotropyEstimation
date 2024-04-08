@@ -4,6 +4,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from randomK_points import randomK_points
 from covarmat_s import covarmat_s
 import numpy as np
+from dependencies.plot import plot_k_fields
 
 
 def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], covtype = 'random', valtype = 'good'):
@@ -53,7 +54,7 @@ def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], covtype = 'random', 
         Kg = np.random.uniform(k_ref_m - k_ref_m/4, k_ref_m + k_ref_m/4)
     
     # random, unconditional field for the given variogram
-    Kflat = randomK_points(mg.extent, cxy, dx,  lx, ang, sigma, cov, Kg) 
+    Kflat = np.log(randomK_points(mg.extent, cxy, dx,  lx, ang, sigma, cov, 1)) 
     
     
     # Construct covariance matrix of measurement error
@@ -91,6 +92,7 @@ def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], covtype = 'random', 
     beta = sol[m]
     
     s_cond = np.squeeze(Qssm.dot(xi)) + np.squeeze(X.dot(beta)) + Kflat
+    # plot_k_fields(gwf, pars, [np.exp(Kflat)/1000, np.exp(s_cond)])
     
     D = np.array([[np.cos(ang), -np.sin(ang)], [np.sin(ang), np.cos(ang)]]) 
     M = D @ np.array([[1/lx[0]**2, 0],[0, 1/lx[1]**2]]) @ D.T

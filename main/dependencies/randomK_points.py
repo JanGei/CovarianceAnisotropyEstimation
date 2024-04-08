@@ -27,7 +27,9 @@ def randomK_points(extent, cxy, dx,  lx, ang, sigY, Ctype, Kg, random = True):
     if not random:
         np.random.seed(2)
     # ang = np.deg2rad(ang)
-    ang = ang - np.pi/4
+    
+    # Why are we subtracting pi/4? <-- INVESTIGATE
+    # ang = -ang 
     # total number of nodes
     ntot = len(cxy)
     xmin, xmax, ymin, ymax = extent
@@ -37,7 +39,7 @@ def randomK_points(extent, cxy, dx,  lx, ang, sigY, Ctype, Kg, random = True):
     
     nx_ex = np.round((np.array([xmax-xmin, ymax-ymin]) + 5*np.array(lx)) / dx).astype(int)
     nx_ex = [np.max(nx_ex), np.max(nx_ex)]
-    print(nx_ex)
+    # print(nx_ex)
     x = np.arange((-nx_ex[0] +1) / 2 * dx[0], (nx_ex[0] - 1) / 2 * dx[0] + dx[0], dx[0])
     y = np.arange((-nx_ex[1] +1) / 2 * dx[1], (nx_ex[1] - 1) / 2 * dx[1] + dx[1], dx[1])
     
@@ -49,8 +51,11 @@ def randomK_points(extent, cxy, dx,  lx, ang, sigY, Ctype, Kg, random = True):
     X, Y = np.meshgrid(x, y)
     
     # Rotation into Longitudinal/Transverse Coordinates
-    X2 = np.cos(ang)*X + np.sin(ang)*Y
-    Y2 = -np.sin(ang)*X + np.cos(ang)*Y
+    # This formulation rotates counter-clockwise from x-axis
+    # To rotate clockwise, you need the inverse of this rotation matrix, i.e.
+    # flipping the signs of the sines
+    X2 = np.cos(ang)*X - np.sin(ang)*Y
+    Y2 = np.sin(ang)*X + np.cos(ang)*Y
     
     # Scaling by correlation lengths
     H = np.sqrt((X2/lx[0])**2+(Y2/lx[1])**2)

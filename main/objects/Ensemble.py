@@ -5,7 +5,7 @@ import time
     
 class Ensemble:
     
-    def __init__(self, members: list, pilotp_flag, nprocs: int, obs_cid: list, mask, ellipses = [],pp_cid = [], pp_xy = []):
+    def __init__(self, members: list, pilotp_flag, nprocs: int, obs_cid: list, mask, ellipses = [], ellipses_par = [], pp_cid = [], pp_xy = []):
         self.members    = members
         self.nprocs     = nprocs
         self.n_mem      = len(self.members)
@@ -24,9 +24,13 @@ class Ensemble:
         self.logmeank   = []
         if pilotp_flag:
             self.ellipses   = ellipses
+            self.ellipses_par = ellipses_par
             self.pp_cid     = pp_cid
             self.pp_xy      = pp_xy
             self.mean_cov   = np.mean(ellipses, axis = 0)
+            self.var_cov    = np.var(ellipses, axis = 0)
+            self.mean_cov_par   = np.mean(ellipses_par, axis = 0)
+            self.var_cov_par    = np.var(ellipses_par, axis = 0)
             self.meanlogppk = []
             self.logmeanppk = []
         
@@ -115,7 +119,9 @@ class Ensemble:
                                       params, 
                                       data[idx], 
                                       self.pp_xy,
-                                      self.pp_cid
+                                      self.pp_cid,
+                                      self.mean_cov_par,
+                                      self.var_cov_par
                                       ) 
                                   for idx in range(self.n_mem)
                                   )
@@ -137,8 +143,11 @@ class Ensemble:
                          )
 
         if 'cov_data' in params:
-            self.ellipses = np.array(result)
-            self.mean_cov = self.sort_ellipses(result)
+            # Only register ellipses that perfromed a successfull update
+            self.ellipses = np.array([data[0] for data in result if data[2]])
+            self.ellipses_par = [data[1] for data in result if data[2]]
+            self.mean_cov, self.var_cov = self.sort_ellipses(self.ellipses)
+            self.mean_cov_par, self.var_cov_par = self.parametric_ellipsis(self.ellipses_par)
             if 'npf' in params:
                 self.meanlogppk = np.mean(X[cl:len(self.pp_cid)+cl,:], axis = 1)
                 self.logmeanppk = np.log(np.mean(np.exp(X[cl:len(self.pp_cid)+cl,:]), axis = 1))
@@ -146,8 +155,10 @@ class Ensemble:
             if self.pilotp_flag:
                 self.meanlogppk = np.mean(X[:len(self.pp_cid),:], axis = 1)
                 self.logmeanppk = np.log(np.mean(np.exp(X[:len(self.pp_cid),:]), axis = 1))
-                
-
+    
+    def parametric_ellipsis(self, data):
+        
+        return [np.mean(np.array(data), axis = 0), np.var(np.array(data), axis = 0)]
     
     def sort_ellipses(self, data):
         placeholder = np.ones(3)
@@ -170,7 +181,7 @@ class Ensemble:
             sorted_data.append(placeholder.copy())        
             
         
-        return np.mean(np.array(sorted_data), axis = 0)
+        return [np.mean(np.array(sorted_data), axis = 0), np.var(np.array(sorted_data), axis = 0)]
     
 
                     
@@ -364,6 +375,13 @@ class Ensemble:
             f.write('\n')
             f.close()
             
+            f = open(os.path.join(direc, 'cov_variance.dat'),'a')
+            f.write("{:.10f} ".format(self.var_cov[0]))
+            f.write("{:.10f} ".format(self.var_cov[1]))
+            f.write("{:.10f} ".format(self.var_cov[2]))
+            f.write('\n')
+            f.close()
+            
             for i in range(self.n_mem):
                 f = open(os.path.join(direc, f'covariance_model_{i}.dat'), 'a')
                 for j in range(len(cov_data[i]['cov_data'])):
@@ -409,7 +427,8 @@ class Ensemble:
                       os.path.join(pars['resdir'], 'k_mean.dat'),
                       os.path.join(pars['resdir'], 'h_mean.dat'),
                       os.path.join(pars['resdir'], 'h_var.dat'),
-                      os.path.join(pars['resdir'], 'obs_mean.dat')]
+                      os.path.join(pars['resdir'], 'obs_mean.dat'),
+                      os.path.join(pars['resdir'], 'cov_variance.dat')]
         
         for file_path in file_paths:
             if os.path.exists(file_path):

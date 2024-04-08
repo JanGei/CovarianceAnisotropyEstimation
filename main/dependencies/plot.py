@@ -280,54 +280,6 @@ def ellipsis(cov_data, mean_cov, pars):
     plt.grid(True)
     plt.show()
 
-# def ellipsis(cov_data, mean_cov, pars):
-
-#     center = (0, 0)  # center coordinates
-
-    
-#     # Create a figure and axis
-#     fig, ax = plt.subplots()
-    
-#     for i in range(len(cov_data)):
-#         ellipse = patches.Ellipse(center,
-#                                   cov_data[i]['cov_data'][0],
-#                                   cov_data[i]['cov_data'][1],
-#                                   angle=cov_data[i]['cov_data'][2],
-#                                   fill=False,
-#                                   color='black',
-#                                   alpha=0.5)
-#         ax.add_patch(ellipse)
-#     ellipse = patches.Ellipse(center,
-#                               mean_cov[0],
-#                               mean_cov[1],
-#                               angle=mean_cov[2],
-#                               fill=False,
-#                               color='blue')
-#     ax.add_patch(ellipse)
-    
-#     ellipse = patches.Ellipse(center,
-#                               pars['lx'][0][0],
-#                               pars['lx'][0][1],
-#                               angle=pars['ang'][0],
-#                               fill=False,
-#                               color='red')
-#     ax.add_patch(ellipse)
-    
-#     # Set equal aspect ratio for the axis
-#     ax.set_aspect('equal', 'box')
-    
-#     # Set axis limits
-#     ax.set_xlim(-1500, 1500)
-#     ax.set_ylim(-1500, 1500)
-    
-#     # # Add labels and title
-#     # plt.xlabel('X-axis')
-#     # plt.ylabel('Y-axis')
-#     # plt.title('Ellipse')
-    
-#     # Display the plot
-#     plt.grid(True)
-#     plt.show()
 
 def movie(gwf, diff = False, bc=False, contour = False):
     

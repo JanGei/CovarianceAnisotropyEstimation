@@ -1,7 +1,7 @@
 import numpy as np
 import os 
 
-def prepare_data(directory, pars, krig = False, ellips = True):   
+def prepare_data(directory, pars, krig = False, ellips = True, new = True):   
     
     out_dir = os.path.join(directory, 'output')
     
@@ -30,6 +30,14 @@ def prepare_data(directory, pars, krig = False, ellips = True):
     true_obs = np.loadtxt(os.path.join(out_dir, 'obs_true.dat')) 
     mean_obs = np.loadtxt(os.path.join(out_dir, 'obs_mean.dat')) 
     
+    h_true = np.load(pars['vr_h_d'].replace('Virtual_Reality/', ''))
+    if not new:
+        h_mean = []
+        h_var = []
+    else:
+        h_mean = np.loadtxt(os.path.join(out_dir, 'h_mean.dat'))
+        h_var = np.loadtxt(os.path.join(out_dir, 'h_var.dat'))
+    
     
     k_dir = pars['k_r_d'].replace('Virtual_Reality/', '')
     k_true = np.loadtxt(k_dir, delimiter = ',')
@@ -37,13 +45,13 @@ def prepare_data(directory, pars, krig = False, ellips = True):
     
     if ellips:
         if krig:
-            return ellipsis_data, mean_data, errors, ppk, pp_xy, k_mean, k_true, true_obs, mean_obs, k_ini
+            return ellipsis_data, mean_data, errors, ppk, pp_xy, k_mean, k_true, true_obs, mean_obs, k_ini, h_true, h_mean, h_var
         else:
             
-            return ellipsis_data, mean_data, errors, [], [], k_mean, k_true, true_obs, mean_obs, k_ini
+            return ellipsis_data, mean_data, errors, [], [], k_mean, k_true, true_obs, mean_obs, k_ini, h_true, h_mean, h_var
     else:
         if krig:
-            return [], [], errors, ppk, pp_xy, k_mean, k_true, true_obs, mean_obs, k_ini
+            return [], [], errors, ppk, pp_xy, k_mean, k_true, true_obs, mean_obs, k_ini, h_true, h_mean, h_var
         else:
             
-            return [], [], errors, [], [], k_mean, k_true, true_obs, mean_obs, k_ini
+            return [], [], errors, [], [], k_mean, k_true, true_obs, mean_obs, k_ini, h_true, h_mean, h_var
