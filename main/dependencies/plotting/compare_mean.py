@@ -1,0 +1,49 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import flopy
+from cmcrameri import cm
+
+def compare_mean_true(gwf, k_fields):
+    
+    kmin = np.min(np.log(k_fields[0]))
+    kmax = np.max(np.log(k_fields[0]))
+    
+    fig, axes = plt.subplots(nrows=3, ncols=1, sharex='col', sharey=True, figsize= (16,6))
+    # gs = GridSpec(3, 1, height_ratios=[1, 1, 1], hspace=0.3)
+
+    # Plot upper left - Here come the true - non-log field
+    ax0 = axes[0]
+    gwf.npf.k.set_data(k_fields[0])
+    axf0 = flopy.plot.PlotMapView(model=gwf, ax=ax0)
+    c0 = axf0.plot_array(np.log(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1,vmin=kmin, vmax=kmax)
+    ax0.set_aspect('equal')
+
+
+    # Plot upper right - here comes the meanlogfield
+    ax1 = axes[1]
+    gwf.npf.k.set_data(k_fields[1])
+    axf1 = flopy.plot.PlotMapView(model=gwf, ax=ax1)
+    axf1.plot_array((gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1,vmin=kmin, vmax=kmax)
+    ax1.set_aspect('equal')
+
+
+    # Plot lower
+    ax2 = axes[2]
+    gwf.npf.k.set_data((k_fields[1])/ np.log((k_fields[0])))
+    axf2 = flopy.plot.PlotMapView(model=gwf, ax=ax2)
+    c2 = axf2.plot_array((gwf.npf.k.array), cmap=cm.batlow, alpha=1)
+    ax2.set_aspect('equal')
+
+
+    # Add colorbars
+    cbar0 = fig.colorbar(c0, ax=[ax0, ax1], fraction=0.1, pad=0.01)
+    cbar0.set_label('Log(K)')
+    cbar1 = fig.colorbar(c2, ax=ax2, fraction=0.1, pad=0.01, aspect=10)
+    cbar1.set_label('Ratio')
+
+    
+    # Set custom bounds for colorbars
+    cbar0.mappable.set_clim(vmin=kmin, vmax=kmax)
+    cbar1.mappable.set_clim(vmin=0.5, vmax=1.5)
+
+    plt.show()    
