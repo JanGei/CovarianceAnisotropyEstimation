@@ -5,7 +5,7 @@ import sys
 sys.path.append('..')
 from dependencies.randomK_points import randomK_points
 from dependencies.covarmat_s import covarmat_s
-from dependencies.plot import plot_k_fields
+# from dependencies.plotting.plot_k_fields import plot_k_fields
 # import time
 
 
@@ -136,14 +136,14 @@ class MFModel:
                 self.n_neg_def += 1
                 # If nothing has worked for 10 consecutive timesteps, draw a new
                 # variogram from the mean variogram distribution
+                print(self.n_neg_def)
                 if self.n_neg_def == 10:
                     print('Replacing covariance model')
                     pos_def = False
-                    # TODO: THE CODE IS STUCK HERE - INVEEEEEEEEEEEEEEEEEESTIGATE
                     while not pos_def:
-                        a = np.random.normal(mean_cov[0,0], var_cov[0,0]**2)
-                        b = np.random.normal(mean_cov[1,1], var_cov[1,1]**2)
-                        m = np.random.normal(mean_cov[0,1], var_cov[0,1]**2)
+                        a = np.random.normal(mean_cov[0,0], np.sqrt(var_cov[0,0]))
+                        b = np.random.normal(mean_cov[1,1], np.sqrt(var_cov[1,1]))
+                        m = np.random.normal(mean_cov[0,1], np.sqrt(var_cov[0,1]))
                         eigenvalues, eigenvectors, mat, pos_def = self.check_new_matrix([a,b,m])
                         
                     l1, l2, angle = self.pos_krig(mat, eigenvalues, eigenvectors, data, pp_cid, pp_xy)
@@ -187,7 +187,7 @@ class MFModel:
         
         l1, l2, angle = self.extract_truth(eigenvalues, eigenvectors)
         self.lx = [l1, l2]
-        self.angle = angle
+        self.ang = angle
         
         # Is ppk really without a logarithm
         pp_k = data[1]
@@ -219,7 +219,7 @@ class MFModel:
 
     def conditional_field(self, pp_xy, pp_cid, pp_k):
         
-        cov     = self.pars['cov']
+        # cov     = self.pars['cov']
         sigma   = self.pars['sigma'][0]
         cov     = self.pars['cov']
         sig_meas = 0.1 # standard deviation of measurement error
@@ -227,7 +227,7 @@ class MFModel:
         # random, unconditional field for the given variogram
         # Kg = np.mean(np.exp(pp_k))
         
-        Kflat = np.log(randomK_points(self.mg.extent, self.cxy, self.dx,  self.lx, self.ang, sigma, cov, 1)) 
+        Kflat = np.log(randomK_points(self.mg.extent, self.cxy, self.dx,  self.lx, self.ang, sigma, cov, 1, self.pars)) 
 
         # Construct covariance matrix of measurement error
         m = len(pp_k)

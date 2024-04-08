@@ -4,10 +4,10 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from randomK_points import randomK_points
 from covarmat_s import covarmat_s
 import numpy as np
-from dependencies.plot import plot_k_fields
+# from dependencies.plotting.plot_k_fields import plot_k_fields
 
 
-def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], covtype = 'random', valtype = 'good'):
+def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], covtype = 'random', valtype = 'good', test_cov = []):
     
     cov     = pars['cov']
     clx     = pars['lx']
@@ -16,7 +16,7 @@ def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], covtype = 'random', 
     mu      = pars['mu'][0]
     cov     = pars['cov']
     k_ref   = np.loadtxt(pars['k_r_d'], delimiter = ',')
-    k_ref_m = np.mean(k_ref)
+    # k_ref_m = np.mean(k_ref)
     
     mg = gwf.modelgrid
     xyz = mg.xyzcellcenters
@@ -42,19 +42,22 @@ def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], covtype = 'random', 
     elif covtype == 'good':
         lx = clx[0]
         ang = np.deg2rad(angles[0])
+    elif covtype == 'test':
+        lx = test_cov[0]
+        ang = test_cov[1]
         
     # starting k values at pilot points
     if valtype == 'good':
         pp_k = np.log(k_ref[pp_cid.astype(int)])
-        Kg = k_ref_m
+        # Kg = k_ref_m
         
     elif valtype == 'random':
         pp_k = np.random.uniform(mu-mu/4, mu+mu/4, len(pp_cid))
         pp_k = pp_k + sig_meas * np.random.randn(*pp_k.shape)
-        Kg = np.random.uniform(k_ref_m - k_ref_m/4, k_ref_m + k_ref_m/4)
+        # Kg = np.random.uniform(k_ref_m - k_ref_m/4, k_ref_m + k_ref_m/4)
     
     # random, unconditional field for the given variogram
-    Kflat = np.log(randomK_points(mg.extent, cxy, dx,  lx, ang, sigma, cov, 1)) 
+    Kflat = np.log(randomK_points(mg.extent, cxy, dx,  lx, ang, sigma, cov, 1, pars)) 
     
     
     # Construct covariance matrix of measurement error

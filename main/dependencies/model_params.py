@@ -51,7 +51,7 @@ def get():
     computer = ['office', 'icluster', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 24
+        n_mem  = 48
         nprocs = np.min([n_mem, psutil.cpu_count()])
         if n_mem == 2:
             nprocs = 1
@@ -72,7 +72,7 @@ def get():
     choice = 0
     variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     pp_flag = True
-    l_red = 5
+    l_red = 5 # possible are 5 and 10
 
     if choice == 0 or choice == 1:
         if not pp_flag:
@@ -111,7 +111,7 @@ def get():
         'setup' : setup,
         'EnKF_p': variants[choice], 
         'damp'  : damp[choice],
-        'n_PP'  : 150,
+        'n_PP'  : 200,
         'eps'   : 0.05,
         'covt'  : covtype,
         'valt'  : valtype,

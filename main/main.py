@@ -2,15 +2,17 @@ from dependencies.model_params import get
 from dependencies.copy import create_Ensemble
 from dependencies.convert_transient import convert_to_transient
 from dependencies.create_pilot_points import create_pilot_points
-# from dependencies.create_k_fields import create_k_fields
 from dependencies.conditional_k import conditional_k
 from dependencies.load_template_model import load_template_model
 from dependencies.write_file import write_file
 from dependencies.load_observations import load_true_h_field
 from dependencies.get_transient_data import get_transient_data
-from dependencies.plot import plot_fields, plot_POI, plot_k_fields, plot, ellipsis, compare_mean_true
 from dependencies.intersect_with_grid import intersect_with_grid
 from dependencies.generate_mask import chd_mask
+from dependencies.plotting.ellipses import ellipses
+from dependencies.plotting.compare_mean import compare_mean_true
+from dependencies.plotting.plot_k_fields import plot_k_fields
+# from dependencies.plotting.compare_mean import plot_fields, plot_POI, plot_k_fields, plot, ellipsis, compare_mean_true
 from objects.Ensemble import Ensemble
 from objects.MFModel import MFModel
 from objects.EnsembleKalmanFilter import EnsembleKalmanFilter
@@ -214,24 +216,16 @@ if __name__ == '__main__':
         # visualize covariance structures
         if pars['setup'] == 'office' and t_step%10 == 0:
             if 'cov_data' in pars['EnKF_p']:
-                ellipsis(
+                ellipses(
                     MF_Ensemble.ellipses,
                     MF_Ensemble.mean_cov,
                     pars
                     )
-                
-                
+        
             compare_mean_true(gwf, [k_ref, MF_Ensemble.meanlogk]) 
-            # covl.append(MF_Ensemble.get_member_fields(['cov_data'])[0])
             k_fields = MF_Ensemble.get_member_fields(['npf'])
             plot_k_fields(gwf, pars,  [field['npf'] for field in k_fields[0:8]])
             
-            # if t_step%10 == 0:
-            #     k_fields_dict = MF_Ensemble.get_member_fields(['npf'])
-            #     k_fields = [d['npf'] for d in k_fields_dict]
-            #     plot_k_fields(gwf, pars,  k_fields, np.rad2deg(MF_Ensemble.ellipses[:,2]))
-         
-
         print(f'Plotting and recording took {(time.time() - start_time):.2f} seconds')
     
     
