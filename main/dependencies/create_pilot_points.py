@@ -10,7 +10,10 @@ def create_pilot_points(gwf, pars:dict,):
     nPP = pars['n_PP']
     mg = gwf.modelgrid
     ixs  = flopy.utils.GridIntersect(mg, method = "vertex")
-    xyzex = mg.xyzextent
+    vert = mg.xyzvertices
+    xmax = np.max([np.max(list) for list in vert[0]])
+    ymax = np.max([np.max(list) for list in vert[1]])
+    # xyzex = mg.xyzextent
     xyz = mg.xyzcellcenters
     xy = list(zip(xyz[0], xyz[1]))
     
@@ -30,11 +33,11 @@ def create_pilot_points(gwf, pars:dict,):
     
     while len(pp_cid_accepted) != nPP:
         
-        pp_xy_proposal = sampler.random(n = n_test) * np.array([xyzex[1], xyzex[3]])
+        pp_xy_proposal = sampler.random(n = n_test) * np.array([xmax, ymax])
         
         pp_cid_proposal = np.zeros(len(pp_xy_proposal))
         for i, point in  enumerate(pp_xy_proposal):
-            pp_cid_proposal[i] = ixs.intersect(Point(point)).cellids.astype(int)
+            pp_cid_proposal[i] = ixs.intersect(Point(point)).cellids.astype(int)[0]
         
         
         common_cells = np.intersect1d(pp_cid_proposal, blocked_cid)

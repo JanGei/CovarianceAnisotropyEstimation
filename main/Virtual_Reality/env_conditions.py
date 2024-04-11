@@ -31,8 +31,6 @@ tssl.set_index('Datum / Uhrzeit', inplace=True)
 # alter data so it meets the 2m amplitude
 tssl.loc[:,'Wert'] = tssl['Wert'] / 100 *3.8  +12.1
 
-
-
 # Resample and calculate the mean for every 6 hours
 tssl6h = tssl.resample('6H').mean()
 

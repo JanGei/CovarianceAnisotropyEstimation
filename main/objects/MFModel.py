@@ -30,9 +30,9 @@ class MFModel:
         self.chd        = self.gwf.chd
         self.mg         = self.gwf.modelgrid
         self.cxy        = np.vstack((self.mg.xyzcellcenters[0], self.mg.xyzcellcenters[1])).T
-        dxmin           = np.min([max(sublist) - min(sublist) for sublist in self.mg.xvertices])
-        dymin           = np.min([max(sublist) - min(sublist) for sublist in self.mg.yvertices])
-        self.dx         = [dxmin, dymin]
+        dxmax           = np.max([max(sublist) - min(sublist) for sublist in self.mg.xvertices])
+        dymax           = np.max([max(sublist) - min(sublist) for sublist in self.mg.yvertices])
+        self.dx         = [dxmax, dymax]
         self.old_npf    = []
         self.n_failure  = 0
         self.n_neg_def  = 0
@@ -139,14 +139,37 @@ class MFModel:
                 print(self.n_neg_def)
                 if self.n_neg_def == 10:
                     print('Replacing covariance model')
-                    pos_def = False
-                    while not pos_def:
-                        a = np.random.normal(mean_cov[0,0], np.sqrt(var_cov[0,0]))
-                        b = np.random.normal(mean_cov[1,1], np.sqrt(var_cov[1,1]))
-                        m = np.random.normal(mean_cov[0,1], np.sqrt(var_cov[0,1]))
-                        eigenvalues, eigenvectors, mat, pos_def = self.check_new_matrix([a,b,m])
+                    a = np.random.normal(mean_cov[0], np.sqrt(var_cov[0]))
+                    b = np.random.normal(mean_cov[1], np.sqrt(var_cov[1]))
+                    angle = np.random.normal(mean_cov[2], np.sqrt(var_cov[2]))
                         
-                    l1, l2, angle = self.pos_krig(mat, eigenvalues, eigenvectors, data, pp_cid, pp_xy)
+                    if a < b:
+                        l1 = b
+                        l2 = a
+                        if angle > np.pi/2:
+                            angle -= np.pi/2
+                        else:
+                            angle += np.pi/2
+                    else:
+                        l1 = a
+                        l2 = b
+                    
+                    # Constructing parametric form of ellips
+                    D = self.pars['rotmat'](angle)
+                    M = D @ np.array([[1/l1**2, 0],[0, 1/l2**2]]) @ D.T
+                    
+                    self.update_ellips_mat(M)
+                    success = True
+                    
+                    # This is needed when drawing from parametric ensemble distribution
+                    # pos_def = False
+                    # while not pos_def:
+                        # a = np.random.normal(mean_cov[0,0], np.sqrt(var_cov[0,0]))
+                        # b = np.random.normal(mean_cov[1,1], np.sqrt(var_cov[1,1]))
+                        # m = np.random.normal(mean_cov[0,1], np.sqrt(var_cov[0,1]))
+                        # eigenvalues, eigenvectors, mat, pos_def = self.check_new_matrix([a,b,m])
+                        
+                    # l1, l2, angle = self.pos_krig(mat, eigenvalues, eigenvectors, data, pp_cid, pp_xy)
                     
             return [[l1, l2, angle%np.pi], self.ellips_mat, success]
                 
@@ -195,7 +218,9 @@ class MFModel:
         field = self.conditional_field(pp_xy, pp_cid, pp_k)
         
         self.set_field([np.exp(field)], ['npf'])
-
+        
+        if self.n_neg_def > 0:
+            print('A model has been fixed')
         self.n_neg_def = 0
         
         return l1, l2, angle
@@ -219,14 +244,11 @@ class MFModel:
 
     def conditional_field(self, pp_xy, pp_cid, pp_k):
         
-        # cov     = self.pars['cov']
         sigma   = self.pars['sigma'][0]
         cov     = self.pars['cov']
         sig_meas = 0.1 # standard deviation of measurement error
         
         # random, unconditional field for the given variogram
-        # Kg = np.mean(np.exp(pp_k))
-        
         Kflat = np.log(randomK_points(self.mg.extent, self.cxy, self.dx,  self.lx, self.ang, sigma, cov, 1, self.pars)) 
 
         # Construct covariance matrix of measurement error

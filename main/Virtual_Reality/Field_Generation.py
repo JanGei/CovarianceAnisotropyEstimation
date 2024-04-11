@@ -34,24 +34,17 @@ def generate_fields(pars):
     gwf = sim.get_model(mname)
     mg = gwf.modelgrid
     cxy = np.vstack((mg.xyzcellcenters[0], mg.xyzcellcenters[1])).T
-    dxmin           = np.min([max(sublist) - min(sublist) for sublist in mg.xvertices])
-    dymin           = np.min([max(sublist) - min(sublist) for sublist in mg.yvertices])
-    dx         = [dxmin, dymin]
+    dxmax      = np.max([max(sublist) - min(sublist) for sublist in mg.xvertices])
+    dymax      = np.max([max(sublist) - min(sublist) for sublist in mg.yvertices])
+    dx         = [dxmax, dymax]
    
     #%% Field generation
-    
-    K = randomK_points(mg.extent, cxy, dx,  lx[0], np.deg2rad(ang[0]), sigma[0], cov, np.exp(mu[0]), pars, random = False)
+    K = randomK_points(mg.extent, cxy, dx,  lx[0], np.deg2rad(ang[0]), np.exp(sigma[0]), cov, np.exp(mu[0]), pars, random = False)
     rech = randomK_points(mg.extent, cxy, dx,  lx[1], np.deg2rad(ang[1]), sigma[1], cov, mu[1], pars, random = False)
     logK = np.log(K)
     # Anmerkung des Übersetzers: Beim generieren dieser Felder ist die Varianz per se dimensionslos
     # Wenn wir also die Felder von Erdal und Cirpka nachbilden wollen, müssen wir überhaupt nicht
     # die Varianz mitscalieren, wenn die Einheiten geändert werden, sonder nur der mean
-    inspection = False
-    if inspection:
-        plot_fields(gwf, pars, logK, rech)
-        print(mu[0], np.mean(logK))
-        print(mu[1], np.mean(rech))
-        sys.exit()
 
     #%% Saving the fields - Übergabe in (m/s)
     np.savetxt(os.path.join(pars['k_r_d']), K, delimiter = ',')

@@ -120,8 +120,9 @@ class Ensemble:
                                       data[idx], 
                                       self.pp_xy,
                                       self.pp_cid,
-                                      self.mean_cov_par,
-                                      self.var_cov_par
+                                      # lets draw from non-parametric space
+                                      self.mean_cov, 
+                                      self.var_cov
                                       ) 
                                   for idx in range(self.n_mem)
                                   )

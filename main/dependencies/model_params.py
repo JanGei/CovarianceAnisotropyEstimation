@@ -3,6 +3,13 @@ import os
 import sys
 import psutil
 
+# define one rotation matrix to fix it
+def rotation_matrix(angle):
+    # This formulation rotates counter-clockwise from x-axis
+    # To rotate clockwise, you need the inverse of this rotation matrix, i.e.
+    # flipping the signs of the sines
+    return np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]]) 
+
 def get():
     
     # Changing the working directory to the parent directory to have consisten access
@@ -51,7 +58,7 @@ def get():
     computer = ['office', 'icluster', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 48
+        n_mem  = 24
         nprocs = np.min([n_mem, psutil.cpu_count()])
         if n_mem == 2:
             nprocs = 1
@@ -101,8 +108,8 @@ def get():
             valtype = "random"
             
     h_damp = 0.5
-    cov_damp = 0.1
-    npf_damp = 1
+    cov_damp = 0.15
+    npf_damp = 0.25
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
     
     pars    = {
@@ -159,7 +166,8 @@ def get():
         'trs_ws': trs_ws ,
         'resdir': output_dir,
         'nsteps': int(2*365*24/6),
-        'nprern': n_pre_run
+        'nprern': n_pre_run,
+        'rotmat': rotation_matrix
         }
     
     return pars

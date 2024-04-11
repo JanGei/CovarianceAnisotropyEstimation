@@ -52,7 +52,7 @@ def randomK_points(extent, cxy, dx,  lx, ang, sigY, Ctype, Kg, pars, random = Tr
     # print(nx_ex)
     x = np.arange((-nx_ex[0] +1) / 2 * dx[0], (nx_ex[0] - 1) / 2 * dx[0] + dx[0], dx[0])
     y = np.arange((-nx_ex[1] +1) / 2 * dx[1], (nx_ex[1] - 1) / 2 * dx[1] + dx[1], dx[1])
-    
+
     xint = np.arange(xmin + dx[0]/2, xmax + dx[0]/2, dx[0])
     yint = np.arange(ymin + dx[1]/2, ymax + dx[1]/2, dx[1])
     Xint, Yint = np.meshgrid(xint, yint)
@@ -61,11 +61,12 @@ def randomK_points(extent, cxy, dx,  lx, ang, sigY, Ctype, Kg, pars, random = Tr
     X, Y = np.meshgrid(x, y)
     
     # Rotation into Longitudinal/Transverse Coordinates
-    # This formulation rotates counter-clockwise from x-axis
-    # To rotate clockwise, you need the inverse of this rotation matrix, i.e.
-    # flipping the signs of the sines
-    X2 = np.cos(ang)*X - np.sin(ang)*Y
-    Y2 = np.sin(ang)*X + np.cos(ang)*Y
+    rotmat = pars['rotmat'](ang)
+    # Apparently we need to use the mirrored rotation matrix in this setup
+    # In Olafs original script the "clockwise" rotation is used to obtain
+    # counter-clockwise rotations
+    X2 = rotmat[0,0]*X + rotmat[1,0]*Y
+    Y2 = rotmat[0,1]*X + rotmat[1,1]*Y
     
     # Scaling by correlation lengths
     H = np.sqrt((X2/lx[0])**2+(Y2/lx[1])**2)
@@ -106,8 +107,7 @@ def randomK_points(extent, cxy, dx,  lx, ang, sigY, Ctype, Kg, pars, random = Tr
     K = K[0:ny, 0:nx]
     
     # generating an associated grid for K 
-    # Dont ask me why, but if we flip the y_coordinates here, it works perfectly
     values_at_coordinates = griddata((Xint.ravel(), Yint.ravel()), K.ravel(),
-                                     (cxy[:,0], np.flip(cxy[:,1])), method='nearest')
+                                     (cxy[:,0], cxy[:,1]), method='nearest')
     
     return values_at_coordinates

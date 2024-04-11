@@ -9,45 +9,28 @@ from flopy.discretization.structuredgrid import StructuredGrid
 from flopy.utils.gridgen import Gridgen
 from shapely.geometry import LineString, MultiPoint
 import numpy as np
-
-# imports from parent directory
-# import sys
-# sys.path.append('..')
 from Virtual_Reality.Field_Generation import generate_fields
 from Virtual_Reality.transient_run import transient_run
-# from dependencies.model_params import get
-# from dependencies.plot import plot
+from dependencies.plotting.plot_fields import plot_fields
+import sys
 
 def run_reference_model(pars):
     #%% Model Parameters
-    generate_fields(pars)
-    print('Fields are generated')
-    
     nx      = pars['nx']
     dx      = pars['dx']
-    # lx      = pars['lx']
-    # ang     = pars['ang']
-    # sigma   = pars['sigma']
-    # mu      = pars['mu']
-    # cov     = pars['cov']
     toph    = pars['top']
-    # both    = pars['bot']
     nlay    = pars['nlay'][0]
     mname   = pars['mname']
     sname   = pars['sname']
     sim_ws  = pars['sim_ws']
     gg_ws   = pars['gg_ws']
     
-    
     #%% Grid Generation
     Lx = nx[0] * dx[0]
     Ly = nx[1] * dx[1]
     
-    
     delr = np.ones(nx[0])*Lx/nx[0]
     delc = np.ones(nx[1])*Ly/nx[1]
-    
-    # delv = (toph - both) / nlay
     
     top     =  np.array([np.ones((nx[1],nx[0]))]*toph)
     botm    =  np.array([np.zeros((nx[1],nx[0]))])
@@ -56,25 +39,23 @@ def run_reference_model(pars):
     
     g = Gridgen(strgrd, model_ws=gg_ws)
     
-    
     #%% Well Location
     welxy   = pars['welxy']
     welq    = pars['welq']
     welay   = pars['welay']
     
     # possible refinements
-    # g.add_refinement_features(list(zip(wells)), "point", 4, range(nlay))
+    g.add_refinement_features(welxy, "point", 4, range(nlay))
     
     #%% Southern Boudnary - river
     river           = pars['river']
     rivd            = pars['rivd']
     river_stages    = np.genfromtxt(pars['rh_d'],delimiter = ',', names=True)['Wert']
     rivC            = pars['rivC']
-    # riv_line        = [tuple(xy) for xy in river]
+    riv_line        = [tuple(xy) for xy in river]
     
-    # NEED VARAIBLE RIVER STAGE DATA
     # possible refinements
-    # g.add_refinement_features([riv_line], "line", 3, range(nlay))
+    g.add_refinement_features([riv_line], "line", 3, range(nlay))
     
     #%% Northern Boudnary - Fixed head
     chdl            = pars['chd']
@@ -90,7 +71,72 @@ def run_reference_model(pars):
     strt        = np.zeros([vgrid.nlay, vgrid.ncpl])+20
     ixs         = flopy.utils.GridIntersect(vgrid, method = "vertex")
     
-    #%% Loading reference fields
+     
+    #%% Flopy Model definiiton - Core packages
+    
+    # simulation object
+    sim     = flopy.mf6.MFSimulation(sim_name           = sname,
+                                     sim_ws             = sim_ws,
+                                     verbosity_level    = 2)
+    # groundwater flow / model object
+    gwf     = flopy.mf6.ModflowGwf(sim,
+                                   modelname            = mname,
+                                   save_flows           = True)
+    # disv package
+    disv    = flopy.mf6.ModflowGwfdisv(model            = gwf,
+                                       length_units     = "METERS",
+                                       pname            = "disv",
+                                       xorigin          = 0,
+                                       yorigin          = 0,
+                                       angrot           = 0,
+                                       nogrb            = False,
+                                       nlay             = disv_props["nlay"], 
+                                       ncpl             = disv_props["ncpl"],
+                                       nvert            = len(disv_props["vertices"]), 
+                                       top              = disv_props["top"],
+                                       botm             = disv_props["botm"], 
+                                       idomain          = idom, 
+                                       cell2d           = disv_props["cell2d"], 
+                                       vertices         = disv_props["vertices"])
+    disv.export("./model_files/disv_ref.shp")
+    
+    # tdis package
+    tdis    = flopy.mf6.ModflowTdis(sim,
+                                    time_units          = "SECONDS",
+                                    perioddata          = [[60*60*6, 1, 1.0]])
+    
+    # ims package
+    ims = flopy.mf6.ModflowIms(sim,
+                               print_option             = "SUMMARY",
+                               complexity               = "COMPLEX",
+                               linear_acceleration      = "BICGSTAB")
+    
+    # oc package
+    headfile            = "{}.hds".format(mname)
+    head_filerecord     = [headfile]
+    budgetfile          = "{}.cbb".format(mname)
+    budget_filerecord   = [budgetfile]
+    saverecord          = [("HEAD", "ALL"), ("BUDGET", "ALL")]
+    printrecord         = [("HEAD", "LAST")]
+    oc = flopy.mf6.ModflowGwfoc(gwf,
+                                saverecord              = saverecord,
+                                head_filerecord         = head_filerecord,
+                                budget_filerecord       = budget_filerecord,
+                                printrecord             = printrecord)
+    
+    sto = flopy.mf6.ModflowGwfsto(gwf, 
+                                  pname                 = "sto",
+                                  save_flows            = True,
+                                  iconvert              = 1,
+                                  ss                    = pars['ss'],
+                                  sy                    = pars['sy'],
+                                  steady_state          = {0: True},)
+                                   # transient             = {0: True},)
+
+    sim.write_simulation()
+    #%% Generating and loading reference fields
+    generate_fields(pars)
+    print('Fields are generated')
     k_ref = np.loadtxt(pars['k_r_d'], delimiter = ',')
     r_ref = np.loadtxt(pars['r_r_d'], delimiter = ',')
     sfac  = np.genfromtxt(pars['sf_d'],delimiter = ',', names=True)['Wert']
@@ -136,56 +182,15 @@ def run_reference_model(pars):
             # xc,yc = vgrid.xyzcellcenters[0][cell],vgrid.xyzcellcenters[1][cell]
             chd_list.append([(0, cell), chd_stage])
     
-    #%% Flopy Model definiiton
-    
-    # simulation object
-    sim     = flopy.mf6.MFSimulation(sim_name           = sname,
-                                     sim_ws             = sim_ws,
-                                     verbosity_level    = 2)
-    # groundwater flow / model object
-    gwf     = flopy.mf6.ModflowGwf(sim,
-                                   modelname            = mname,
-                                   save_flows           = True)
-    # disv package
-    disv    = flopy.mf6.ModflowGwfdisv(model            = gwf,
-                                       length_units     = "METERS",
-                                       pname            = "disv",
-                                       xorigin          = 0,
-                                       yorigin          = 0,
-                                       angrot           = 0,
-                                       nogrb            = False,
-                                       nlay             = disv_props["nlay"], 
-                                       ncpl             = disv_props["ncpl"],
-                                       nvert            = len(disv_props["vertices"]), 
-                                       top              = disv_props["top"],
-                                       botm             = disv_props["botm"], 
-                                       idomain          = idom, 
-                                       cell2d           = disv_props["cell2d"], 
-                                       vertices         = disv_props["vertices"])
-    disv.export("./model_files/disv_ref.shp")
     # npf package
     npf     = flopy.mf6.ModflowGwfnpf(model             = gwf,
                                       k                 = k_ref)
-    # tdis package
-    tdis    = flopy.mf6.ModflowTdis(sim,
-                                    time_units          = "SECONDS",
-                                    perioddata          = [[60*60*6, 1, 1.0]])
-    # ims package
-    ims = flopy.mf6.ModflowIms(sim,
-                               print_option             = "SUMMARY",
-                               complexity               = "COMPLEX",
-                               linear_acceleration      = "BICGSTAB")
+
+    
     # ic package
     ic = flopy.mf6.ModflowGwfic(gwf, 
                                 strt                    = strt)
-    sto = flopy.mf6.ModflowGwfsto(gwf, 
-                                  pname                 = "sto",
-                                  save_flows            = True,
-                                  iconvert              = 1,
-                                  ss                    = pars['ss'],
-                                  sy                    = pars['sy'],
-                                  steady_state          = {0: True},)
-                                   # transient             = {0: True},)
+    
     # rch package
     rch = flopy.mf6.ModflowGwfrch(gwf,
                                   stress_period_data    = {0:rch_list})
@@ -198,25 +203,19 @@ def run_reference_model(pars):
     # chd package
     chd = flopy.mf6.ModflowGwfchd(gwf,
                                   stress_period_data    = {0:chd_list})
-    # oc package
-    headfile            = "{}.hds".format(mname)
-    head_filerecord     = [headfile]
-    budgetfile          = "{}.cbb".format(mname)
-    budget_filerecord   = [budgetfile]
-    saverecord          = [("HEAD", "ALL"), ("BUDGET", "ALL")]
-    printrecord         = [("HEAD", "LAST")]
-    oc = flopy.mf6.ModflowGwfoc(gwf,
-                                saverecord              = saverecord,
-                                head_filerecord         = head_filerecord,
-                                budget_filerecord       = budget_filerecord,
-                                printrecord             = printrecord)
-    
-    sim.write_simulation()
-    sim.run_simulation()
+
+    inspection = False
+    if inspection and pars['setup'] == 'office':
+        print(pars['mu'][0], np.mean(np.log(k_ref)))
+        print(pars['mu'][1], np.mean(r_ref))
+        plot_fields(gwf, pars, np.log(k_ref), r_ref)
+        sys.exit()
     
     #%% Set steady-state solution as initial condition
-    ic.strt.set_data(gwf.output.head().get_data())
     sim.write_simulation()
+    sim.run_simulation()
+    ic.strt.set_data(gwf.output.head().get_data())
+    ic.write()
     
     #%% Run transient simulation
     transient_run(pars)

@@ -16,7 +16,6 @@ def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], covtype = 'random', 
     mu      = pars['mu'][0]
     cov     = pars['cov']
     k_ref   = np.loadtxt(pars['k_r_d'], delimiter = ',')
-    # k_ref_m = np.mean(k_ref)
     
     mg = gwf.modelgrid
     xyz = mg.xyzcellcenters
@@ -97,6 +96,7 @@ def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], covtype = 'random', 
     s_cond = np.squeeze(Qssm.dot(xi)) + np.squeeze(X.dot(beta)) + Kflat
     # plot_k_fields(gwf, pars, [np.exp(Kflat)/1000, np.exp(s_cond)])
     
+    #!!!!!!!!!!!! same rotational matrix?
     D = np.array([[np.cos(ang), -np.sin(ang)], [np.sin(ang), np.cos(ang)]]) 
     M = D @ np.array([[1/lx[0]**2, 0],[0, 1/lx[1]**2]]) @ D.T
     
