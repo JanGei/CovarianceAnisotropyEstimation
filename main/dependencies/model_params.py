@@ -62,7 +62,7 @@ def get():
         nprocs = np.min([n_mem, psutil.cpu_count()])
         if n_mem == 2:
             nprocs = 1
-        up_temp = False
+        up_temp = True
         n_pre_run = 1
     elif setup == 'icluster':
         n_mem  = 120
