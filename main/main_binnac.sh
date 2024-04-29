@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ### Job Name
-#PBS -N EnKF_n_280
+#PBS -N l10n250d005d01
 
 ### Set email type for job
 
@@ -25,12 +25,12 @@ echo Time is `date`
 # Load conda environment
 # This is needed to find conda on the nodes
 source /home/tu/tu_tu/tu_epajg01/miniconda3/etc/profile.d/conda.sh
-conda activate Corrl
+conda activate work
 which python
 
 module load geo/modflow/6.4.2
 # run Python file
-python /beegfs/work/tu_epajg01/Python/Corellation/EnKF_280/main.py
+python /beegfs/work/tu_epajg01/Python/Corellation/paper1_1/l10n250d005d01/main.py
 
 # print some diagnostic output
 echo $PBS_O_WORKDIR/

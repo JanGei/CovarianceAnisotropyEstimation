@@ -96,8 +96,9 @@ def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], covtype = 'random', 
     s_cond = np.squeeze(Qssm.dot(xi)) + np.squeeze(X.dot(beta)) + Kflat
     # plot_k_fields(gwf, pars, [np.exp(Kflat)/1000, np.exp(s_cond)])
     
-    #!!!!!!!!!!!! same rotational matrix?
-    D = np.array([[np.cos(ang), -np.sin(ang)], [np.sin(ang), np.cos(ang)]]) 
+    # !!!!!!!!!!!! same rotational matrix?
+    # D = np.array([[np.cos(ang), -np.sin(ang)], [np.sin(ang), np.cos(ang)]]) 
+    D = pars['rotmat'](ang)
     M = D @ np.array([[1/lx[0]**2, 0],[0, 1/lx[1]**2]]) @ D.T
     
     return np.exp(s_cond), [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang]

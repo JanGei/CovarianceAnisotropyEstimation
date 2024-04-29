@@ -113,16 +113,16 @@ class Ensemble:
         
         if self.pilotp_flag:
             start_time = time.time()
-            result = Parallel(n_jobs=self.nprocs,
+            result = Parallel(n_jobs=self.nprocs, #!!!!!!!!!!!!!!
                               backend="threading")(
                                   delayed(self.members[idx].kriging)(
                                       params, 
                                       data[idx], 
                                       self.pp_xy,
                                       self.pp_cid,
-                                      # lets draw from non-parametric space
-                                      self.mean_cov, 
-                                      self.var_cov
+                                      # lets draw from parametric space
+                                      self.mean_cov_par, 
+                                      self.var_cov_par
                                       ) 
                                   for idx in range(self.n_mem)
                                   )
@@ -147,8 +147,10 @@ class Ensemble:
             # Only register ellipses that perfromed a successfull update
             self.ellipses = np.array([data[0] for data in result if data[2]])
             self.ellipses_par = [data[1] for data in result if data[2]]
-            self.mean_cov, self.var_cov = self.sort_ellipses(self.ellipses)
-            self.mean_cov_par, self.var_cov_par = self.parametric_ellipsis(self.ellipses_par)
+            self.mean_cov = np.mean(self.ellipses, axis = 0)
+            self.var_cov = np.var(self.ellipses, axis = 0)
+            self.mean_cov_par = np.mean(np.array(self.ellipses_par), axis = 0)
+            self.var_cov_par = np.var(np.array(self.ellipses_par), axis = 0)
             if 'npf' in params:
                 self.meanlogppk = np.mean(X[cl:len(self.pp_cid)+cl,:], axis = 1)
                 self.logmeanppk = np.log(np.mean(np.exp(X[cl:len(self.pp_cid)+cl,:]), axis = 1))
@@ -156,35 +158,6 @@ class Ensemble:
             if self.pilotp_flag:
                 self.meanlogppk = np.mean(X[:len(self.pp_cid),:], axis = 1)
                 self.logmeanppk = np.log(np.mean(np.exp(X[:len(self.pp_cid),:]), axis = 1))
-    
-    def parametric_ellipsis(self, data):
-        
-        return [np.mean(np.array(data), axis = 0), np.var(np.array(data), axis = 0)]
-    
-    def sort_ellipses(self, data):
-        placeholder = np.ones(3)
-        data = np.array(data)
-        sorted_data = []
-        # Step 1 - allign on major axis
-        for i in range(data.shape[0]):
-            if data[i,0] < data[i,1]:
-                placeholder[0] = data[i,1]
-                placeholder[1] = data[i,0]
-                placeholder[2] = data[i,2] + np.pi/2
-            else:
-                placeholder[0] = data[i,0]
-                placeholder[1] = data[i,1]
-                placeholder[2] = data[i,2] 
-                
-        # Step 2 - allign on upper two quadrants
-            placeholder[2] = placeholder[2]%np.pi
-
-            sorted_data.append(placeholder.copy())        
-            
-        
-        return [np.mean(np.array(sorted_data), axis = 0), np.var(np.array(sorted_data), axis = 0)]
-    
-
                     
     def get_Kalman_X_Y(self, params: list):   
 
@@ -217,7 +190,6 @@ class Ensemble:
         for i in range(self.n_mem):
             if 'cov_data' in params:
                 if 'npf' in params:
-                    # log transformation of cov l to prevent negative numbers?? 
                     x = np.concatenate((data[i]['cov_data'].flatten(),
                                         np.log(data[i]['npf'][:,self.pp_cid].flatten()),
                                         head[i]['h']))
@@ -383,6 +355,20 @@ class Ensemble:
             f.write('\n')
             f.close()
             
+            f = open(os.path.join(direc, 'covariance_data_par.dat'),'a')
+            f.write("{:.10f} ".format(self.mean_cov_par[0,0]))
+            f.write("{:.10f} ".format(self.mean_cov_par[1,1]))
+            f.write("{:.10f} ".format(self.mean_cov_par[0,1]))
+            f.write('\n')
+            f.close()
+            
+            f = open(os.path.join(direc, 'cov_variance_par.dat'),'a')
+            f.write("{:.10f} ".format(self.var_cov_par[0,0]))
+            f.write("{:.10f} ".format(self.var_cov_par[1,1]))
+            f.write("{:.10f} ".format(self.var_cov_par[0,1]))
+            f.write('\n')
+            f.close()
+            
             for i in range(self.n_mem):
                 f = open(os.path.join(direc, f'covariance_model_{i}.dat'), 'a')
                 for j in range(len(cov_data[i]['cov_data'])):
@@ -420,6 +406,9 @@ class Ensemble:
         
         file_paths = [os.path.join(pars['resdir'], 'errors.dat'),
                       os.path.join(pars['resdir'], 'covariance_data.dat'),
+                      os.path.join(pars['resdir'], 'cov_variance.dat'),
+                      os.path.join(pars['resdir'], 'covariance_data_par.dat'),
+                      os.path.join(pars['resdir'], 'cov_variance_par.dat'),
                       os.path.join(pars['resdir'], 'logmeanppk.dat'),
                       os.path.join(pars['resdir'], 'meanlogppk.dat'),
                       os.path.join(pars['resdir'], 'obs_true.dat'),
@@ -429,7 +418,7 @@ class Ensemble:
                       os.path.join(pars['resdir'], 'h_mean.dat'),
                       os.path.join(pars['resdir'], 'h_var.dat'),
                       os.path.join(pars['resdir'], 'obs_mean.dat'),
-                      os.path.join(pars['resdir'], 'cov_variance.dat')]
+                      ]
         
         for file_path in file_paths:
             if os.path.exists(file_path):

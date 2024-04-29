@@ -101,7 +101,7 @@ class MFModel:
         self.ic.write()
         
         
-    def kriging(self, params, data, pp_xy, pp_cid, mean_cov, var_cov):
+    def kriging(self, params, data, pp_xy, pp_cid, mean_cov_par, var_cov_par):
         # start_time = time.time()
         if 'cov_data' in params:   
             
@@ -112,8 +112,9 @@ class MFModel:
             if not pos_def:
                 # Ansatz Olaf: Update so lange verkleinern, bis es passt und
                 # die Matrix positiv definit ist
-                difmat = mat - self.ellips_mat
                 reduction = 0.96
+                difmat = mat - self.ellips_mat
+
                 while reduction > 0:
                     test_mat = self.ellips_mat + reduction * difmat
                     eigenvalues, eigenvectors = np.linalg.eig(test_mat)
@@ -133,43 +134,21 @@ class MFModel:
                 
                 l1, l2, angle = self.extract_truth(eigenvalues, eigenvectors)
                 success = False
-                self.n_neg_def += 1
+                self.n_neg_def += 1                
                 # If nothing has worked for 10 consecutive timesteps, draw a new
                 # variogram from the mean variogram distribution
-                print(self.n_neg_def)
                 if self.n_neg_def == 10:
-                    print('Replacing covariance model')
-                    a = np.random.normal(mean_cov[0], np.sqrt(var_cov[0]))
-                    b = np.random.normal(mean_cov[1], np.sqrt(var_cov[1]))
-                    angle = np.random.normal(mean_cov[2], np.sqrt(var_cov[2]))
+                    pos_def = False
+                    while not pos_def:
+                        a = np.random.normal(mean_cov_par[0,0], np.sqrt(var_cov_par[0,0]))
+                        m = np.random.normal(mean_cov_par[0,1], np.sqrt(var_cov_par[0,1]))
+                        b = np.random.normal(mean_cov_par[1,1], np.sqrt(var_cov_par[1,1]))
+                    
+                        eigenvalues, eigenvectors, mat, pos_def = self.check_new_matrix([a,m,b])
                         
-                    if a < b:
-                        l1 = b
-                        l2 = a
-                        if angle > np.pi/2:
-                            angle -= np.pi/2
-                        else:
-                            angle += np.pi/2
-                    else:
-                        l1 = a
-                        l2 = b
-                    
-                    # Constructing parametric form of ellips
-                    D = self.pars['rotmat'](angle)
-                    M = D @ np.array([[1/l1**2, 0],[0, 1/l2**2]]) @ D.T
-                    
-                    self.update_ellips_mat(M)
-                    success = True
-                    
-                    # This is needed when drawing from parametric ensemble distribution
-                    # pos_def = False
-                    # while not pos_def:
-                        # a = np.random.normal(mean_cov[0,0], np.sqrt(var_cov[0,0]))
-                        # b = np.random.normal(mean_cov[1,1], np.sqrt(var_cov[1,1]))
-                        # m = np.random.normal(mean_cov[0,1], np.sqrt(var_cov[0,1]))
-                        # eigenvalues, eigenvectors, mat, pos_def = self.check_new_matrix([a,b,m])
-                        
-                    # l1, l2, angle = self.pos_krig(mat, eigenvalues, eigenvectors, data, pp_cid, pp_xy)
+                    l1, l2, angle = self.pos_krig(mat, eigenvalues, eigenvectors, data, pp_cid, pp_xy)
+                elif self.n_neg_def == 1:
+                    print('A new model got stuck')
                     
             return [[l1, l2, angle%np.pi], self.ellips_mat, success]
                 
@@ -203,14 +182,19 @@ class MFModel:
         return lxmat[0], lxmat[1], ang
     
     def update_ellips_mat(self, mat):
-        self.ellips_mat = mat
+        self.ellips_mat = mat.copy()
      
     def pos_krig(self, mat, eigenvalues, eigenvectors, data, pp_cid, pp_xy):
         self.update_ellips_mat(mat)
         
         l1, l2, angle = self.extract_truth(eigenvalues, eigenvectors)
+        
+        if l2 > l1:
+            l1, l2 = l2, l1
+            angle += np.pi/2
+            
         self.lx = [l1, l2]
-        self.ang = angle
+        self.ang = angle%np.pi
         
         # Is ppk really without a logarithm
         pp_k = data[1]
@@ -220,8 +204,11 @@ class MFModel:
         self.set_field([np.exp(field)], ['npf'])
         
         if self.n_neg_def > 0:
-            print('A model has been fixed')
-        self.n_neg_def = 0
+            if self.n_neg_def == 10:
+                print('10 tries reached- replacing covariance model')
+            else:
+                print('A model has been fixed')
+            self.n_neg_def = 0
         
         return l1, l2, angle
     

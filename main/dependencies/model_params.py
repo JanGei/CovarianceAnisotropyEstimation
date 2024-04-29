@@ -8,6 +8,7 @@ def rotation_matrix(angle):
     # This formulation rotates counter-clockwise from x-axis
     # To rotate clockwise, you need the inverse of this rotation matrix, i.e.
     # flipping the signs of the sines
+
     return np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]]) 
 
 def get():
@@ -58,11 +59,11 @@ def get():
     computer = ['office', 'icluster', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 24
+        n_mem  = 25
         nprocs = np.min([n_mem, psutil.cpu_count()])
         if n_mem == 2:
             nprocs = 1
-        up_temp = True
+        up_temp = False
         n_pre_run = 1
     elif setup == 'icluster':
         n_mem  = 120
@@ -108,7 +109,7 @@ def get():
             valtype = "random"
             
     h_damp = 0.5
-    cov_damp = 0.15
+    cov_damp = 0.05
     npf_damp = 0.25
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
     
@@ -118,7 +119,7 @@ def get():
         'setup' : setup,
         'EnKF_p': variants[choice], 
         'damp'  : damp[choice],
-        'n_PP'  : 200,
+        'n_PP'  : 100,
         'eps'   : 0.05,
         'covt'  : covtype,
         'valt'  : valtype,
