@@ -40,6 +40,7 @@ class MFModel:
             self.ellips_mat = np.array([[ellips[0], ellips[1]], [ellips[1], ellips[2]]])
             self.lx         = [l_angs[0], l_angs[1]]
             self.ang        = l_angs[2]
+            self.corrL_max  = np.max(pars['nx']) * np.max(pars['dx'])/5
             
         
     def set_field(self, field, pkg_name: list):
@@ -127,7 +128,8 @@ class MFModel:
             if pos_def:
                 success = True
                 l1, l2, angle = self.pos_krig(mat, eigenvalues, eigenvectors, data, pp_cid, pp_xy)
-                
+                l1, l2, angle = self.check_corrL(l1,l2, angle)
+                            
             else:
                 # If nothing works, keep old solution
                 eigenvalues, eigenvectors = np.linalg.eig(self.ellips_mat)
@@ -276,9 +278,28 @@ class MFModel:
         return s_cond
         
         
+    def reduce_corL(self, corL):
+        # reducing correlation lengths based on monod kinetic model
+        return (self.corrL_max * corL) / (self.corrL_max*0.25 + corL)
         
-        
-        
+    def check_corrL(self, l1, l2, angle):
+        correction = False
+        if l1 > 0.75*self.corrL_max:
+            l1 = self.reduce_corL(l1)
+            print('We are correcting a variogram')
+            correction = True
+        if l2 > 0.75*self.corrL_max:
+            l2 = self.reduce_corL(l2)
+            correction = True
+        if correction:
+            self.variogram_to_matrix(l1, l2, angle)
+            
+        return l1, l2, angle
+    
+    def variogram_to_matrix(self, l1, l2, angle):
+        D = self.pars['rotmat'](angle)
+        M = D @ np.array([[1/l1**2, 0],[0, 1/l2**2]]) @ D.T
+        self.update_ellips_mat(M)
         
         
         
