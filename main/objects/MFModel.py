@@ -286,7 +286,7 @@ class MFModel:
         correction = False
         if l1 > 0.75*self.corrL_max:
             l1 = self.reduce_corL(l1)
-            print('We are correcting a variogram')
+            # print('We are correcting a variogram')
             correction = True
         if l2 > 0.75*self.corrL_max:
             l2 = self.reduce_corL(l2)
