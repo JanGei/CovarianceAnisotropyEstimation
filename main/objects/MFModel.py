@@ -5,6 +5,7 @@ import sys
 sys.path.append('..')
 from dependencies.randomK_points import randomK_points
 from dependencies.covarmat_s import covarmat_s
+
 # from dependencies.plotting.plot_k_fields import plot_k_fields
 # import time
 
@@ -30,9 +31,7 @@ class MFModel:
         self.chd        = self.gwf.chd
         self.mg         = self.gwf.modelgrid
         self.cxy        = np.vstack((self.mg.xyzcellcenters[0], self.mg.xyzcellcenters[1])).T
-        dxmax           = np.max([max(sublist) - min(sublist) for sublist in self.mg.xvertices])
-        dymax           = np.max([max(sublist) - min(sublist) for sublist in self.mg.yvertices])
-        self.dx         = [dxmax, dymax]
+        self.dx         = pars['dx']
         self.old_npf    = []
         self.n_failure  = 0
         self.n_neg_def  = 0
@@ -134,7 +133,7 @@ class MFModel:
                 # If nothing works, keep old solution
                 eigenvalues, eigenvectors = np.linalg.eig(self.ellips_mat)
                 
-                l1, l2, angle = self.extract_truth(eigenvalues, eigenvectors)
+                l1, l2, angle = self.pars['mat2cv'](eigenvalues, eigenvectors)
                 success = False
                 self.n_neg_def += 1                
                 # If nothing has worked for 10 consecutive timesteps, draw a new
@@ -161,27 +160,6 @@ class MFModel:
             
             self.set_field([np.exp(field)], ['npf'])
         
-        # print(f'Entire function took {(time.time() - start_time):.2f} seconds')
-    
-    def extract_truth(self, eigenvalues, eigenvectors):
-        
-        lxmat = 1/np.sqrt(eigenvalues)
-        
-        if lxmat[0] < lxmat[1]:
-            lxmat = np.flip(lxmat)
-            eigenvectors = np.flip(eigenvectors, axis = 1)
-        
-        if eigenvectors[0,0] > 0:
-            ang = np.pi/2 -np.arccos(np.dot(eigenvectors[:,0],np.array([0,1])))    
-
-        else:
-            if eigenvectors[1,0] > 0:
-                ang = np.arccos(np.dot(eigenvectors[:,0],np.array([1,0])))
-
-            else:
-                ang = np.pi -np.arccos(np.dot(eigenvectors[:,0],np.array([1,0])))
-
-        return lxmat[0], lxmat[1], ang
     
     def update_ellips_mat(self, mat):
         self.ellips_mat = mat.copy()
@@ -189,7 +167,7 @@ class MFModel:
     def pos_krig(self, mat, eigenvalues, eigenvectors, data, pp_cid, pp_xy):
         self.update_ellips_mat(mat)
         
-        l1, l2, angle = self.extract_truth(eigenvalues, eigenvectors)
+        l1, l2, angle = self.pars['mat2cv'](eigenvalues, eigenvectors)
         
         if l2 > l1:
             l1, l2 = l2, l1
@@ -249,10 +227,9 @@ class MFModel:
         
         R = np.eye(m)* sig_meas**2
         
-        Ctype = 2
         # Construct the necessary covariance matrices
-        Qssm = covarmat_s(self.cxy,pp_xy,Ctype,[sigma,self.lx,self.ang]) 
-        Qsmsm = covarmat_s(pp_xy,pp_xy,Ctype,[sigma,self.lx, self.ang])
+        Qssm = covarmat_s(self.cxy,pp_xy,cov,[sigma,self.lx,self.ang], self.pars['rotmat'](self.ang)) 
+        Qsmsm = covarmat_s(pp_xy,pp_xy,cov,[sigma,self.lx, self.ang], self.pars['rotmat'](self.ang))
         
         # kriging matrix and its inverse
         krigmat = np.vstack((np.hstack((Qsmsm+R, Xm)), np.append(Xm.T, 0)))

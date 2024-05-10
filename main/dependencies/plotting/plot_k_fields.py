@@ -4,7 +4,7 @@ from cmcrameri import cm
 import numpy as np
 
 
-def plot_k_fields(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pars,  k_fields: list):
+def plot_k_fields(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pars,  k_fields: list, points = []):
     
     assert len(k_fields)%2 == 0, "You should provide an even number of fields"
     kmin    = np.min(np.log(np.loadtxt(pars['k_r_d'], delimiter = ',')))
@@ -32,4 +32,7 @@ def plot_k_fields(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pars,  k_fields: list
     axf.plot_array((gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1, vmin = kmin, vmax = kmax)
     ax.set_aspect('equal')
     plt.tight_layout()
+    if len(points) > 0:
+        plt.scatter(points[:,0], points[:,1], s=1, color = "black")
+        
     plt.show()

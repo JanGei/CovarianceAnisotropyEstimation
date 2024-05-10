@@ -3,6 +3,14 @@ import os
 import sys
 import psutil
 
+def create_wells(row_well, col_well, dx):
+    well_loc = np.zeros((col_well*row_well,2))
+    for i in range(row_well):
+        for j in range(col_well):
+            well_loc[i*col_well + j, 0] = (19.5 + 10*j) *dx[0] 
+            well_loc[i*col_well + j, 1] = (8.5 + 10*i) *dx[1]
+    # pumping wells should be at (5, 9, 15, 27, 31)
+    return well_loc
 # define one rotation matrix to fix it
 def rotation_matrix(angle):
     # This formulation rotates counter-clockwise from x-axis
@@ -11,116 +19,106 @@ def rotation_matrix(angle):
 
     return np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]]) 
 
+def extract_truth(eigenvalues, eigenvectors):
+     
+     lxmat = 1/np.sqrt(eigenvalues)
+     
+     if lxmat[0] < lxmat[1]:
+         lxmat = np.flip(lxmat)
+         eigenvectors = np.flip(eigenvectors, axis = 1)
+     
+     if eigenvectors[0,0] > 0:
+         ang = np.pi/2 -np.arccos(np.dot(eigenvectors[:,0],np.array([0,1])))    
+
+     else:
+         if eigenvectors[1,0] > 0:
+             ang = np.arccos(np.dot(eigenvectors[:,0],np.array([1,0])))
+
+         else:
+             ang = np.pi -np.arccos(np.dot(eigenvectors[:,0],np.array([1,0])))
+
+     return lxmat[0], lxmat[1], ang
+
 def get():
     
     # Changing the working directory to the parent directory to have consisten access
     current_directory = os.path.dirname(os.path.abspath(__file__))
     parent_directory = os.path.dirname(current_directory)
-    Vrdir = parent_directory + '/Virtual_Reality'
+    Vrdir = os.path.join(parent_directory, 'Virtual_Reality')
+    ensemb_dir  = os.path.join(parent_directory, 'Ensemble')
 
-    # Cell spacing in x and y
     dx          = np.array([50, 50])
-    # Different covariance models
-    cov_mods    = ['Exponential', 'Matern', 'Gaussian']
-    # Well locations in Erdal & Cirpka
     row_well    = 5
     col_well    = 9
-    well_loc    = np.zeros((col_well*row_well,2))
-    for i in range(row_well):
-        for j in range(col_well):
-            well_loc[i*col_well + j, 0] = (19.5 + 10*j) *dx[0] 
-            well_loc[i*col_well + j, 1] = (8.5 + 10*i) *dx[1]
-    # pumping wells should be at (5, 9, 15, 27, 31)
+    well_loc    = create_wells(row_well, col_well, dx)
+    
     q_idx       = [5, 9, 15, 27, 31]
     mask        = np.full(len(well_loc),True,dtype=bool)
     mask[q_idx] = False
-    # Model units
-    lenuni      = 'METERS'
-    timuni      = 'SECONDS'
     
-    sim_ws      = os.path.join(Vrdir, 'model_files')
-    gg_ws       = os.path.join(Vrdir, 'gridgen_files')
-    trs_ws      = os.path.join(Vrdir, 'transient_model')
-    vr_h_dir    = os.path.join(Vrdir, 'model_data', 'head_ref.npy')
-    vr_obs_dir  = os.path.join(Vrdir, 'model_data', 'obs_ref.npy')
-    
-    ensemb_dir  = os.path.join(parent_directory, 'Ensemble')
-    output_dir  = os.path.join(parent_directory, 'output')
-    
-    temp_m_ws   = os.path.join(ensemb_dir, 'template_model')
-    member_ws   = os.path.join(ensemb_dir, 'member')
-
-    # reference data paths
-    k_ref_dir   = os.path.join(Vrdir, 'model_data','logK_ref.csv')
-    r_ref_dir   = os.path.join(Vrdir, 'model_data','rech_ref.csv')
-    rivh_dir   = os.path.join(Vrdir, 'model_data','tssl.csv')
-    sfac_dir   = os.path.join(Vrdir, 'model_data','sfac.csv')
-    
+    cov_mods    = ['Exponential', 'Matern', 'Gaussian']
     computer = ['office', 'icluster', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 25
+        n_mem  = 24
         nprocs = np.min([n_mem, psutil.cpu_count()])
         if n_mem == 2:
             nprocs = 1
         up_temp = False
         n_pre_run = 1
+        printf = True
     elif setup == 'icluster':
         n_mem  = 120
         nprocs = psutil.cpu_count()
         up_temp = True
-        n_pre_run = 40
+        n_pre_run = 20
+        printf = False
     elif setup == 'binnac':
-        n_mem  = 560
+        n_mem  = 280
         nprocs = psutil.cpu_count()
         up_temp = True
-        n_pre_run = 40
+        n_pre_run = 20
+        printf = False
     
-    
-    choice = 0
-    variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
+    choice = [0, 0]
+    cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
+    est_variants = ["underestimate", "good", "overestimate"]
     pp_flag = True
-    l_red = 5 # possible are 5 and 10
-
-    if choice == 0 or choice == 1:
-        if not pp_flag:
-            print("You cant have a variogram with no pilotpoints - yet")
-            print("Exiting...")
-            sys.exit() 
-        if l_red < 5:
-            print("Your system must not be dominated by the correlation length, if you want to estimate it")
-            print("Exiting...")
-            sys.exit()
-        
-        
-    if choice == 0:
+    l_red = 10 # possible are 5 and 10
+    nPP = 50
+    
+    h_damp = 0.5
+    cov_damp = 0.1
+    npf_damp = 0.2
+    damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
+    
+    
+    if choice[0] == 0:
         covtype = "random"
         valtype = "random"
         
-    elif choice == 1:
+    elif choice[0] == 1:
         covtype = "random"
         valtype = "good"
         
-    elif choice == 2:
+    elif choice[0] == 2:
         covtype = "random"
         if pp_flag:
             valtype = "random"
         else:
             valtype = "random"
-            
-    h_damp = 0.5
-    cov_damp = 0.05
-    npf_damp = 0.25
-    damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
+
     
     pars    = {
         'pilotp': pp_flag,
         'nprocs': nprocs,
         'setup' : setup,
-        'EnKF_p': variants[choice], 
-        'damp'  : damp[choice],
-        'n_PP'  : 100,
+        'EnKF_p': cov_variants[choice[0]], 
+        'damp'  : damp[choice[0]],
+        'estyp' : est_variants[choice[1]],
+        'n_PP'  : nPP,
         'eps'   : 0.05,
+        'omitc' : 2,
         'covt'  : covtype,
         'valt'  : valtype,
         'l_red' : l_red,
@@ -150,25 +148,38 @@ def get():
         'sy'    : 0.15,                                     # specific yield
         'mname' : "Reference",
         'sname' : "Reference",
-        'sim_ws': sim_ws,
-        'vr_h_d': vr_h_dir,
-        'vr_o_d': vr_obs_dir,
-        'gg_ws' : gg_ws,
+        'printf': printf,
+        'sim_ws': os.path.join(Vrdir, 'model_files'),
+        'vr_h_d': os.path.join(Vrdir, 'model_data', 'head_ref.npy'),
+        'vr_o_d': os.path.join(Vrdir, 'model_data', 'obs_ref.npy'),
+        'gg_ws' : os.path.join(Vrdir, 'gridgen_files'),
         'ens_ws': ensemb_dir,
-        'mem_ws': member_ws,
-        'timuni': timuni,                                   # time unit
-        'lenuni': lenuni,                                   # length unit
-        'k_r_d' : k_ref_dir,
-        'r_r_d' : r_ref_dir,
-        'rh_d'  : rivh_dir,
-        'sf_d'  : sfac_dir,
+        'mem_ws': os.path.join(ensemb_dir, 'member'),
+        'timuni': 'SECONDS',                                   # time unit
+        'lenuni': 'METERS',                                   # length unit
+        'k_r_d' : os.path.join(Vrdir, 'model_data','logK_ref.csv'),
+        'r_r_d' : os.path.join(Vrdir, 'model_data','rech_ref.csv'),
+        'rh_d'  : os.path.join(Vrdir, 'model_data','tssl.csv'),
+        'sf_d'  : os.path.join(Vrdir, 'model_data','sfac.csv'),
         'n_mem' : n_mem,
-        'tm_ws' : temp_m_ws,
-        'trs_ws': trs_ws ,
-        'resdir': output_dir,
+        'tm_ws' : os.path.join(ensemb_dir, 'template_model'),
+        'trs_ws': os.path.join(Vrdir, 'transient_model') ,
+        'resdir': os.path.join(parent_directory, 'output'),
         'nsteps': int(2*365*24/6),
         'nprern': n_pre_run,
-        'rotmat': rotation_matrix
+        'rotmat': rotation_matrix,
+        'mat2cv': extract_truth
+        
         }
     
+    if choice == 0 or choice == 1:
+        if not pp_flag:
+            print("You cant have a variogram with no pilotpoints - yet")
+            print("Exiting...")
+            sys.exit() 
+        if l_red < 5:
+            print("Your system must not be dominated by the correlation length, if you want to estimate it")
+            print("Exiting...")
+            sys.exit()
+            
     return pars

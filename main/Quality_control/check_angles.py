@@ -20,6 +20,6 @@ angles = np.deg2rad(np.arange(0, 360, 10))
 results = []
 
 for i in range(len(angles)):
-    res = conditional_k(gwf, pars, pp_xy, pp_cid, covtype = 'test', valtype = 'random', test_cov = [lx, angles[i]])
+    res = conditional_k(gwf, pars, pp_xy, pp_cid, test_cov = [lx, angles[i]])
     results.append(res)
     plot_angles(gwf, pars, res[0], res[1], angles[i])

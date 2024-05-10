@@ -7,7 +7,7 @@ import numpy as np
 # from dependencies.plotting.plot_k_fields import plot_k_fields
 
 
-def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], covtype = 'random', valtype = 'good', test_cov = []):
+def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = []):
     
     cov     = pars['cov']
     clx     = pars['lx']
@@ -16,18 +16,23 @@ def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], covtype = 'random', 
     mu      = pars['mu'][0]
     cov     = pars['cov']
     k_ref   = np.loadtxt(pars['k_r_d'], delimiter = ',')
+    dx      = pars['dx']
     
     mg = gwf.modelgrid
     xyz = mg.xyzcellcenters
     cxy = np.vstack((xyz[0], xyz[1])).T
-    dxmin = np.min([max(sublist) - min(sublist) for sublist in mg.xvertices])
-    dymin = np.min([max(sublist) - min(sublist) for sublist in mg.yvertices])
-    dx = [dxmin, dymin]
-    sig_meas = 0.1 # standard deviation of measurement error
+    sig_meas = 0.1 
     
-    if covtype == 'random':
-        lx = np.array([np.random.randint(pars['dx'][0], clx[0][0]*2),
-                       np.random.randint(pars['dx'][1], clx[0][1]*2)])
+    if pars['estyp'] == "overestimate":
+        factor = 3
+    elif pars['estyp'] == "good":
+        factor = 2
+    elif pars['estyp'] == "underestimate":
+        factor = 1
+    
+    if pars['covt'] == 'random':
+        lx = np.array([np.random.randint(pars['dx'][0], clx[0][0]*factor),
+                       np.random.randint(pars['dx'][1], clx[0][1]*factor)])
         ang = np.random.uniform(0, np.pi)
         sigma = np.random.uniform(0.5, 3)
         if lx[0] < lx[1]:
@@ -38,27 +43,25 @@ def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], covtype = 'random', 
                 ang += np.pi/2
         elif lx[0] == lx[1]:
             lx[0] += 1
-    elif covtype == 'good':
+    elif pars['covt'] == 'good':
         lx = clx[0]
         ang = np.deg2rad(angles[0])
-    elif covtype == 'test':
+        
+    if test_cov:
         lx = test_cov[0]
         ang = test_cov[1]
         
     # starting k values at pilot points
-    if valtype == 'good':
-        pp_k = np.log(k_ref[pp_cid.astype(int)])
-        # Kg = k_ref_m
-        
-    elif valtype == 'random':
+    if pars['valt'] == 'good':
+        pp_k = np.log(k_ref[pp_cid.astype(int)])   
+    elif pars['valt'] == 'random':
         pp_k = np.random.uniform(mu-mu/4, mu+mu/4, len(pp_cid))
         pp_k = pp_k + sig_meas * np.random.randn(*pp_k.shape)
-        # Kg = np.random.uniform(k_ref_m - k_ref_m/4, k_ref_m + k_ref_m/4)
+
     
     # random, unconditional field for the given variogram
     Kflat = np.log(randomK_points(mg.extent, cxy, dx,  lx, ang, sigma, cov, 1, pars)) 
-    
-    
+
     # Construct covariance matrix of measurement error
     m = len(pp_k)
     n = cxy.shape[0]
@@ -67,12 +70,12 @@ def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], covtype = 'random', 
     Xm = np.ones((m,1)) 
     # One = np.ones((1,n))
     
+    D = pars['rotmat'](ang)
     R = np.eye(m)* sig_meas**2
     
-    Ctype = 2
     # Construct the necessary covariance matrices
-    Qssm = covarmat_s(cxy,pp_xy,Ctype,[sigma,lx,ang]) 
-    Qsmsm = covarmat_s(pp_xy,pp_xy,Ctype,[sigma,lx, ang])
+    Qssm = covarmat_s(cxy,pp_xy,pars['cov'],[sigma,lx,ang], D) 
+    Qsmsm = covarmat_s(pp_xy,pp_xy,pars['cov'],[sigma,lx, ang], D)
         
     # kriging matrix and its inverse
     krigmat = np.vstack((np.hstack((Qsmsm+R, Xm)), np.append(Xm.T, 0)))
@@ -94,11 +97,8 @@ def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], covtype = 'random', 
     beta = sol[m]
     
     s_cond = np.squeeze(Qssm.dot(xi)) + np.squeeze(X.dot(beta)) + Kflat
-    # plot_k_fields(gwf, pars, [np.exp(Kflat)/1000, np.exp(s_cond)])
     
-    # !!!!!!!!!!!! same rotational matrix?
-    # D = np.array([[np.cos(ang), -np.sin(ang)], [np.sin(ang), np.cos(ang)]]) 
-    D = pars['rotmat'](ang)
+    
     M = D @ np.array([[1/lx[0]**2, 0],[0, 1/lx[1]**2]]) @ D.T
     
     return np.exp(s_cond), [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang]

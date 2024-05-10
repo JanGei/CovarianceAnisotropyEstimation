@@ -4,26 +4,6 @@ import numpy as np
 from dependencies.load_template_model import load_template_model
 from dependencies.model_params import get
 
-def extract_truth(eigenvalues, eigenvectors):
-    
-    lxmat = 1/np.sqrt(eigenvalues)
-    
-    if lxmat[0] < lxmat[1]:
-        lxmat = np.flip(lxmat)
-        eigenvectors = np.flip(eigenvectors, axis = 1)
-    
-    if eigenvectors[0,0] > 0:
-        ang = np.pi/2 -np.arccos(np.dot(eigenvectors[:,0],np.array([0,1])))    
-
-    else:
-        if eigenvectors[1,0] > 0:
-            ang = np.arccos(np.dot(eigenvectors[:,0],np.array([1,0])))
-
-        else:
-            ang = np.pi -np.arccos(np.dot(eigenvectors[:,0],np.array([1,0])))
-
-    return lxmat[0], lxmat[1], ang
-
 
 pars        = get()
 n_mem       = pars['n_mem']
@@ -53,8 +33,9 @@ for i in range(n_target):
     D = pars['rotmat'](ang)
     M = D @ np.array([[1/lx[0]**2, 0],[0, 1/lx[1]**2]]) @ D.T
     
-    eigenvalues, eigenvectors = eigenvalues, eigenvectors = np.linalg.eig(M)
-    res[i,3:] = extract_truth(eigenvalues, eigenvectors)
+    eigenvalues, eigenvectors =  np.linalg.eig(M)
+    # res[i,3:] = extract_truth(eigenvalues, eigenvectors)
+    res[i,3:] = pars['mat2cv'](eigenvalues, eigenvectors)
     
 difference = res[:,0:3] - res[:,3:]
 print(np.max(np.abs(difference)))

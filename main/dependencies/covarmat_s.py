@@ -13,7 +13,7 @@ def rotate_coordinates(coordinates, ang):
     
     return rc
 
-def covarmat_s(Xint, Xmeas, Ctype, theta):
+def covarmat_s(Xint, Xmeas, Ctype, theta, rotmat):
     # Xint: (n x dim) array of interpolation locations
     # Xmeas: (m x dim) array of measurement locations
     # Ctype: type of covariance model (1: exponential, 2: Gaussian, 3: Matern)
@@ -24,14 +24,16 @@ def covarmat_s(Xint, Xmeas, Ctype, theta):
     
     m, dim = Xmeas.shape
     n = Xint.shape[0]
-    ang = theta[2]
+    # ang = theta[2]
     sigma2 = np.array(theta[0])
     lx = np.array(theta[1]).flatten()
     if len(lx) == 1:
         lx = np.tile(lx, dim)
     
-    Xint = rotate_coordinates(Xint, ang)
-    Xmeas = rotate_coordinates(Xmeas, ang)
+    # Xint = rotate_coordinates(Xint, ang)
+    # Xmeas = rotate_coordinates(Xmeas, ang)
+    Xint = np.dot(rotmat, Xint.T).T
+    Xmeas = np.dot(rotmat, Xmeas.T).T
     # Scaled distance between all points
     deltaXnorm = (Xint[:, np.newaxis, 0] * np.ones((1,m)) - np.ones((n,1)) * Xmeas[:, 0]) / lx[0]
     if dim > 1:
@@ -44,11 +46,11 @@ def covarmat_s(Xint, Xmeas, Ctype, theta):
     else:
         H = np.abs(deltaXnorm)
 
-    if Ctype == 1:
+    if Ctype == 'Exponential':
         Q_ssm = sigma2 * np.exp(-H)
-    elif Ctype == 2:
+    elif Ctype == 'Gaussian':
         Q_ssm = sigma2 * np.exp(-H ** 2)
-    elif Ctype == 3:
+    elif Ctype == 'Matern':
         Q_ssm = sigma2 * np.multiply((1+np.sqrt(3)*H), np.exp(-np.sqrt(3)*H))
         # Q_ssm[H > 1] = 0
     else:

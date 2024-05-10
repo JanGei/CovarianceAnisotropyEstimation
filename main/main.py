@@ -75,8 +75,6 @@ if __name__ == '__main__':
             pars, 
             pp_xy,
             pp_cid,
-            covtype = pars['covt'],
-            valtype = pars['valt']
             )
             for idx in range(n_mem)
             )
@@ -120,7 +118,7 @@ if __name__ == '__main__':
     print(f'The model has {len(obs_cid)} observation points')
     if pars['pilotp']:
         print(f'The model has {len(pp_cid)} pilot points points')
-    print(f'Loading of data and creating k_fields took {(time.time() - start_time):.2f} seconds')
+    if pars['printf']: print(f'Loading of data and creating k_fields took {(time.time() - start_time):.2f} seconds')
     
     #%% generate model instances  
     start_time = time.time()
@@ -132,7 +130,7 @@ if __name__ == '__main__':
         for idx in range(n_mem)
         )
     
-    print(f'{n_mem} models are initiated in {(time.time() - start_time):.2f} seconds')
+    if pars['printf']: print(f'{n_mem} models are initiated in {(time.time() - start_time):.2f} seconds')
     #%% add the models to the ensemble
     start_time = time.time()
     
@@ -149,7 +147,7 @@ if __name__ == '__main__':
     # set their respective k-fields
     MF_Ensemble.set_field(k_fields, ['npf'])
     # plot_k_fields(gwf, pars,  k_fields, np.rad2deg(MF_Ensemble.ellipses[:,2]))
-    print(f'Ensemble is initiated and respective k-fields are set in {(time.time() - start_time):.2f} seconds')
+    if pars['printf']: print(f'Ensemble is initiated and respective k-fields are set in {(time.time() - start_time):.2f} seconds')
     #%% Running each model n times
     start_time = time.time()
     
@@ -181,12 +179,12 @@ if __name__ == '__main__':
         rch_data, wel_data, riv_data, Y_obs = get_transient_data(pars, t_step, true_h[t_step], obs_cid)
         start_time = time.time()
         MF_Ensemble.update_transient_data(rch_data, wel_data, riv_data)
-        print(f'transient data loaded and applied in {(time.time() - start_time):.2f} seconds')
+        if pars['printf']: print(f'transient data loaded and applied in {(time.time() - start_time):.2f} seconds')
         
-        print('---')
+        if pars['printf']: print('---')
         start_time = time.time()
         MF_Ensemble.propagate()
-        print(f'ensemble propagated in {(time.time() - start_time):.2f} seconds')
+        if pars['printf']: print(f'Ensemble propagated in {(time.time() - start_time):.2f} seconds')
  
         if Assimilate:
             # print('---')
@@ -200,12 +198,12 @@ if __name__ == '__main__':
 
             EnKF.Kalman_update(Y_obs)
 
-            print(f'Ensemble Kalman Filter performed in  {(time.time() - start_time):.2f} seconds')
+            if pars['printf']: print(f'Ensemble Kalman Filter performed in  {(time.time() - start_time):.2f} seconds')
             
             start_time = time.time()
             MF_Ensemble.apply_X(pars['EnKF_p'], EnKF.X)
 
-            print(f'Application of results plus kriging took {(time.time() - start_time):.2f} seconds')
+            if pars['printf']: print(f'Application of results plus kriging took {(time.time() - start_time):.2f} seconds')
         else:
             # Very important: update initial conditions if youre not assimilating
             MF_Ensemble.update_initial_heads()
@@ -218,14 +216,14 @@ if __name__ == '__main__':
             if 'cov_data' in pars['EnKF_p']:
                 ellipses(
                     MF_Ensemble.ellipses,
-                    MF_Ensemble.mean_cov,
+                    MF_Ensemble.mean_cov_par,
                     pars
                     )
         
-            compare_mean_true(gwf, [k_ref, MF_Ensemble.meanlogk]) 
+            # compare_mean_true(gwf, [k_ref, MF_Ensemble.meanlogk]) 
             # k_fields = MF_Ensemble.get_member_fields(['npf'])
             # plot_k_fields(gwf, pars,  [field['npf'] for field in k_fields[0:8]])
             
-        print(f'Plotting and recording took {(time.time() - start_time):.2f} seconds')
+        if pars['printf']: print(f'Plotting and recording took {(time.time() - start_time):.2f} seconds')
     
     
