@@ -27,6 +27,7 @@ sigma   = pars['sigma'][0]
 cov     = pars['cov']
 
 
-Kflat = np.log(randomK_points(mg.extent, cxy, dx,  lx, ang, sigma, cov, 5e-4, pars)) 
-print(np.mean(np.exp(Kflat)))
-plot_fields(gwf, pars, Kflat, np.exp(Kflat))
+Kflat, K  = randomK_points(mg.extent, cxy, dx,  lx, ang, sigma, cov, 5e-4, pars)
+
+print(np.mean(Kflat))
+plot_fields(gwf, pars, np.log(Kflat), Kflat)

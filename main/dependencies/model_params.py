@@ -11,14 +11,29 @@ def create_wells(row_well, col_well, dx):
             well_loc[i*col_well + j, 1] = (8.5 + 10*i) *dx[1]
     # pumping wells should be at (5, 9, 15, 27, 31)
     return well_loc
-# define one rotation matrix to fix it
+
+def covariance_matrix(H, sigma2, Ctype):
+    if Ctype == 'Exponential':
+        covmat = sigma2 * np.exp(-H)
+    elif Ctype == 'Gaussian':
+        covmat = sigma2 * np.exp(-H ** 2)
+    elif Ctype == 'Matern':
+        covmat = sigma2 * np.multiply((1+np.sqrt(3)*H), np.exp(-np.sqrt(3)*H))
+        
+    return covmat
+
 def rotation_matrix(angle):
     # This formulation rotates counter-clockwise from x-axis
     # To rotate clockwise, you need the inverse of this rotation matrix, i.e.
     # flipping the signs of the sines
-
     return np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]]) 
 
+def rotate2Dfield(X,Y, angle):
+    rotmat = rotation_matrix(angle)
+    Xrot = X * rotmat[0,0] + Y * rotmat[0,1]
+    Yrot = X * rotmat[1,0] + Y * rotmat[1,1]
+    
+    return Xrot, Yrot
 def extract_truth(eigenvalues, eigenvectors):
      
      lxmat = 1/np.sqrt(eigenvalues)
@@ -40,8 +55,6 @@ def extract_truth(eigenvalues, eigenvectors):
      return lxmat[0], lxmat[1], ang
 
 def get():
-    
-    # Changing the working directory to the parent directory to have consisten access
     current_directory = os.path.dirname(os.path.abspath(__file__))
     parent_directory = os.path.dirname(current_directory)
     Vrdir = os.path.join(parent_directory, 'Virtual_Reality')
@@ -60,7 +73,7 @@ def get():
     computer = ['office', 'icluster', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 24
+        n_mem  = 4
         nprocs = np.min([n_mem, psutil.cpu_count()])
         if n_mem == 2:
             nprocs = 1
@@ -126,7 +139,7 @@ def get():
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
         'lx'    : np.array([[2000,600], [5000,500]])/l_red, # corellation lengths
-        'ang'   : np.array([291, 17]),                      # angle in ° (logK, recharge)
+        'ang'   : np.array([111, 17]),                      # angle in ° (logK, recharge)
         'sigma' : np.array([1.7, 0.1]),                     # variance (logK, recharge)
         'mu'    : np.array([-8.5, -0.7]),                   # mean (log(ms-1), (mm/d))
         'cov'   : cov_mods[1],                              # Covariance models
@@ -168,8 +181,9 @@ def get():
         'nsteps': int(2*365*24/6),
         'nprern': n_pre_run,
         'rotmat': rotation_matrix,
-        'mat2cv': extract_truth
-        
+        'mat2cv': extract_truth,
+        'rot2df': rotate2Dfield,
+        'covmat': covariance_matrix,
         }
     
     if choice == 0 or choice == 1:

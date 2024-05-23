@@ -1,14 +1,10 @@
 import flopy
 import numpy as np
-# import os
 import sys
-sys.path.append('..')
 from dependencies.randomK_points import randomK_points
 from dependencies.covarmat_s import covarmat_s
 
-# from dependencies.plotting.plot_k_fields import plot_k_fields
-# import time
-
+sys.path.append('..')
 
 class MFModel:
     
@@ -102,16 +98,10 @@ class MFModel:
         
         
     def kriging(self, params, data, pp_xy, pp_cid, mean_cov_par, var_cov_par):
-        # start_time = time.time()
         if 'cov_data' in params:   
-            
-            # The normalized (unit “length”) eigenvectors, such that the column
-            # eigenvectors[:,i] is the eigenvector corresponding to the eigenvalue eigenvalues[i].
             eigenvalues, eigenvectors, mat, pos_def = self.check_new_matrix(data[0])
             
             if not pos_def:
-                # Ansatz Olaf: Update so lange verkleinern, bis es passt und
-                # die Matrix positiv definit ist
                 reduction = 0.96
                 difmat = mat - self.ellips_mat
 
@@ -216,8 +206,9 @@ class MFModel:
         sig_meas = 0.1 # standard deviation of measurement error
         
         # random, unconditional field for the given variogram
-        Kflat = np.log(randomK_points(self.mg.extent, self.cxy, self.dx,  self.lx, self.ang, sigma, cov, 1, self.pars)) 
-
+        Kflat, _ = randomK_points(self.mg.extent, self.cxy, self.dx,  self.lx, self.ang, sigma, cov, 1, self.pars)
+        Kflat = np.log(Kflat)
+        
         # Construct covariance matrix of measurement error
         m = len(pp_k)
         n = self.cxy.shape[0]
@@ -228,8 +219,8 @@ class MFModel:
         R = np.eye(m)* sig_meas**2
         
         # Construct the necessary covariance matrices
-        Qssm = covarmat_s(self.cxy,pp_xy,cov,[sigma,self.lx,self.ang], self.pars['rotmat'](self.ang)) 
-        Qsmsm = covarmat_s(pp_xy,pp_xy,cov,[sigma,self.lx, self.ang], self.pars['rotmat'](self.ang))
+        Qssm = covarmat_s(self.cxy,pp_xy,self.pars,[sigma,self.lx,self.ang]) 
+        Qsmsm = covarmat_s(pp_xy,pp_xy,self.pars,[sigma,self.lx, self.ang])
         
         # kriging matrix and its inverse
         krigmat = np.vstack((np.hstack((Qsmsm+R, Xm)), np.append(Xm.T, 0)))

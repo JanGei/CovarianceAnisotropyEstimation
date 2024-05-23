@@ -45,7 +45,7 @@ def ellipses(cov_data, mean_cov, pars):
     ellipse = patches.Ellipse(center,
                               pars['lx'][0][0]*2,
                               pars['lx'][0][1]*2,
-                              angle=np.rad2deg(pars['ang'][0]),
+                              angle=pars['ang'][0],
                               fill=False,
                               color='red',
                               zorder = 2)

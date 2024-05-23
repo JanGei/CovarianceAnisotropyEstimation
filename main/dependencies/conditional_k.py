@@ -60,7 +60,8 @@ def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = []):
 
     
     # random, unconditional field for the given variogram
-    Kflat = np.log(randomK_points(mg.extent, cxy, dx,  lx, ang, sigma, cov, 1, pars)) 
+    Kflat, K = randomK_points(mg.extent, cxy, dx,  lx, ang, sigma, cov, 0.1, pars)
+    Kflat = np.log(Kflat)
 
     # Construct covariance matrix of measurement error
     m = len(pp_k)
@@ -74,8 +75,8 @@ def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = []):
     R = np.eye(m)* sig_meas**2
     
     # Construct the necessary covariance matrices
-    Qssm = covarmat_s(cxy,pp_xy,pars['cov'],[sigma,lx,ang], D) 
-    Qsmsm = covarmat_s(pp_xy,pp_xy,pars['cov'],[sigma,lx, ang], D)
+    Qssm = covarmat_s(cxy,pp_xy,pars,[sigma,lx,ang]) 
+    Qsmsm = covarmat_s(pp_xy,pp_xy,pars,[sigma,lx, ang])
         
     # kriging matrix and its inverse
     krigmat = np.vstack((np.hstack((Qsmsm+R, Xm)), np.append(Xm.T, 0)))
@@ -98,7 +99,6 @@ def conditional_k(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = []):
     
     s_cond = np.squeeze(Qssm.dot(xi)) + np.squeeze(X.dot(beta)) + Kflat
     
-    
     M = D @ np.array([[1/lx[0]**2, 0],[0, 1/lx[1]**2]]) @ D.T
-    
-    return np.exp(s_cond), [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang]
+
+    return np.exp(s_cond), [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k]

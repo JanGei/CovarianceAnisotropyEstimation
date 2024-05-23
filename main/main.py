@@ -11,7 +11,7 @@ from dependencies.intersect_with_grid import intersect_with_grid
 from dependencies.generate_mask import chd_mask
 from dependencies.plotting.ellipses import ellipses
 from dependencies.plotting.compare_mean import compare_mean_true
-from dependencies.plotting.plot_k_fields import plot_k_fields
+# from dependencies.plotting.plot_k_fields import plot_k_fields
 # from dependencies.plotting.compare_mean import plot_fields, plot_POI, plot_k_fields, plot, ellipsis, compare_mean_true
 from objects.Ensemble import Ensemble
 from objects.MFModel import MFModel
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     start_time = time.time()
     
     # copy template model to ensemble folder
-    model_dir   = create_Ensemble(pars)
+    model_dir = create_Ensemble(pars)
     sim, gwf = load_template_model(pars)
     
     obs_cid = intersect_with_grid(gwf, pars['obsxy'])
@@ -80,7 +80,7 @@ if __name__ == '__main__':
             )
         # sorting the results
         for tup in result:
-            field, ellips, l_ang = tup
+            field, ellips, l_ang, _ = tup
             k_fields.append(field)
             cor_ellips.append(ellips)
             l_angs.append(l_ang)
@@ -220,7 +220,7 @@ if __name__ == '__main__':
                     pars
                     )
         
-            # compare_mean_true(gwf, [k_ref, MF_Ensemble.meanlogk]) 
+            compare_mean_true(gwf, [k_ref, MF_Ensemble.meanlogk]) 
             # k_fields = MF_Ensemble.get_member_fields(['npf'])
             # plot_k_fields(gwf, pars,  [field['npf'] for field in k_fields[0:8]])
             

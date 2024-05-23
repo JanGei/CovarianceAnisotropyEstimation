@@ -1,19 +1,8 @@
 import numpy as np
 
-def rotate_coordinates(coordinates, ang):
-    # Apply rotation to coordinates
-    # rotation_matrix = np.squeeze(np.array([[np.cos(angle), np.sin(angle)], [-np.sin(angle), np.cos(angle)]]))
-    
-    # rotated_coordinates = np.dot(coordinates, rotation_matrix)
-    
-    rc = np.ones(coordinates.shape)
-    
-    rc[:,0] = np.cos(ang)*coordinates[:,0] + np.sin(ang)*coordinates[:,1]
-    rc[:,1] = -np.sin(ang)*coordinates[:,0] + np.cos(ang)*coordinates[:,1]
-    
-    return rc
 
-def covarmat_s(Xint, Xmeas, Ctype, theta, rotmat):
+
+def covarmat_s(Xint, Xmeas, pars, theta):
     # Xint: (n x dim) array of interpolation locations
     # Xmeas: (m x dim) array of measurement locations
     # Ctype: type of covariance model (1: exponential, 2: Gaussian, 3: Matern)
@@ -22,6 +11,7 @@ def covarmat_s(Xint, Xmeas, Ctype, theta, rotmat):
     #        following: correlation lengths
     #        if only one corr. length, assume isotropy
     
+    Ctype = pars['cov']
     m, dim = Xmeas.shape
     n = Xint.shape[0]
     # ang = theta[2]
@@ -30,10 +20,11 @@ def covarmat_s(Xint, Xmeas, Ctype, theta, rotmat):
     if len(lx) == 1:
         lx = np.tile(lx, dim)
     
-    # Xint = rotate_coordinates(Xint, ang)
-    # Xmeas = rotate_coordinates(Xmeas, ang)
+    rotmat = pars['rotmat'](-theta[2])
+    # How to fix this?
     Xint = np.dot(rotmat, Xint.T).T
     Xmeas = np.dot(rotmat, Xmeas.T).T
+    
     # Scaled distance between all points
     deltaXnorm = (Xint[:, np.newaxis, 0] * np.ones((1,m)) - np.ones((n,1)) * Xmeas[:, 0]) / lx[0]
     if dim > 1:
@@ -45,15 +36,7 @@ def covarmat_s(Xint, Xmeas, Ctype, theta, rotmat):
             H = np.sqrt(deltaXnorm ** 2 + deltaYnorm ** 2)
     else:
         H = np.abs(deltaXnorm)
-
-    if Ctype == 'Exponential':
-        Q_ssm = sigma2 * np.exp(-H)
-    elif Ctype == 'Gaussian':
-        Q_ssm = sigma2 * np.exp(-H ** 2)
-    elif Ctype == 'Matern':
-        Q_ssm = sigma2 * np.multiply((1+np.sqrt(3)*H), np.exp(-np.sqrt(3)*H))
-        # Q_ssm[H > 1] = 0
-    else:
-        raise ValueError("Invalid Ctype value. Must be 1, 2, or 3.")
+    
+    Q_ssm = pars['covmat'](H, sigma2, Ctype)
 
     return Q_ssm

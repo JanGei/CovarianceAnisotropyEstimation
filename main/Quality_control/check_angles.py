@@ -14,12 +14,14 @@ pars = get()
 sim, gwf = load_template_model(pars)
 pp_cid, pp_xy = create_pilot_points(gwf, pars)
 
-lx = np.array([500,250])
-angles = np.deg2rad(np.arange(0, 360, 10))
+lx = np.array([700,150])
+angles = np.deg2rad(np.arange(20, 160, 10))
 
 results = []
+
+pars['valt'] = "good"
 
 for i in range(len(angles)):
     res = conditional_k(gwf, pars, pp_xy, pp_cid, test_cov = [lx, angles[i]])
     results.append(res)
-    plot_angles(gwf, pars, res[0], res[1], angles[i])
+    plot_angles(gwf, pars, res[0], res[1], angles[i], res[3])

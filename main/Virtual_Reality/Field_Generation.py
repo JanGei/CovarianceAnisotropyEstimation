@@ -9,8 +9,9 @@ import os
 import flopy
 # from Virtual_Reality.functions.generator import gsgenerator
 from dependencies.randomK_points import randomK_points
-from dependencies.plotting.plot_fields import plot_fields
-import sys 
+# from dependencies.plotting.plot_fields import plot_fields
+# import sys 
+
 def generate_fields(pars):
     #%% Field generation (based on Olafs Skript)
     # Watch out as first entry corresponds to y and not to x
@@ -39,13 +40,15 @@ def generate_fields(pars):
     dx         = [dxmax, dymax]
    
     #%% Field generation
-    K = randomK_points(mg.extent, cxy, dx,  lx[0], np.deg2rad(ang[0]), np.exp(sigma[0]), cov, np.exp(mu[0]), pars, random = False)
-    rech = randomK_points(mg.extent, cxy, dx,  lx[1], np.deg2rad(ang[1]), sigma[1], cov, mu[1], pars, random = False)
+    Kflat, K  = randomK_points(mg.extent, cxy, dx,  lx[0], np.deg2rad(ang[0]), np.exp(sigma[0]), cov, np.exp(mu[0]), pars, random = False)
+    Rflat, R = randomK_points(mg.extent, cxy, dx,  lx[1], np.deg2rad(ang[1]), sigma[1], cov, mu[1], pars, random = False)
     logK = np.log(K)
     # Anmerkung des Übersetzers: Beim generieren dieser Felder ist die Varianz per se dimensionslos
     # Wenn wir also die Felder von Erdal und Cirpka nachbilden wollen, müssen wir überhaupt nicht
     # die Varianz mitscalieren, wenn die Einheiten geändert werden, sonder nur der mean
 
     #%% Saving the fields - Übergabe in (m/s)
-    np.savetxt(os.path.join(pars['k_r_d']), K, delimiter = ',')
-    np.savetxt(os.path.join(pars['r_r_d']), rech/1000/86400, delimiter = ',')
+    np.savetxt(os.path.join(pars['k_r_d']), Kflat, delimiter = ',')
+    np.savetxt(os.path.join(pars['r_r_d']), Rflat/1000/86400, delimiter = ',')
+
+    return Kflat, Rflat/1000/86400, K, R

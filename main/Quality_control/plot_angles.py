@@ -7,9 +7,9 @@ import matplotlib.patches as patches
 import sys
 sys.path.append('..')
 from dependencies.model_params import get
-
+from matplotlib.colors import Normalize
  
-def plot_angles(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pars,  logk_proposal: np.ndarray, matv, angle):
+def plot_angles(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pars,  logk_proposal: np.ndarray, matv, angle, condp):
     
     pars = get()
     kmin    = np.min(np.log(np.loadtxt(pars['k_r_d'], delimiter = ',')))
@@ -37,6 +37,9 @@ def plot_angles(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pars,  logk_proposal: n
     cbar0       = fig.colorbar(c, cax=cax)
     cbar0.mappable.set_clim(kmin, kmax)
     cbar0.set_label('Log-Conductivity (log(m/s))')
+    
+    norm = Normalize(vmin=kmin, vmax=kmax)
+    axes[0].scatter(condp[0][:,0], condp[0][:,1], c=condp[1], cmap=cm.bilbao_r, norm=norm)
     axes[0].set_aspect('equal')
     axes[0].set_ylabel('Y-axis')
     axes[0].set_title(f'Angle: {np.rad2deg(angle)} and {np.rad2deg(ang)}')
