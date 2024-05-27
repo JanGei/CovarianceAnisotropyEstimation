@@ -2,8 +2,8 @@ from dependencies.model_params import get
 from dependencies.copy import create_Ensemble
 from dependencies.convert_transient import convert_to_transient
 from dependencies.create_pilot_points import create_pilot_points
-from dependencies.conditional_k import conditional_k
 from dependencies.load_template_model import load_template_model
+from dependencies.create_k_fields import create_k_fields
 from dependencies.write_file import write_file
 from dependencies.load_observations import load_true_h_field
 from dependencies.get_transient_data import get_transient_data
@@ -70,7 +70,7 @@ if __name__ == '__main__':
         pp_cid, pp_xy = create_pilot_points(gwf, pars)
         write_file(pars,[pp_cid, pp_xy], ["pp_cid","pp_xy"], 0, intf = True)
         # create_k_fields
-        result = Parallel(n_jobs=nprocs, backend = "threading")(delayed(conditional_k)(
+        result = Parallel(n_jobs=nprocs, backend = "threading")(delayed(create_k_fields)(
             gwf,
             pars, 
             pp_xy,
@@ -220,7 +220,7 @@ if __name__ == '__main__':
                     pars
                     )
         
-            compare_mean_true(gwf, [k_ref, MF_Ensemble.meanlogk]) 
+            compare_mean_true(gwf, [k_ref, MF_Ensemble.logmeank]) 
             # k_fields = MF_Ensemble.get_member_fields(['npf'])
             # plot_k_fields(gwf, pars,  [field['npf'] for field in k_fields[0:8]])
             

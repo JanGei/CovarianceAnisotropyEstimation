@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.interpolate import griddata
 
-def randomK_points(extent, cxy, dx,  lx, ang, sigY, Ctype, Kg, pars, random = True):
+def randomK_points(extent, cxy, dx,  lx, ang, sigY, pars, random = True):
     '''
     Generate auto-correlated 2-D random hydraulic-conductivity fields using
     spectral methods.
@@ -13,10 +13,6 @@ def randomK_points(extent, cxy, dx,  lx, ang, sigY, Ctype, Kg, pars, random = Tr
     lx (1x2)   : correlation length [m] in longitudinal/transverse direction
     ang (1x1)  : rotation angle [radians] of the covariance function
     sigY (1x1) : variance of ln(K) [K in m/s]
-    Ctype (1x1): type of covariance model
-              1: exponential
-              2: Gaussian
-              3: spherical (then lx becomes the range)
     Kg : geometric mean of hydraulic conductivity [m/s]
 
 
@@ -67,7 +63,7 @@ def randomK_points(extent, cxy, dx,  lx, ang, sigY, Ctype, Kg, pars, random = Tr
     H = np.sqrt((X2/lx[0])**2+(Y2/lx[1])**2)
     H = np.flip(H, axis = 0)
     
-    RYY = pars['covmat'](H, sigY, Ctype)
+    RYY = pars['covmat'](H, sigY, pars['cov'])
        
     # ============== END AUTO-COVARIANCE BLOCK ================================
     
@@ -92,7 +88,7 @@ def randomK_points(extent, cxy, dx,  lx, ang, sigY, Ctype, Kg, pars, random = Tr
                        1j * np.random.randn(shape[0], shape[1])))
 
     # Backtransformation into the physical coordinates
-    K = Kg * np.exp(np.real(np.fft.ifftn(ran*ntot)))
+    K = pars['geomea'] * np.exp(np.real(np.fft.ifftn(ran*ntot)))
     K = K[0:ny, 0:nx]
     
     # generating an associated grid for K 

@@ -1,8 +1,9 @@
 import flopy
 import numpy as np
 import sys
-from dependencies.randomK_points import randomK_points
-from dependencies.covarmat_s import covarmat_s
+# from dependencies.randomK_points import randomK_points
+# from dependencies.covarmat_s import covarmat_s
+from dependencies.conditional_k import conditional_k
 
 sys.path.append('..')
 
@@ -146,7 +147,17 @@ class MFModel:
         else:
             pp_k = data
           
-            field = self.conditional_field(pp_xy, pp_cid, pp_k)
+            field = conditional_k(self.mg,
+                                  self.cxy,
+                                  self.dx,
+                                  self.lx,
+                                  self.ang,
+                                  self.pars['sigma'][0],
+                                  self.pars,
+                                  pp_k,
+                                  pp_xy,
+                                  pp_cid
+                                  )
             
             self.set_field([np.exp(field)], ['npf'])
         
@@ -169,9 +180,20 @@ class MFModel:
         # Is ppk really without a logarithm
         pp_k = data[1]
         
-        field = self.conditional_field(pp_xy, pp_cid, pp_k)
+        # field = self.conditional_field(pp_xy, pp_cid, pp_k)
+        field = conditional_k(self.mg,
+                              self.cxy,
+                              self.dx,
+                              self.lx,
+                              self.ang,
+                              self.pars['sigma'][0],
+                              self.pars,
+                              pp_k,
+                              pp_xy,
+                              pp_cid
+                              )
         
-        self.set_field([np.exp(field)], ['npf'])
+        self.set_field([field], ['npf'])
         
         if self.n_neg_def > 0:
             if self.n_neg_def == 10:
@@ -199,53 +221,7 @@ class MFModel:
             
         return eigenvalues, eigenvectors, mat, pos_def
 
-    def conditional_field(self, pp_xy, pp_cid, pp_k):
-        
-        sigma   = self.pars['sigma'][0]
-        cov     = self.pars['cov']
-        sig_meas = 0.1 # standard deviation of measurement error
-        
-        # random, unconditional field for the given variogram
-        Kflat, _ = randomK_points(self.mg.extent, self.cxy, self.dx,  self.lx, self.ang, sigma, cov, 1, self.pars)
-        Kflat = np.log(Kflat)
-        
-        # Construct covariance matrix of measurement error
-        m = len(pp_k)
-        n = self.cxy.shape[0]
-        # Discretized trend functions (for constant mean)
-        X = np.ones((n,1))
-        Xm = np.ones((m,1))        
-        
-        R = np.eye(m)* sig_meas**2
-        
-        # Construct the necessary covariance matrices
-        Qssm = covarmat_s(self.cxy,pp_xy,self.pars,[sigma,self.lx,self.ang]) 
-        Qsmsm = covarmat_s(pp_xy,pp_xy,self.pars,[sigma,self.lx, self.ang])
-        
-        # kriging matrix and its inverse
-        krigmat = np.vstack((np.hstack((Qsmsm+R, Xm)), np.append(Xm.T, 0)))
-        # ikrigmat = np.linalg.inv(krigmat)
-        
-        # generating a conditional realisation
-        sunc_at_meas = np.zeros(m)
-        for ii in range(m):
-            sunc_at_meas[ii] = Kflat[int(pp_cid[ii])] 
-        
-        # Perturb the measurements and subtract the unconditional realization
-        spert = np.squeeze(pp_k) + np.squeeze(sig_meas * np.random.randn(*pp_k.shape)) - np.squeeze(sunc_at_meas)
-        
-        # Solve the kriging equation
-        sol = np.linalg.lstsq(krigmat, np.append(spert.flatten(), 0), rcond=None)[0]
-        
-        # Separate the trend coefficient(s) from the weights of the covariance-functions in the function-estimate form
-        xi = sol[:m]
-        beta = sol[m]
-        
-        s_cond = np.squeeze(Qssm.dot(xi)) + np.squeeze(X.dot(beta)) + Kflat
-
-        return s_cond
-        
-        
+            
     def reduce_corL(self, corL):
         # reducing correlation lengths based on monod kinetic model
         return (self.corrL_max * corL) / (self.corrL_max*0.25 + corL)
@@ -268,13 +244,6 @@ class MFModel:
         D = self.pars['rotmat'](angle)
         M = D @ np.array([[1/l1**2, 0],[0, 1/l2**2]]) @ D.T
         self.update_ellips_mat(M)
-        
-        
-        
-        
-        
-        
-        
         
         
         

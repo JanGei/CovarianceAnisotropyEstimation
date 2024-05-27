@@ -73,7 +73,7 @@ def get():
     computer = ['office', 'icluster', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 4
+        n_mem  = 32
         nprocs = np.min([n_mem, psutil.cpu_count()])
         if n_mem == 2:
             nprocs = 1
@@ -93,7 +93,7 @@ def get():
         n_pre_run = 20
         printf = False
     
-    choice = [0, 0]
+    choice = [1, 0]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     pp_flag = True
@@ -132,6 +132,8 @@ def get():
         'n_PP'  : nPP,
         'eps'   : 0.05,
         'omitc' : 2,
+        'sig_me': 0.1,
+        'geomea': 0.1,
         'covt'  : covtype,
         'valt'  : valtype,
         'l_red' : l_red,
