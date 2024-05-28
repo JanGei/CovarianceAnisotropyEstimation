@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.interpolate import griddata
 
-def randomK_points(extent, cxy, dx,  lx, ang, sigY, pars, random = True):
+def randomK_points(extent, cxy, dx,  lx, ang, sigY, pars, random = True, ftype = []):
     '''
     Generate auto-correlated 2-D random hydraulic-conductivity fields using
     spectral methods.
@@ -22,6 +22,10 @@ def randomK_points(extent, cxy, dx,  lx, ang, sigY, pars, random = True):
     '''
         
     if not random:
+        if ftype == 'K':
+            Kg = np.exp(pars['mu'][0])
+        elif ftype == 'R':
+            Kg = pars['mu'][1]
         if pars['cov'] == 'Exponential':
             # Good choice for Exponential
             np.random.seed(6)
@@ -35,6 +39,8 @@ def randomK_points(extent, cxy, dx,  lx, ang, sigY, pars, random = True):
             elif pars['l_red'] == 5:
                 # Good choice for Matern 3/2 with l_red = 5
                 np.random.seed(92)   
+    else:
+        Kg = pars['geomea']
 
     # total number of nodes
     ntot = len(cxy)
@@ -88,7 +94,7 @@ def randomK_points(extent, cxy, dx,  lx, ang, sigY, pars, random = True):
                        1j * np.random.randn(shape[0], shape[1])))
 
     # Backtransformation into the physical coordinates
-    K = pars['geomea'] * np.exp(np.real(np.fft.ifftn(ran*ntot)))
+    K = Kg * np.exp(np.real(np.fft.ifftn(ran*ntot)))
     K = K[0:ny, 0:nx]
     
     # generating an associated grid for K 

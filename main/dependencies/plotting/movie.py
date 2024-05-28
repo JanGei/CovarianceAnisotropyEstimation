@@ -6,7 +6,7 @@ from matplotlib.animation import FuncAnimation
 
 def movie(gwf, diff = False, bc=False, contour = False):
     
-    heads = np.load('model_data/head_ref.npy')
+    heads = np.load('Virtual_Reality/model_data/head_ref.npy')
     if diff:
         heads = heads - heads[0,:,:]
 

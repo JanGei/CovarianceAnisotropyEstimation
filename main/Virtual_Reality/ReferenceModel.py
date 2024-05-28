@@ -207,7 +207,7 @@ def run_reference_model(pars):
     inspection = False
     if inspection and pars['setup'] == 'office':
         print(pars['mu'][0], np.mean(np.log(k_ref)))
-        print(pars['mu'][1], np.mean(r_ref))
+        print(pars['mu'][1]/(86400), np.mean(r_ref))
         plot_fields(gwf, pars, np.log(k_ref), r_ref)
         sys.exit()
     

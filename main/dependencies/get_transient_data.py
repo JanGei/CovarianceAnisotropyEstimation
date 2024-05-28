@@ -13,8 +13,9 @@ def get_transient_data(pars: dict, t_step: int, true_h, obs_cid):
     rch_data = abs(np.array(r_ref).flatten()) * sfac[t_step]
     wel_data = np.zeros(5)
     time = 0.25 * t_step
+    
     for i in range(len(welq)):
-        if welst[i] <= time and welnd[i] > time:
+        if welst[i] <= time%365 and welnd[i] > time%365:
             wel_data[i] = -welq[i]
     riv_data = rivh[t_step]
     

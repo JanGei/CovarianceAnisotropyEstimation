@@ -97,7 +97,7 @@ def get():
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     pp_flag = True
-    l_red = 10 # possible are 5 and 10
+    l_red = 5 # possible are 5 and 10
     nPP = 50
     
     h_damp = 0.5
@@ -133,7 +133,7 @@ def get():
         'eps'   : 0.05,
         'omitc' : 2,
         'sig_me': 0.1,
-        'geomea': 0.1,
+        'geomea': 1,
         'covt'  : covtype,
         'valt'  : valtype,
         'l_red' : l_red,
@@ -150,7 +150,7 @@ def get():
         'top'   : np.array([50]),                           # Top of aquifer
         'welxy' : np.array(well_loc[q_idx]),                # location of pumps
         'obsxy' : np.array(well_loc[mask]),                 # location of obs
-        'welq'  : np.array([9, 18, 90, 0.09, 0.9])/3600,    # Q of wells [m3s-1]
+        'welq'  : np.array([35, 18, 90, 20, 15])/3600,      # Q of wells [m3s-1]
         'welst' : np.array([20, 300, 200, 0, 0]),           # start day of pump
         'welnd' : np.array([150, 365, 360, 370, 300]),      # end day of pump
         'welay' : np.array(np.zeros(5)),                    # layer of wells

@@ -12,7 +12,7 @@ import numpy as np
 import sys
 sys.path.append('..')
 
-# from dependencies.plot import movie
+from dependencies.plotting.movie import movie
 from dependencies.convert_transient import convert_to_transient
 
 def transient_run(pars):
