@@ -1,17 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jan 24 15:32:00 2024
-
-@author: Anwender
-"""
-
 from shapely.geometry import MultiPoint
 import flopy
 import numpy as np
-
 import sys
 sys.path.append('..')
-
 from dependencies.plotting.movie import movie
 from dependencies.convert_transient import convert_to_transient
 
@@ -27,7 +18,6 @@ def transient_run(pars):
     gwf         = sim.get_model(mname)
     
     #%% run simulation
-    
     sim.run_simulation()
     
     #%% Generate Observations

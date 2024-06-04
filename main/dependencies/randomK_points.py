@@ -54,7 +54,7 @@ def randomK_points(extent, cxy, dx,  lx, ang, sigY, pars, random = True, ftype =
 
     
     x = np.arange(-(nx_ex[0] +1) / 2 * dx[0], (nx_ex[0] - 1) / 2 * dx[0] + dx[0], dx[0])
-    y = np.arange(-(nx_ex[1] +1) / 2 * dx[1], (nx_ex[1] - 1) / 2 * dx[1] + dx[1], dx[1])
+    y = np.arange((nx_ex[1] +1) / 2 * dx[1], -(nx_ex[1] - 1) / 2 * dx[1] + dx[1], -dx[1])
 
     xint = np.arange(xmin + dx[0]/2, xmax + dx[0]/2, dx[0])
     yint = np.arange(ymin + dx[1]/2, ymax + dx[1]/2, dx[1])
@@ -67,7 +67,7 @@ def randomK_points(extent, cxy, dx,  lx, ang, sigY, pars, random = True, ftype =
     
     # Scaling by correlation lengths
     H = np.sqrt((X2/lx[0])**2+(Y2/lx[1])**2)
-    H = np.flip(H, axis = 0)
+    # H = np.flip(H, axis = 0)
     
     RYY = pars['covmat'](H, sigY, pars['cov'])
        
@@ -82,7 +82,7 @@ def randomK_points(extent, cxy, dx,  lx, ang, sigY, pars, random = True, ftype =
     SYY[0,0] = 0
     # ============== END POWER-SPECTRUM BLOCK =================================
     
-    # ============== BEGIN FIELD GENERATION BLOCK =====================================
+    # ============== BEGIN FIELD GENERATION BLOCK =============================
     # Generate a field of random real numbers,
     # transform the field into the spectral domain,
     # and evaluate the corresponding phase-spectrum.

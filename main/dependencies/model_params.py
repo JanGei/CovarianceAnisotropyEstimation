@@ -13,6 +13,7 @@ def create_wells(row_well, col_well, dx):
     return well_loc
 
 def covariance_matrix(H, sigma2, Ctype):
+    #covmat
     if Ctype == 'Exponential':
         covmat = sigma2 * np.exp(-H)
     elif Ctype == 'Gaussian':
@@ -26,14 +27,23 @@ def rotation_matrix(angle):
     # This formulation rotates counter-clockwise from x-axis
     # To rotate clockwise, you need the inverse of this rotation matrix, i.e.
     # flipping the signs of the sines
-    return np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]]) 
+    # HOWEVER, AS WE NEED TO ALIGN A VARIOGRAM WHICH HAS BEEN ROTATED COUNTER-
+    # CLOCKWISE AND IS DESTINED TO BE ORIENTED ALONG THE X-AXIS, WE NEED TO 
+    # ROTATE THE ENTIRE SYSTEM CLOCKWISE TO COMPENSATE THE ROTATION OF THE
+    # VARIOGRAM.
+    # ROTATION MATRIX CLOCKWISE
+    # cos(a) sin(a)
+    # -sin(a) cos(a)
+    return np.array([[np.cos(angle), np.sin(angle)], [-np.sin(angle), np.cos(angle)]]) 
 
 def rotate2Dfield(X,Y, angle):
+    # rot2df
     rotmat = rotation_matrix(angle)
     Xrot = X * rotmat[0,0] + Y * rotmat[0,1]
     Yrot = X * rotmat[1,0] + Y * rotmat[1,1]
     
     return Xrot, Yrot
+
 def extract_truth(eigenvalues, eigenvectors):
      
      lxmat = 1/np.sqrt(eigenvalues)
@@ -93,7 +103,7 @@ def get():
         n_pre_run = 20
         printf = False
     
-    choice = [1, 0]
+    choice = [0, 0]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     pp_flag = True
@@ -102,7 +112,7 @@ def get():
     
     h_damp = 0.5
     cov_damp = 0.1
-    npf_damp = 0.2
+    npf_damp = 0.5
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
     
     
@@ -131,9 +141,10 @@ def get():
         'estyp' : est_variants[choice[1]],
         'n_PP'  : nPP,
         'eps'   : 0.05,
-        'omitc' : 2,
+        'omitc' : 4,
+        'nearPP': 5,
         'sig_me': 0.1,
-        'geomea': 1,
+        'geomea': 0.1,
         'covt'  : covtype,
         'valt'  : valtype,
         'l_red' : l_red,

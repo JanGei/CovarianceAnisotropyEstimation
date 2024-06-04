@@ -1,8 +1,9 @@
 from scipy.stats import qmc
+from scipy.spatial.distance import pdist, squareform
 import numpy as np
 import flopy
 from shapely.geometry import MultiPoint, Point, Polygon
-import geopandas as gpd
+# import geopandas as gpd
 
     
 def create_pilot_points(gwf, pars:dict,):
@@ -60,9 +61,19 @@ def create_pilot_points(gwf, pars:dict,):
         elif len(pp_cid_accepted) < nPP:
             n_test += int((nPP - len(pp_cid_proposal) ) /2)
             
-            
+    distance_vector = pdist(pp_xy_accepted, metric='euclidean')  
+    distance_matrix = squareform(distance_vector)    
     
-    return pp_cid_accepted.astype(int), pp_xy_accepted.astype(int)
+    dist = []
+    for i in range(len(distance_matrix)):
+        distances = list(distance_matrix[:,i])
+        distances.sort()
+        dist.append(distances[1:1+pars['nearPP']])
+
+    neardist = np.mean(np.array(dist))
+
+    
+    return pp_cid_accepted.astype(int), pp_xy_accepted.astype(int), neardist
 
 
 def create_pilot_points_even(gwf, pars:dict,):

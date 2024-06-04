@@ -52,12 +52,12 @@ def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = []):
         # pp_k = np.random.uniform(mu-mu/4, mu+mu/4, len(pp_cid))
         # pp_k = pp_k + sig_meas * np.random.randn(*pp_k.shape)
     
-    field = conditional_k(mg, cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy, pp_cid)
+    field, field2f = conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy)
     
     D = pars['rotmat'](ang)
     M = D @ np.array([[1/lx[0]**2, 0],[0, 1/lx[1]**2]]) @ D.T
     
-    return field, [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k]
+    return field, [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k], field2f
     
 
 

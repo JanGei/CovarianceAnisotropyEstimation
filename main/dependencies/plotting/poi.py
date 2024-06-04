@@ -9,18 +9,22 @@ def plot_POI(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pp_xy, pars, bc = False):
     pad = 0.1
     # welxy   = pars['welxy']
     obsxy   = pars['obsxy']
-    kmin    = pars['kmin']
-    kmax    = pars['kmax']
+    welxy   = pars['welxy']
+    kmin    = np.min(np.log(np.loadtxt(pars['k_r_d'], delimiter = ',')))
+    kmax    = np.max(np.log(np.loadtxt(pars['k_r_d'], delimiter = ',')))
   
     fig, axes   = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
     
     ax0         = flopy.plot.PlotMapView(model=gwf, ax=axes)
     c           = ax0.plot_array(np.log(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1)
+    
     axes.scatter(pp_xy[:,0], pp_xy[:,1], marker = '*', color = 'black', label = 'pilot point', s = 20)
-    # axes.scatter(welxy[:,0], welxy[:,1], marker = 'o', color = 'blue', label = 'well', s = 50)
+    
+    axes.scatter(welxy[:,0], welxy[:,1], marker = 'o', color = 'blue', label = 'well', s = 50)
     axes.scatter(obsxy[:,0], obsxy[:,1], marker = 'v', color = 'red', label = 'observation', s = 30)
+    
     if bc:
-        ax0.plot_bc(name     = 'WEL',
+        ax0.plot_bc(name    = 'WEL',
                    package  = gwf.wel,
                    color    = 'blue',
                    label    = 'well')
@@ -30,7 +34,7 @@ def plot_POI(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pp_xy, pars, bc = False):
         ax0.plot_bc(name     = 'CHD',
                    package  = gwf.chd,
                    color    = 'red')
-    axes.legend()
+    axes.legend(loc='lower left')
     divider     = make_axes_locatable(axes)
     cax         = divider.append_axes("right", size="3%", pad=pad)
     cbar        = fig.colorbar(c, cax=cax)

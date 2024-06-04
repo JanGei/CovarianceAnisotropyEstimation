@@ -9,6 +9,7 @@ import os
 import flopy
 # from Virtual_Reality.functions.generator import gsgenerator
 from dependencies.randomK_points import randomK_points
+from dependencies.randomK import randomK
 # from dependencies.plotting.plot_fields import plot_fields
 # import sys 
 
@@ -35,8 +36,8 @@ def generate_fields(pars):
     dx         = [dxmax, dymax]
    
     #%% Field generation
-    Kflat, K  = randomK_points(mg.extent, cxy, dx,  lx[0], np.deg2rad(ang[0]), np.exp(sigma[0]), pars, random = False, ftype = 'K')
-    Rflat, R = randomK_points(mg.extent, cxy, dx,  lx[1], np.deg2rad(ang[1]), sigma[1], pars, random = False, ftype = 'R')
+    Kflat, K  = randomK_points(mg.extent, cxy, dx,  lx[0], -np.deg2rad(ang[0]), np.exp(sigma[0]), pars, random = False, ftype = 'K')
+    Rflat, R  = randomK_points(mg.extent, cxy, dx,  lx[1], -np.deg2rad(ang[1]), sigma[1], pars, random = False, ftype = 'R')
 
     # Anmerkung des Übersetzers: Beim generieren dieser Felder ist die Varianz per se dimensionslos
     # Wenn wir also die Felder von Erdal und Cirpka nachbilden wollen, müssen wir überhaupt nicht

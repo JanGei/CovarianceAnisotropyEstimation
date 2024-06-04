@@ -1,15 +1,13 @@
 import flopy
 import numpy as np
 import sys
-# from dependencies.randomK_points import randomK_points
-# from dependencies.covarmat_s import covarmat_s
 from dependencies.conditional_k import conditional_k
 
 sys.path.append('..')
 
 class MFModel:
     
-    def __init__(self, direc: str,  pars, l_angs = [], ellips = []):
+    def __init__(self, direc: str,  pars, maxcl = [], l_angs = [], ellips = []):
         self.direc      = direc
         self.mname      = pars['mname']
         self.pars       = pars
@@ -36,13 +34,14 @@ class MFModel:
             self.ellips_mat = np.array([[ellips[0], ellips[1]], [ellips[1], ellips[2]]])
             self.lx         = [l_angs[0], l_angs[1]]
             self.ang        = l_angs[2]
-            self.corrL_max  = np.max(pars['nx']) * np.max(pars['dx'])/5
+            self.corrL_max  = maxcl
             
         
     def set_field(self, field, pkg_name: list):
         for i, name in enumerate(pkg_name):
             if name == 'npf':
                 self.old_npf =  self.npf.k.get_data()
+                #!!!!!! ist hier reshape korrekt angewandt? wahrscheinlich, da 1d
                 self.npf.k.set_data(np.reshape(field[i],self.npf.k.array.shape))
                 self.npf.write()
             elif name == 'rch':
@@ -118,7 +117,6 @@ class MFModel:
             if pos_def:
                 success = True
                 l1, l2, angle = self.pos_krig(mat, eigenvalues, eigenvectors, data, pp_cid, pp_xy)
-                l1, l2, angle = self.check_corrL(l1,l2, angle)
                             
             else:
                 # If nothing works, keep old solution
@@ -147,8 +145,7 @@ class MFModel:
         else:
             pp_k = data
           
-            field = conditional_k(self.mg,
-                                  self.cxy,
+            field = conditional_k(self.cxy,
                                   self.dx,
                                   self.lx,
                                   self.ang,
@@ -156,7 +153,6 @@ class MFModel:
                                   self.pars,
                                   pp_k,
                                   pp_xy,
-                                  pp_cid
                                   )
             
             self.set_field([np.exp(field)], ['npf'])
@@ -168,21 +164,16 @@ class MFModel:
     def pos_krig(self, mat, eigenvalues, eigenvectors, data, pp_cid, pp_xy):
         self.update_ellips_mat(mat)
         
-        l1, l2, angle = self.pars['mat2cv'](eigenvalues, eigenvectors)
+        l1, l2, angle = self.pars['mat2cv'](eigenvalues, eigenvectors)    
+        l1, l2, angle = self.check_corrL(l1,l2, angle)
         
-        if l2 > l1:
-            l1, l2 = l2, l1
-            angle += np.pi/2
-            
         self.lx = [l1, l2]
         self.ang = angle%np.pi
         
         # Is ppk really without a logarithm
         pp_k = data[1]
         
-        # field = self.conditional_field(pp_xy, pp_cid, pp_k)
-        field = conditional_k(self.mg,
-                              self.cxy,
+        field = conditional_k(self.cxy,
                               self.dx,
                               self.lx,
                               self.ang,
@@ -190,7 +181,6 @@ class MFModel:
                               self.pars,
                               pp_k,
                               pp_xy,
-                              pp_cid
                               )
         
         self.set_field([field], ['npf'])
@@ -201,6 +191,7 @@ class MFModel:
             else:
                 print('A model has been fixed')
             self.n_neg_def = 0
+        
         
         return l1, l2, angle
     
@@ -227,6 +218,10 @@ class MFModel:
         return (self.corrL_max * corL) / (self.corrL_max*0.25 + corL)
         
     def check_corrL(self, l1, l2, angle):
+        if l2 > l1:
+            l1, l2 = l2, l1
+            angle += np.pi/2
+            
         correction = False
         if l1 > 0.75*self.corrL_max:
             l1 = self.reduce_corL(l1)

@@ -12,7 +12,7 @@ from dependencies.generate_mask import chd_mask
 from dependencies.plotting.ellipses import ellipses
 from dependencies.plotting.compare_mean import compare_mean_true
 # from dependencies.plotting.plot_k_fields import plot_k_fields
-# from dependencies.plotting.compare_mean import plot_fields, plot_POI, plot_k_fields, plot, ellipsis, compare_mean_true
+from dependencies.plotting.plot_k_fields import plot_k_fields
 from objects.Ensemble import Ensemble
 from objects.MFModel import MFModel
 from objects.EnsembleKalmanFilter import EnsembleKalmanFilter
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     
     
     if pars['pilotp']:
-        pp_cid, pp_xy = create_pilot_points(gwf, pars)
+        pp_cid, pp_xy, near_dist = create_pilot_points(gwf, pars)
         write_file(pars,[pp_cid, pp_xy], ["pp_cid","pp_xy"], 0, intf = True)
         # create_k_fields
         result = Parallel(n_jobs=nprocs, backend = "threading")(delayed(create_k_fields)(
@@ -125,6 +125,7 @@ if __name__ == '__main__':
     models = Parallel(n_jobs=nprocs, backend="threading")(delayed(MFModel)(
         model_dir[idx],
         pars,
+        near_dist,
         l_angs[idx],
         cor_ellips[idx]) 
         for idx in range(n_mem)
@@ -220,9 +221,10 @@ if __name__ == '__main__':
                     pars
                     )
         
-            compare_mean_true(gwf, [k_ref, MF_Ensemble.logmeank]) 
-            # k_fields = MF_Ensemble.get_member_fields(['npf'])
-            # plot_k_fields(gwf, pars,  [field['npf'] for field in k_fields[0:8]])
+            # compare_mean_true(gwf, [k_ref, MF_Ensemble.logmeank]) 
+            if t_step%50 == 0:
+                k_fields = MF_Ensemble.get_member_fields(['npf'])
+                plot_k_fields(gwf, pars,  [field['npf'] for field in k_fields[0:8]])
             
         if pars['printf']: print(f'Plotting and recording took {(time.time() - start_time):.2f} seconds')
     

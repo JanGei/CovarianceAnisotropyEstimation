@@ -13,7 +13,8 @@ from dependencies.plotting.plot_fields import plot_fields
 
 pars = get()
 sim, gwf = load_template_model(pars)
-pp_cid, pp_xy = create_pilot_points(gwf, pars)
+pp_cid, pp_xy, near_dist = create_pilot_points(gwf, pars)
+
 
 l_angs = [5000, 2500, np.deg2rad(20)]
 mg = gwf.modelgrid
@@ -24,10 +25,8 @@ dx         = [dxmin, dymin]
 lx         = [l_angs[0], l_angs[1]]
 ang         = l_angs[2]
 sigma   = pars['sigma'][0]
-cov     = pars['cov']
 
-
-Kflat, K  = randomK_points(mg.extent, cxy, dx,  lx, ang, sigma, cov, 5e-4, pars)
+Kflat, K  = randomK_points(mg.extent, cxy, dx,  lx, ang, sigma, pars)
 
 print(np.mean(Kflat))
 plot_fields(gwf, pars, np.log(Kflat), Kflat)

@@ -29,25 +29,6 @@ def check_new_matrix(data):
         
     return eigenvalues, eigenvectors, mat, pos_def
 
-def extract_truth(eigenvalues, eigenvectors):
-    
-    lxmat = 1/np.sqrt(eigenvalues)
-    
-    if lxmat[0] < lxmat[1]:
-        lxmat = np.flip(lxmat)
-        eigenvectors = np.flip(eigenvectors, axis = 1)
-    
-    if eigenvectors[0,0] > 0:
-        ang = np.pi/2 -np.arccos(np.dot(eigenvectors[:,0],np.array([0,1])))    
-
-    else:
-        if eigenvectors[1,0] > 0:
-            ang = np.arccos(np.dot(eigenvectors[:,0],np.array([1,0])))
-
-        else:
-            ang = np.pi -np.arccos(np.dot(eigenvectors[:,0],np.array([1,0])))
-
-    return lxmat[0], lxmat[1], ang
 
 def get_cov_mod(gwf, pars: dict, pp_xy = [], pp_cid = [], covtype = 'random', valtype = 'good', test_cov = []):
     clx     = pars['lx']
@@ -141,7 +122,7 @@ for i in range(target_n):
         counter += 1
         
     result.append(counter)
-    l1, l2, ang = extract_truth(eigenvalues, eigenvectors)
+    l1, l2, ang = pars['mat2cv'](eigenvalues, eigenvectors)
     print(f'Obtained {l1:.{n_decimals}f} m, {l2:.{n_decimals}f} m and {np.rad2deg(ang):.{n_decimals}f}° after {counter} tries')
 
 print(f'It took {np.mean(result)} tries to find a suitable replacemment on average')      

@@ -1,8 +1,6 @@
 import numpy as np
 
-    
-    
-def randomK(nx,dx,lx,ang,sigY,Ctype,Kg):
+def randomK(ang, sigma, Ctype, Kg, pars, grid = []):
     '''
     Generate auto-correlated 2-D random hydraulic-conductivity fields using
     spectral methods.
@@ -26,6 +24,14 @@ def randomK(nx,dx,lx,ang,sigY,Ctype,Kg):
     K          : Field of hydraulic Conductivity
 
     '''
+    if len(grid) != 0:
+        nx = grid[0]
+        dx = grid[1]
+        lx = grid[2]
+    else:
+        nx = pars['nx']
+        dx = pars['dx']
+        lx = pars['lx'][0]
     # np.random.seed(42)
     nx_ex = nx + np.round(5*lx/dx)
     
@@ -41,20 +47,11 @@ def randomK(nx,dx,lx,ang,sigY,Ctype,Kg):
     X, Y = np.meshgrid(x, y)
     
     # Rotation into Longitudinal/Transverse Coordinates
-    X2 = np.cos(ang)*X + np.sin(ang)*Y
-    Y2 = -np.sin(ang)*X + np.cos(ang)*Y
-    
+    X2, Y2 = pars['rot2df'](X,Y,ang)
     # Scaling by correlation lengths
     H = np.sqrt((X2/lx[0])**2+(Y2/lx[1])**2)
     
-    # Covariance Matrix of Log-Conductivities
-    if Ctype == 'Exponential': # Exponential
-        RYY = sigY * np.exp(-abs(H))
-    elif Ctype == 'Matern': # Matern 3/2
-        RYY = sigY * np.multiply((1+np.sqrt(3)*H), np.exp(-np.sqrt(3)*H))
-    elif Ctype == 'Gaussian': # Gaussian
-        RYY = sigY * np.exp(-H**2)
-
+    RYY = pars['covmat'](H, sigma,pars['cov'])
        
     # ============== END AUTO-COVARIANCE BLOCK ================================
     
