@@ -1,6 +1,6 @@
 import numpy as np
 
-def randomK(ang, sigma, Ctype, Kg, pars, grid = []):
+def randomK(ang, sigma, Ctype, Kg, pars, grid = [], random = True, ftype = []):
     '''
     Generate auto-correlated 2-D random hydraulic-conductivity fields using
     spectral methods.
@@ -24,6 +24,27 @@ def randomK(ang, sigma, Ctype, Kg, pars, grid = []):
     K          : Field of hydraulic Conductivity
 
     '''
+    if not random:
+        if ftype == 'K':
+            Kg = np.exp(pars['mu'][0])
+        elif ftype == 'R':
+            Kg = pars['mu'][1]
+        if pars['cov'] == 'Exponential':
+            # Good choice for Exponential
+            np.random.seed(6)
+        elif pars['cov'] == 'Matern':
+            if pars['l_red'] == 1:
+                # Good choice for Matern 3/2
+                np.random.seed(2)
+            elif pars['l_red'] == 10:
+                # Good choice for Matern 3/2 with l_red = 10
+                np.random.seed(8)
+            elif pars['l_red'] == 5:
+                # Good choice for Matern 3/2 with l_red = 5
+                np.random.seed(8)   
+    else:
+        Kg = pars['geomea']
+        
     if len(grid) != 0:
         nx = grid[0]
         dx = grid[1]
@@ -33,7 +54,7 @@ def randomK(ang, sigma, Ctype, Kg, pars, grid = []):
         dx = pars['dx']
         lx = pars['lx'][0]
     # np.random.seed(42)
-    nx_ex = nx + np.round(5*lx/dx)
+    nx_ex = nx + np.round(5*np.array(lx)/np.array(dx))
     
     # total number of nodes
     ntot = np.prod(nx_ex)
@@ -79,4 +100,5 @@ def randomK(ang, sigma, Ctype, Kg, pars, grid = []):
     K = Kg * np.exp(np.real(np.fft.ifftn(ran*ntot)))
     K = K[0:nx[1], 0:nx[0]]
     
+
     return K

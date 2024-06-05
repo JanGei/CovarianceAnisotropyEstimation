@@ -57,8 +57,10 @@ def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = []):
     D = pars['rotmat'](ang)
     M = D @ np.array([[1/lx[0]**2, 0],[0, 1/lx[1]**2]]) @ D.T
     
-    return field, [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k], field2f
-    
+    if test_cov:
+        return field, [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k], field2f
+    else:
+        return field, [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k]
 
 
 

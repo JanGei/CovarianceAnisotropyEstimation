@@ -45,24 +45,26 @@ def rotate2Dfield(X,Y, angle):
     return Xrot, Yrot
 
 def extract_truth(eigenvalues, eigenvectors):
-     
-     lxmat = 1/np.sqrt(eigenvalues)
-     
-     if lxmat[0] < lxmat[1]:
-         lxmat = np.flip(lxmat)
-         eigenvectors = np.flip(eigenvectors, axis = 1)
-     
-     if eigenvectors[0,0] > 0:
-         ang = np.pi/2 -np.arccos(np.dot(eigenvectors[:,0],np.array([0,1])))    
+    # Sort the eigenvalues and corresponding eigenvectors in ascending order
+    idx = eigenvalues.argsort()  # Indices of sorted eigenvalues in ascending order
+    eigenvalues = eigenvalues[idx]  # Sorted eigenvalues
+    eigenvectors = eigenvectors[:, idx]  # Corresponding sorted eigenvectors
+    
+    # Eigenvalues
+    lambda1, lambda2 = eigenvalues
+    
+    # Lengths of the semi-major and semi-minor axes
+    lx = 1 / np.sqrt(lambda1)  # lx is the larger length (semi-major axis)
+    ly = 1 / np.sqrt(lambda2)  # ly is the smaller length (semi-minor axis)
+    
+    # Choose the eigenvector corresponding to the larger eigenvalue as the semi-major axis
+    v1 = eigenvectors[:, 1] 
+    
+    # Angle of orientation relative to the semi-major axis
+    theta = np.arctan2(v1[0], v1[1])
+    
+    return lx, ly, theta%np.pi
 
-     else:
-         if eigenvectors[1,0] > 0:
-             ang = np.arccos(np.dot(eigenvectors[:,0],np.array([1,0])))
-
-         else:
-             ang = np.pi -np.arccos(np.dot(eigenvectors[:,0],np.array([1,0])))
-
-     return lxmat[0], lxmat[1], ang
 
 def get():
     current_directory = os.path.dirname(os.path.abspath(__file__))

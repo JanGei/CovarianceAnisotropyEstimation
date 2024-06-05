@@ -215,16 +215,18 @@ if __name__ == '__main__':
         # visualize covariance structures
         if pars['setup'] == 'office' and t_step%10 == 0:
             if 'cov_data' in pars['EnKF_p']:
+                eigenvalues, eigenvectors = np.linalg.eig(MF_Ensemble.mean_cov_par)
                 ellipses(
                     MF_Ensemble.ellipses,
-                    MF_Ensemble.mean_cov_par,
+                    pars['mat2cv'](eigenvalues, eigenvectors),
                     pars
                     )
         
-            # compare_mean_true(gwf, [k_ref, MF_Ensemble.logmeank]) 
+            
             if t_step%50 == 0:
                 k_fields = MF_Ensemble.get_member_fields(['npf'])
                 plot_k_fields(gwf, pars,  [field['npf'] for field in k_fields[0:8]])
+                compare_mean_true(gwf, [k_ref, MF_Ensemble.logmeank]) 
             
         if pars['printf']: print(f'Plotting and recording took {(time.time() - start_time):.2f} seconds')
     

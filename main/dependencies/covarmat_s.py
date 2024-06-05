@@ -20,9 +20,11 @@ def covarmat_s(Xint, Xmeas, pars, theta):
         lx = np.tile(lx, dim)
     
 
-    rotmat = pars['rotmat'](-theta[2])
-    Xint = np.flip((rotmat @ Xint.T).T, axis = 1)
-    Xmeas = np.flip((rotmat @ Xmeas.T).T, axis = 1)
+    rotmat = pars['rotmat'](theta[2])
+    Xint = (rotmat @ Xint.T).T
+    Xmeas = (rotmat @ Xmeas.T).T
+    # Xint = np.flip((rotmat @ Xint.T).T, axis = 1)
+    # Xmeas = np.flip((rotmat @ Xmeas.T).T, axis = 1)
 
         
     # # Scaled distance between all points

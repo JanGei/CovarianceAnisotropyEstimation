@@ -30,17 +30,17 @@ def ellipses(cov_data, mean_cov, pars):
         ax.add_patch(ellipse)
 
     
-    res = X**2 * mean_cov[0,0] + X*Y*(mean_cov[0,1] + mean_cov[1,0]) + Y**2 * mean_cov[1,1] - 1
-    ax.contour(X, Y, res, levels=[0], colors='blue', alpha=0.5, zorder = 2)
+    # res = X**2 * mean_cov[0,0] + X*Y*(mean_cov[0,1] + mean_cov[1,0]) + Y**2 * mean_cov[1,1] - 1
+    # ax.contour(X, Y, res, levels=[0], colors='blue', alpha=0.5, zorder = 2)
     
-    # ellipse = patches.Ellipse(center,
-    #                           mean_cov[0]*2,
-    #                           mean_cov[1]*2,
-    #                           angle=np.rad2deg(mean_cov[2]),
-    #                           fill=False,
-    #                           color='blue',
-    #                           zorder = 1)
-    # ax.add_patch(ellipse)
+    ellipse = patches.Ellipse(center,
+                              mean_cov[0]*2,
+                              mean_cov[1]*2,
+                              angle=np.rad2deg(mean_cov[2]),
+                              fill=False,
+                              color='blue',
+                              zorder = 2)
+    ax.add_patch(ellipse)
     
     ellipse = patches.Ellipse(center,
                               pars['lx'][0][0]*2,

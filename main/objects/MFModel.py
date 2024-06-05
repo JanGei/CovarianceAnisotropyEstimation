@@ -183,7 +183,7 @@ class MFModel:
                               pp_xy,
                               )
         
-        self.set_field([field], ['npf'])
+        self.set_field([field[0]], ['npf'])
         
         if self.n_neg_def > 0:
             if self.n_neg_def == 10:
@@ -221,6 +221,7 @@ class MFModel:
         if l2 > l1:
             l1, l2 = l2, l1
             angle += np.pi/2
+            print("It happened")
             
         correction = False
         if l1 > 0.75*self.corrL_max:

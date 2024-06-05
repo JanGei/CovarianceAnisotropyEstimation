@@ -1,15 +1,13 @@
 import sys
 sys.path.append('..')
-import numpy as np
-from dependencies.load_template_model import load_template_model
+# from dependencies.load_template_model import load_template_model
 from dependencies.model_params import get
-
-
+import numpy as np
 pars        = get()
 n_mem       = pars['n_mem']
 nprocs      = pars['nprocs']
 clx         = pars['lx']
-sim, gwf = load_template_model(pars)
+# sim, gwf = load_template_model(pars)
 
 n_target = 10000
 res = np.zeros((n_target,6))
@@ -36,6 +34,8 @@ for i in range(n_target):
     eigenvalues, eigenvectors =  np.linalg.eig(M)
     # res[i,3:] = extract_truth(eigenvalues, eigenvectors)
     res[i,3:] = pars['mat2cv'](eigenvalues, eigenvectors)
+
     
 difference = res[:,0:3] - res[:,3:]
+# difference[:,2] = difference[:,2]%np.pi
 print(np.max(np.abs(difference)))

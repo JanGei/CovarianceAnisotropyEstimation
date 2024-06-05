@@ -35,7 +35,7 @@ def conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy):
     # ikrigmat = np.linalg.inv(krigmat)
     
     # random, unconditional field for the given variogram
-    sunc = np.log(randomK(ang, sigma, pars['cov'], pars['geomea'], pars, [pars['nx'], dx, lx]))
+    sunc = np.log(randomK(ang, sigma, pars['cov'], pars['geomea'], pars, grid=[pars['nx'], dx, lx]))
     
     # generating a conditional realisation
     sunc_at_meas = np.zeros(m)
