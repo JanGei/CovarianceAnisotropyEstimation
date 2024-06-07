@@ -203,9 +203,8 @@ def run_reference_model(pars):
     # chd package
     chd = flopy.mf6.ModflowGwfchd(gwf,
                                   stress_period_data    = {0:chd_list})
-
-    inspection = False
-    if inspection and pars['setup'] == 'office':
+    
+    if pars['inspec'] and pars['setup'] == 'office':
         print(pars['mu'][0], np.mean(np.log(k_ref)))
         print(pars['mu'][1]/(86400), np.mean(r_ref))
         plot_fields(gwf, pars, np.log(k_ref), r_ref)

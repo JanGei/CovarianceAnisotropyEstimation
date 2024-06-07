@@ -34,14 +34,14 @@ class MFModel:
             self.ellips_mat = np.array([[ellips[0], ellips[1]], [ellips[1], ellips[2]]])
             self.lx         = [l_angs[0], l_angs[1]]
             self.ang        = l_angs[2]
-            self.corrL_max  = maxcl
+            self.threshhold = maxcl
+            self.corrL_max  = maxcl/0.75
             
         
     def set_field(self, field, pkg_name: list):
         for i, name in enumerate(pkg_name):
             if name == 'npf':
                 self.old_npf =  self.npf.k.get_data()
-                #!!!!!! ist hier reshape korrekt angewandt? wahrscheinlich, da 1d
                 self.npf.k.set_data(np.reshape(field[i],self.npf.k.array.shape))
                 self.npf.write()
             elif name == 'rch':
@@ -224,11 +224,11 @@ class MFModel:
             print("It happened")
             
         correction = False
-        if l1 > 0.75*self.corrL_max:
+        if l1 > self.threshhold:
             l1 = self.reduce_corL(l1)
             # print('We are correcting a variogram')
             correction = True
-        if l2 > 0.75*self.corrL_max:
+        if l2 > self.threshhold:
             l2 = self.reduce_corL(l2)
             correction = True
         if correction:

@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.patches as patches
 from dependencies.load_template_model import load_template_model
 from dependencies.model_params import get
-from dependencies.conditional_k import conditional_k
+from dependencies.create_k_fields import create_k_fields
 from dependencies.create_pilot_points import create_pilot_points
 import matplotlib.pyplot as plt
 import flopy
@@ -13,7 +13,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 pars = get()
 sim, gwf = load_template_model(pars)
-pp_cid, pp_xy = create_pilot_points(gwf, pars)
+pp_cid, pp_xy, neardist = create_pilot_points(gwf, pars)
 
 # define 3 ellipses
 data = np.zeros((3,3))
@@ -26,7 +26,7 @@ results = []
 
 pars['valt'] = 'good'
 for i in range(len(data)):
-    res = conditional_k(gwf, pars, pp_xy, pp_cid, test_cov = [data[i,0:2], data[i,2]])
+    res = create_k_fields(gwf, pars, pp_xy, pp_cid, test_cov = [data[i,0:2], data[i,2]])
     results.append(res)
 
 

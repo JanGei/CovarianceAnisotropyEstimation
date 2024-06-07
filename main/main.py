@@ -103,7 +103,7 @@ if __name__ == '__main__':
             pp_xy, pp_cid = [], []
         
     # save original fields
-    if pars['setup'] == 'icluster' or pars['setup'] == 'binnac':
+    if pars['setup'] == 'binnac':
         np.save(os.path.join(pars['resdir'] ,'k_ensemble_ini.npy'), k_fields)
     k_ref = np.loadtxt(pars['k_r_d'], delimiter = ',')
     

@@ -91,10 +91,10 @@ def randomK(ang, sigma, Ctype, Kg, pars, grid = [], random = True, ftype = []):
     # and evaluate the corresponding phase-spectrum.
     # This random phase-spectrum and the given power spectrum
     # define the Fourier transform of the random autocorrelated field.
-    shape = np.shape(SYY)
+
     ran = np.multiply(np.sqrt(SYY),
-                      (np.random.randn(shape[0], shape[1]) +
-                       1j * np.random.randn(shape[0], shape[1])))
+                      (np.random.randn(*SYY.shape) +
+                       1j * np.random.randn(*SYY.shape)))
 
     # Backtransformation into the physical coordinates
     K = Kg * np.exp(np.real(np.fft.ifftn(ran*ntot)))

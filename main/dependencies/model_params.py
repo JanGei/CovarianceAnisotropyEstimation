@@ -12,6 +12,26 @@ def create_wells(row_well, col_well, dx):
     # pumping wells should be at (5, 9, 15, 27, 31)
     return well_loc
 
+def distance_matrix(X1,X2,lx=1,ly=1):
+    #dstmat
+    # calculates the distances between all points in two (n x dim) matrices
+    # that are odered pairwise according to their dimension
+    n = X1.shape[0]
+    m, dim = X2.shape
+    
+    X1_x_ex = np.reshape(X1[:,0],(len(X1),1)) @ np.ones((1,m))
+    X2_x_ex = np.ones((n,1)) @ np.reshape(X2[:, 0], (len(X2[:,0]),1)).T
+    
+    X1_y_ex = np.reshape(X1[:,1],(len(X1),1)) @ np.ones((1,m))
+    X2_y_ex = np.ones((n,1)) @ np.reshape(X2[:, 1], (len(X2[:,1]),1)).T
+    
+    deltaXnorm = (X1_x_ex - X2_x_ex) / lx
+    deltaYnorm = (X1_y_ex - X2_y_ex) / ly
+        
+    H = np.sqrt(deltaXnorm ** 2 + deltaYnorm ** 2)
+    
+    return H
+
 def covariance_matrix(H, sigma2, Ctype):
     #covmat
     if Ctype == 'Exponential':
@@ -82,22 +102,17 @@ def get():
     mask[q_idx] = False
     
     cov_mods    = ['Exponential', 'Matern', 'Gaussian']
-    computer = ['office', 'icluster', 'binnac']
+    computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
         n_mem  = 32
         nprocs = np.min([n_mem, psutil.cpu_count()])
         if n_mem == 2:
             nprocs = 1
-        up_temp = False
+        up_temp = True
+        inspection = False
         n_pre_run = 1
         printf = True
-    elif setup == 'icluster':
-        n_mem  = 120
-        nprocs = psutil.cpu_count()
-        up_temp = True
-        n_pre_run = 20
-        printf = False
     elif setup == 'binnac':
         n_mem  = 280
         nprocs = psutil.cpu_count()
@@ -113,7 +128,7 @@ def get():
     nPP = 50
     
     h_damp = 0.5
-    cov_damp = 0.1
+    cov_damp = 0.2
     npf_damp = 0.5
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
     
@@ -154,7 +169,7 @@ def get():
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
         'lx'    : np.array([[2000,600], [5000,500]])/l_red, # corellation lengths
-        'ang'   : np.array([111, 17]),                      # angle in ° (logK, recharge)
+        'ang'   : np.array([17, 111]),                      # angle in ° (logK, recharge)
         'sigma' : np.array([1.7, 0.1]),                     # variance (logK, recharge)
         'mu'    : np.array([-8.5, -0.7]),                   # mean (log(ms-1), (mm/d))
         'cov'   : cov_mods[1],                              # Covariance models
@@ -176,6 +191,7 @@ def get():
         'sy'    : 0.15,                                     # specific yield
         'mname' : "Reference",
         'sname' : "Reference",
+        'inspec': inspection,
         'printf': printf,
         'sim_ws': os.path.join(Vrdir, 'model_files'),
         'vr_h_d': os.path.join(Vrdir, 'model_data', 'head_ref.npy'),
@@ -199,6 +215,7 @@ def get():
         'mat2cv': extract_truth,
         'rot2df': rotate2Dfield,
         'covmat': covariance_matrix,
+        'dstmat': distance_matrix,
         }
     
     if choice == 0 or choice == 1:
