@@ -120,7 +120,6 @@ class Ensemble:
                                       data[idx], 
                                       self.pp_xy,
                                       self.pp_cid,
-                                      # lets draw from parametric space
                                       self.mean_cov_par, 
                                       self.var_cov_par
                                       ) 

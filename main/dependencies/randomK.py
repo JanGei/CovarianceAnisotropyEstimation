@@ -41,7 +41,10 @@ def randomK(ang, sigma, Ctype, Kg, pars, grid = [], random = True, ftype = []):
                 np.random.seed(8)
             elif pars['l_red'] == 5:
                 # Good choice for Matern 3/2 with l_red = 5
-                np.random.seed(8)   
+                np.random.seed(9)  
+            elif pars['l_red'] == 7:
+                # Good choice for Matern 3/2 with l_red = 5
+                np.random.seed(11)  
     else:
         Kg = pars['geomea']
         

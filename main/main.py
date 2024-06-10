@@ -163,9 +163,7 @@ if __name__ == '__main__':
     X, Ysim = MF_Ensemble.get_Kalman_X_Y(pars['EnKF_p'])
     damp = MF_Ensemble.get_damp(X, pars['damp'],pars['EnKF_p'])
     EnKF = EnsembleKalmanFilter(X, Ysim, damp = damp, eps = pars['eps'])
-    
-    covl = []
-    k_means = []
+
     Assimilate = True
     # for t_step in range(pars['nsteps']):
     for t_step in range(pars['nsteps']):

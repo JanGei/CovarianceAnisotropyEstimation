@@ -78,10 +78,10 @@ def extract_truth(eigenvalues, eigenvectors):
     ly = 1 / np.sqrt(lambda2)  # ly is the smaller length (semi-minor axis)
     
     # Choose the eigenvector corresponding to the larger eigenvalue as the semi-major axis
-    v1 = eigenvectors[:, 1] 
+    v1 = eigenvectors[:, 0] 
     
     # Angle of orientation relative to the semi-major axis
-    theta = np.arctan2(v1[0], v1[1])
+    theta = np.arctan2(v1[1], v1[0])
     
     return lx, ly, theta%np.pi
 
@@ -109,8 +109,8 @@ def get():
         nprocs = np.min([n_mem, psutil.cpu_count()])
         if n_mem == 2:
             nprocs = 1
-        up_temp = True
-        inspection = False
+        up_temp = False
+        inspection = True
         n_pre_run = 1
         printf = True
     elif setup == 'binnac':
@@ -120,16 +120,16 @@ def get():
         n_pre_run = 20
         printf = False
     
-    choice = [0, 0]
+    choice = [1, 0]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     pp_flag = True
     l_red = 5 # possible are 5 and 10
-    nPP = 50
+    nPP = 30
     
-    h_damp = 0.5
-    cov_damp = 0.2
-    npf_damp = 0.5
+    h_damp = 0.25
+    cov_damp = 0.15
+    npf_damp = 0.15
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
     
     
@@ -209,7 +209,7 @@ def get():
         'tm_ws' : os.path.join(ensemb_dir, 'template_model'),
         'trs_ws': os.path.join(Vrdir, 'transient_model') ,
         'resdir': os.path.join(parent_directory, 'output'),
-        'nsteps': int(2*365*24/6),
+        'nsteps': int(365*24/6),
         'nprern': n_pre_run,
         'rotmat': rotation_matrix,
         'mat2cv': extract_truth,
