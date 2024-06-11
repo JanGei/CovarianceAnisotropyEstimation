@@ -16,7 +16,8 @@ def plot_k_fields(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pars,  k_fields: list
     layout.append(low_plot)
     layout.append(low_plot)
     
-    fig, axes = plt.subplot_mosaic(layout, figsize=(4,len(k_fields)/2+2), sharex=True, sharey = True)    
+    dpi = 300
+    fig, axes = plt.subplot_mosaic(layout, figsize=(4,len(k_fields)/2+2), sharex=True, sharey = True, dpi=dpi)    
     for i in range(int(len(k_fields)/2)):
         for j, letter in enumerate(['r', 'l']):
             gwf.npf.k.set_data(k_fields[i*2+j])

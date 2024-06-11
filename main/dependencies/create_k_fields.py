@@ -56,7 +56,7 @@ def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = []):
     
     # The ellips is rotated counter-clockwise, thats why a minus is needed here
     D = pars['rotmat'](-ang)
-    M = D @ np.array([[1/lx[0]**2, 0],[0, 1/lx[1]**2]]) @ D.T
+    M = np.matmul(np.matmul(D, np.array([[1/lx[0]**2, 0],[0, 1/lx[1]**2]])), D.T)
     
     if len(test_cov) != 0:
         return field, [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k], field2f

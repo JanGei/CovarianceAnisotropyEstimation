@@ -49,8 +49,8 @@ for i in range(n_target):
     
     res[i,0:3] = lx[0], lx[1], ang
     
-    D = pars['rotmat'](-ang)
-    M = D @ np.array([[1/lx[0]**2, 0],[0, 1/lx[1]**2]]) @ D.T
+    D = pars['rotmat'](ang)
+    M = np.matmul(np.matmul(D,np.array([[1/lx[0]**2, 0],[0, 1/lx[1]**2]])), D.T)
     
     eigenvalues, eigenvectors =  np.linalg.eig(M)
     # res[i,3:] = extract_truth(eigenvalues, eigenvectors)

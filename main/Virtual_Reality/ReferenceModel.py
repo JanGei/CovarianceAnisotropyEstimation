@@ -10,11 +10,12 @@ from flopy.utils.gridgen import Gridgen
 from shapely.geometry import LineString, MultiPoint
 import numpy as np
 from Virtual_Reality.Field_Generation import generate_fields
-from Virtual_Reality.transient_run import transient_run
+from dependencies.convert_transient import convert_to_transient
+# from Virtual_Reality.transient_run import transient_run
 from dependencies.plotting.plot_fields import plot_fields
 import sys
 
-def run_reference_model(pars):
+def create_reference_model(pars):
     #%% Model Parameters
     nx      = pars['nx']
     dx      = pars['dx']
@@ -77,7 +78,7 @@ def run_reference_model(pars):
     # simulation object
     sim     = flopy.mf6.MFSimulation(sim_name           = sname,
                                      sim_ws             = sim_ws,
-                                     verbosity_level    = 2)
+                                     verbosity_level    = 0)
     # groundwater flow / model object
     gwf     = flopy.mf6.ModflowGwf(sim,
                                    modelname            = mname,
@@ -216,8 +217,12 @@ def run_reference_model(pars):
     ic.strt.set_data(gwf.output.head().get_data())
     ic.write()
     
+    
     #%% Run transient simulation
-    transient_run(pars)
+    sim = convert_to_transient(pars['trs_ws'], pars)
+    
+    # transient_run(pars)
+    
     # plot(gwf, ['logK', 'rch'])
     # plot(gwf, ['logK', 'rch', 'h'], bc = True)
     # plot(gwf, ['logK','h'], bc=False)

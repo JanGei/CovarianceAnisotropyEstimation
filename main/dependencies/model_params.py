@@ -54,7 +54,7 @@ def rotation_matrix(angle):
     # ROTATION MATRIX CLOCKWISE
     # cos(a) sin(a)
     # -sin(a) cos(a)
-    return np.array([[np.cos(angle), np.sin(angle)], [-np.sin(angle), np.cos(angle)]]) 
+    return np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]]) 
 
 def rotate2Dfield(X,Y, angle):
     # rot2df
@@ -83,7 +83,7 @@ def extract_truth(eigenvalues, eigenvectors):
     # Angle of orientation relative to the semi-major axis
     theta = np.arctan2(v1[1], v1[0])
     
-    return lx, ly, theta%np.pi
+    return lx, ly, (theta-np.pi)%np.pi
 
 
 def get():
@@ -109,9 +109,9 @@ def get():
         nprocs = np.min([n_mem, psutil.cpu_count()])
         if n_mem == 2:
             nprocs = 1
-        up_temp = False
-        inspection = True
-        n_pre_run = 1
+        up_temp = True
+        inspection = False
+        n_pre_run = 20
         printf = True
     elif setup == 'binnac':
         n_mem  = 280
@@ -125,7 +125,7 @@ def get():
     est_variants = ["underestimate", "good", "overestimate"]
     pp_flag = True
     l_red = 5 # possible are 5 and 10
-    nPP = 30
+    nPP = 40
     
     h_damp = 0.25
     cov_damp = 0.15
@@ -158,8 +158,8 @@ def get():
         'estyp' : est_variants[choice[1]],
         'n_PP'  : nPP,
         'eps'   : 0.05,
-        'omitc' : 4,
-        'nearPP': 5,
+        'omitc' : 5,
+        'nearPP': 4,
         'sig_me': 0.1,
         'geomea': 0.1,
         'covt'  : covtype,

@@ -297,7 +297,7 @@ class Ensemble:
         
         return mean_h, var_h
     
-    def record_state(self, pars: dict, params: list):
+    def record_state(self, pars: dict, params: list, true_h):
         
         mean_h, var_h = self.get_mean_var()
         k_fields = self.get_member_fields(['npf'])
@@ -309,13 +309,17 @@ class Ensemble:
         
         f = open(os.path.join(direc,  'h_mean.dat'),'a')
         g = open(os.path.join(direc,  'h_var.dat'),'a')
+        h = open(os.path.join(direc,  'true_h.dat'),'a')
         for i in range(len(mean_h)):
             f.write("{:.5f} ".format(mean_h[i]))
             g.write("{:.5f} ".format(var_h[i]))
+            h.write("{:.5f} ".format(true_h[i]))
         f.write('\n')
         g.write('\n')
+        h.write('\n')
         f.close()
         g.close()
+        h.close()
         
         f = open(os.path.join(direc,  'errors.dat'),'a')
         f.write("{:.4f} ".format(self.ole[-1]))
@@ -417,6 +421,7 @@ class Ensemble:
                       os.path.join(pars['resdir'], 'h_mean.dat'),
                       os.path.join(pars['resdir'], 'h_var.dat'),
                       os.path.join(pars['resdir'], 'obs_mean.dat'),
+                      os.path.join(pars['resdir'], 'true_h.dat'),
                       ]
         
         for file_path in file_paths:

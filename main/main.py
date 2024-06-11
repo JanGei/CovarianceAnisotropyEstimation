@@ -1,11 +1,10 @@
 from dependencies.model_params import get
 from dependencies.copy import create_Ensemble
-from dependencies.convert_transient import convert_to_transient
+# from dependencies.convert_transient import convert_to_transient
 from dependencies.create_pilot_points import create_pilot_points
 from dependencies.load_template_model import load_template_model
 from dependencies.create_k_fields import create_k_fields
 from dependencies.write_file import write_file
-from dependencies.load_observations import load_true_h_field
 from dependencies.get_transient_data import get_transient_data
 from dependencies.intersect_with_grid import intersect_with_grid
 from dependencies.generate_mask import chd_mask
@@ -15,8 +14,9 @@ from dependencies.plotting.compare_mean import compare_mean_true
 from dependencies.plotting.plot_k_fields import plot_k_fields
 from objects.Ensemble import Ensemble
 from objects.MFModel import MFModel
+from objects.Virtual_Reality import Virtual_Reality
 from objects.EnsembleKalmanFilter import EnsembleKalmanFilter
-from Virtual_Reality.ReferenceModel import run_reference_model
+from Virtual_Reality.ReferenceModel import create_reference_model
 from Virtual_Reality.functions.generator import gsgenerator
 import time
 import numpy as np
@@ -43,9 +43,9 @@ if __name__ == '__main__':
     nprocs      = pars['nprocs']
     
     if pars['up_tem']:
-        run_reference_model(pars)
-        temp_sim = convert_to_transient(pars['tm_ws'], pars)
+        create_reference_model(pars)
         
+    VR_Model = Virtual_Reality(pars)
     
     print(f'Joblib initiated with {nprocs} processors')
     print(f'The template model is located in {pars["tm_ws"]}')
@@ -57,9 +57,7 @@ if __name__ == '__main__':
     sim, gwf = load_template_model(pars)
     
     obs_cid = intersect_with_grid(gwf, pars['obsxy'])
-    # not needed here, but will be needed in non synthetic cases
-    # obs_val = load_observations(pars) 
-    true_h = load_true_h_field(pars)
+    Y_obs = VR_Model.get_observations(obs_cid)
     
     k_fields = []
     cor_ellips = []
@@ -105,13 +103,6 @@ if __name__ == '__main__':
     # save original fields
     if pars['setup'] == 'binnac':
         np.save(os.path.join(pars['resdir'] ,'k_ensemble_ini.npy'), k_fields)
-    k_ref = np.loadtxt(pars['k_r_d'], delimiter = ',')
-    
-    # plot_POI(gwf, pp_xy, pars, bc = True)
-    # plot_fields(gwf, pars,  k_fields[0], k_fields[1])
-    # plot_k_fields(gwf, pars,  k_fields)
-    
-    # plot(gwf, ['logK','h'], bc=True)
     
     mask_chd = chd_mask(gwf)
     
@@ -132,6 +123,7 @@ if __name__ == '__main__':
         )
     
     if pars['printf']: print(f'{n_mem} models are initiated in {(time.time() - start_time):.2f} seconds')
+    
     #%% add the models to the ensemble
     start_time = time.time()
     
@@ -155,15 +147,19 @@ if __name__ == '__main__':
     for idx in range(pars['nprern']):
         MF_Ensemble.propagate()
         MF_Ensemble.update_initial_heads()
+        VR_Model.simulation()
+        VR_Model.update_ic()
+        print(np.mean(VR_Model.get_field(['h'])['h']))
     # print(MF_Ensemble.get_mean_var())
     
     print(f'Each model is run and updated {pars["nprern"]} times which took {(time.time() - start_time):.2f} seconds')
     print(f'That makes {((time.time() - start_time)/(pars["nprern"] * n_mem)):.2f} seconds per model run')
+    
     #%%
     X, Ysim = MF_Ensemble.get_Kalman_X_Y(pars['EnKF_p'])
     damp = MF_Ensemble.get_damp(X, pars['damp'],pars['EnKF_p'])
     EnKF = EnsembleKalmanFilter(X, Ysim, damp = damp, eps = pars['eps'])
-
+    true_h = np.zeros((pars['nsteps'],len(VR_Model.cxy)))
     Assimilate = True
     # for t_step in range(pars['nsteps']):
     for t_step in range(pars['nsteps']):
@@ -175,13 +171,17 @@ if __name__ == '__main__':
         print('--------')
         print(f'time step {t_step}')
         start_time = time.time()
-        rch_data, wel_data, riv_data, Y_obs = get_transient_data(pars, t_step, true_h[t_step], obs_cid)
+        rch_data, wel_data, riv_data = get_transient_data(pars, t_step)
         start_time = time.time()
         MF_Ensemble.update_transient_data(rch_data, wel_data, riv_data)
+        VR_Model.update_transient_data(rch_data, wel_data, riv_data)
+
         if pars['printf']: print(f'transient data loaded and applied in {(time.time() - start_time):.2f} seconds')
         
         if pars['printf']: print('---')
         start_time = time.time()
+        VR_Model.simulation()
+        true_h[t_step,:] = VR_Model.update_ic()
         MF_Ensemble.propagate()
         if pars['printf']: print(f'Ensemble propagated in {(time.time() - start_time):.2f} seconds')
  
@@ -194,7 +194,7 @@ if __name__ == '__main__':
                     )
                 )
             EnKF.analysis()
-
+            Y_obs = VR_Model.get_observations(obs_cid)
             EnKF.Kalman_update(Y_obs)
 
             if pars['printf']: print(f'Ensemble Kalman Filter performed in  {(time.time() - start_time):.2f} seconds')
@@ -209,7 +209,7 @@ if __name__ == '__main__':
 
         start_time = time.time()
         MF_Ensemble.model_error(true_h[t_step])
-        MF_Ensemble.record_state(pars, pars['EnKF_p'])
+        MF_Ensemble.record_state(pars, pars['EnKF_p'], true_h[t_step])
         # visualize covariance structures
         if pars['setup'] == 'office' and t_step%10 == 0:
             if 'cov_data' in pars['EnKF_p']:
@@ -222,10 +222,9 @@ if __name__ == '__main__':
         
             
             if t_step%50 == 0:
-                k_fields = MF_Ensemble.get_member_fields(['npf'])
-                plot_k_fields(gwf, pars,  [field['npf'] for field in k_fields[0:8]])
-                compare_mean_true(gwf, [k_ref, MF_Ensemble.logmeank]) 
+                k_fields = [Member.get_field(['npf'])['npf'].T for Member in MF_Ensemble.members[0:8]] 
+                plot_k_fields(gwf, pars,  k_fields)
+                compare_mean_true(gwf, [np.squeeze(VR_Model.npf.k.array), MF_Ensemble.logmeank]) 
             
         if pars['printf']: print(f'Plotting and recording took {(time.time() - start_time):.2f} seconds')
-    
     

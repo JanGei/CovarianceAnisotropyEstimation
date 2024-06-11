@@ -11,7 +11,7 @@ import flopy
 from dependencies.randomK_points import randomK_points
 from dependencies.randomK import randomK
 from scipy.interpolate import griddata
-from dependencies.extract_variogram import extract_vario
+# from dependencies.extract_variogram import extract_vario
 # from dependencies.plotting.plot_fields import plot_fields
 # import sys 
 

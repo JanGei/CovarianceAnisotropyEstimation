@@ -1,6 +1,6 @@
 import numpy as np
 
-def get_transient_data(pars: dict, t_step: int, true_h, obs_cid):
+def get_transient_data(pars: dict, t_step: int):
     
 
     r_ref = np.loadtxt(pars['r_r_d'], delimiter = ',')
@@ -19,8 +19,5 @@ def get_transient_data(pars: dict, t_step: int, true_h, obs_cid):
             wel_data[i] = -welq[i]
     riv_data = rivh[t_step]
     
-    # Y_obs = np.ones(len(obs_cid))
-    for key in  obs_cid:
-        Y_obs = np.array(true_h).flatten()[obs_cid.tolist()]
         
-    return rch_data, wel_data, riv_data, Y_obs
+    return rch_data, wel_data, riv_data

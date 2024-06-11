@@ -58,7 +58,7 @@ def randomK(ang, sigma, Ctype, Kg, pars, grid = [], random = True, ftype = []):
         lx = pars['lx'][0]
     # np.random.seed(42)
     nx_ex = nx + np.round(5*np.array(lx)/np.array(dx))
-    
+    nx_ex = np.array([np.max(nx_ex), np.max(nx_ex)])
     # total number of nodes
     ntot = np.prod(nx_ex)
     
@@ -71,7 +71,7 @@ def randomK(ang, sigma, Ctype, Kg, pars, grid = [], random = True, ftype = []):
     X, Y = np.meshgrid(x, y)
     
     # Rotation into Longitudinal/Transverse Coordinates
-    X2, Y2 = pars['rot2df'](X,Y,ang)
+    X2, Y2 = pars['rot2df'](X,Y,-ang)
     # Scaling by correlation lengths
     H = np.sqrt((X2/lx[0])**2+(Y2/lx[1])**2)
     

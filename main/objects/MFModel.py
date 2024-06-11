@@ -35,7 +35,7 @@ class MFModel:
             self.lx         = [l_angs[0], l_angs[1]]
             self.ang        = l_angs[2]
             self.threshhold = maxcl
-            self.corrL_max  = maxcl/0.75
+            self.corrL_max  = maxcl/0.7
             
         
     def set_field(self, field, pkg_name: list):
@@ -215,7 +215,7 @@ class MFModel:
             
     def reduce_corL(self, corL):
         # reducing correlation lengths based on monod kinetic model
-        return (self.corrL_max * corL) / (self.corrL_max*0.25 + corL)
+        return (self.corrL_max * corL) / (self.corrL_max*0.3 + corL)
         
     def check_corrL(self, l1, l2, angle):
         if l2 > l1:
@@ -237,8 +237,8 @@ class MFModel:
         return l1, l2, angle
     
     def variogram_to_matrix(self, l1, l2, angle):
-        D = self.pars['rotmat'](-angle)
-        M = D @ np.array([[1/l1**2, 0],[0, 1/l2**2]]) @ D.T
+        D = self.pars['rotmat'](angle)
+        M = np.matmul(np.matmul(D, np.array([[1/l1**2, 0],[0, 1/l2**2]])), D.T)
         self.update_ellips_mat(M)
         
         

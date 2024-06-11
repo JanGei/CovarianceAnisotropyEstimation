@@ -31,7 +31,7 @@ def compare_mean_true(gwf, k_fields):
     ax2 = axes[2]
     gwf.npf.k.set_data((k_fields[1])/ np.log((k_fields[0])))
     axf2 = flopy.plot.PlotMapView(model=gwf, ax=ax2)
-    c2 = axf2.plot_array((gwf.npf.k.array), cmap=cm.batlow, alpha=1)
+    c2 = axf2.plot_array((gwf.npf.k.array), cmap=cm.roma, alpha=1)
     ax2.set_aspect('equal')
 
 

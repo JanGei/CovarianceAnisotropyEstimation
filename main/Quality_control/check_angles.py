@@ -29,5 +29,5 @@ for i in range(len(angles)):
 
     # plot_angles(gwf, pars, res[0], res[2], angles[i], res[3])
     alt_field = randomK(angles[i], pars['sigma'][0], pars['cov'], pars['mu'][0], pars, grid = [pars['nx'], pars['dx'], pars['lx'][0]],  ftype = 'K')
-    compare_conditional(gwf, pars, res[0], angles[i], res[3][1], pp_xy, np.exp(res[4])/100)
-    # compare_conditional(gwf, pars, res[0], angles[i], res[3][1], pp_xy, alt_field/100)
+    # compare_conditional(gwf, pars, res[0], angles[i], res[3][1], pp_xy, np.exp(res[4])/100)
+    compare_conditional(gwf, pars, res[0], angles[i], res[3][1], pp_xy, alt_field/100)
