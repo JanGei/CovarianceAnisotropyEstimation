@@ -22,7 +22,7 @@ results = []
 pars['valt'] = "good"
 
 for i in range(len(angles)):
-    res = create_k_fields(gwf, pars, pp_xy, pp_cid, test_cov = [lx, angles[i]])
+    res = create_k_fields(gwf, pars, pp_xy, pp_cid, test_cov = [lx, angles[i]], conditional = False)
     results.append(res)
     # if i == 0:
     #     plot_angles(gwf, pars, res[0], res[1], angles[i], res[3], ref = True)

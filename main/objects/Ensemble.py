@@ -5,7 +5,7 @@ import time
     
 class Ensemble:
     
-    def __init__(self, members: list, pilotp_flag, nprocs: int, obs_cid: list, mask, ellipses = [], ellipses_par = [], pp_cid = [], pp_xy = []):
+    def __init__(self, members: list, pilotp_flag, nprocs: int, obs_cid: list, mask, ellipses = [], ellipses_par = [], pp_cid = [], pp_xy = [], pp_k = []):
         self.members    = members
         self.nprocs     = nprocs
         self.n_mem      = len(self.members)
@@ -33,6 +33,7 @@ class Ensemble:
             self.var_cov_par    = np.var(ellipses_par, axis = 0)
             self.meanlogppk = []
             self.logmeanppk = []
+            self.pp_k = pp_k
         
         
     def set_field(self, field, pkg_name: list):
@@ -95,8 +96,11 @@ class Ensemble:
                 else:
                     head[i]['h'] = head[i]['h'].flatten()
                     head[i]['h'][~self.h_mask] = X[cl:,i]
-
-                    data.append([X[:cl,i], np.log(self.members[0].npf.k.array.flatten()[self.pp_cid])])
+                    
+                    # This is not working as intended
+                    if i == 0:
+                        print(self.pp_k)
+                    data.append([X[:cl,i], self.pp_k])
                     
             else:
                 head[i]['h'] = head[i]['h'].flatten()
@@ -208,19 +212,18 @@ class Ensemble:
         return X, Ysim
     
     def update_transient_data(self, rch_data, wel_data, riv_data):
-        
+
         spds = self.members[0].get_field(['rch', 'wel', 'riv'])
-        
         rch_spd = spds['rch']
         wel_spd = spds['wel']
         riv_spd = spds['riv']
-        
         rivhl = np.ones(np.shape(riv_spd[0]['cellid']))
-        
         rch_spd[0]['recharge'] = rch_data
         riv_spd[0]['stage'] = rivhl * riv_data
         wel_spd[0]['q'] = wel_data
 
+        
+        # this is the part that takes the most time 
         Parallel(n_jobs=self.nprocs)(delayed(self.members[idx].set_field)(
             [rch_spd, wel_spd, riv_spd],
             ['rch', 'wel', 'riv']

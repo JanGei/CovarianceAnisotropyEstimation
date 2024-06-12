@@ -47,6 +47,9 @@ def generate_fields(pars):
     X, Y = np.meshgrid(x, y)
     
     K = randomK(np.deg2rad(ang[0]), sigma[0], pars['cov'], 1, pars, ftype = 'K', random = False)
+    # K = randomK(np.deg2rad(ang[0]), sigma[0], pars['cov'], 1, pars, ftype = 'K')
+    # import matplotlib.pyplot as plt
+    # plt.imshow(np.flip(K, axis =1))
     # extract_vario(X.ravel(order = 'F'), Y.ravel(order = 'F'), K.ravel(order = 'F')) #not functional.. yet)
     R = randomK(np.deg2rad(ang[1]), sigma[1], pars['cov'], 1, pars, ftype = 'R', random = False)
     # Anmerkung des Übersetzers: Beim generieren dieser Felder ist die Varianz per se dimensionslos

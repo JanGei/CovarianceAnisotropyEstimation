@@ -1,7 +1,7 @@
 from dependencies.model_params import get
 from dependencies.copy import create_Ensemble
 # from dependencies.convert_transient import convert_to_transient
-from dependencies.create_pilot_points import create_pilot_points
+from dependencies.create_pilot_points import create_pilot_points_even
 from dependencies.load_template_model import load_template_model
 from dependencies.create_k_fields import create_k_fields
 from dependencies.write_file import write_file
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     
     
     if pars['pilotp']:
-        pp_cid, pp_xy, near_dist = create_pilot_points(gwf, pars)
+        pp_cid, pp_xy, near_dist = create_pilot_points_even(gwf, pars)
         write_file(pars,[pp_cid, pp_xy], ["pp_cid","pp_xy"], 0, intf = True)
         # create_k_fields
         result = Parallel(n_jobs=nprocs, backend = "threading")(delayed(create_k_fields)(
@@ -73,12 +73,13 @@ if __name__ == '__main__':
             pars, 
             pp_xy,
             pp_cid,
+            conditional = pars['condfl']
             )
             for idx in range(n_mem)
             )
         # sorting the results
         for tup in result:
-            field, ellips, l_ang, _ = tup
+            field, ellips, l_ang, pilotpoints = tup
             k_fields.append(field)
             cor_ellips.append(ellips)
             l_angs.append(l_ang)
@@ -135,7 +136,8 @@ if __name__ == '__main__':
                                np.array(l_angs),
                                np.array(cor_ellips),
                                pp_cid,
-                               pp_xy)
+                               pp_xy,
+                               pilotpoints[1])
     
     # set their respective k-fields
     MF_Ensemble.set_field(k_fields, ['npf'])
@@ -177,6 +179,9 @@ if __name__ == '__main__':
         VR_Model.update_transient_data(rch_data, wel_data, riv_data)
 
         if pars['printf']: print(f'transient data loaded and applied in {(time.time() - start_time):.2f} seconds')
+        # print(MF_Ensemble.members[0].npf.k.array[0,542])
+        # print(MF_Ensemble.members[0].rch.stress_period_data.get_data()[0][542])
+        # print(MF_Ensemble.members[0].ic.strt.array[0,542])
         
         if pars['printf']: print('---')
         start_time = time.time()

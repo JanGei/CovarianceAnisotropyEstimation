@@ -2,6 +2,8 @@ import flopy
 import numpy as np
 import sys
 from dependencies.conditional_k import conditional_k
+from dependencies.Kriging import Kriging
+
 
 sys.path.append('..')
 
@@ -35,8 +37,7 @@ class MFModel:
             self.lx         = [l_angs[0], l_angs[1]]
             self.ang        = l_angs[2]
             self.threshhold = maxcl
-            self.corrL_max  = maxcl/0.7
-            
+            self.corrL_max  = maxcl/0.7            
         
     def set_field(self, field, pkg_name: list):
         for i, name in enumerate(pkg_name):
@@ -173,15 +174,26 @@ class MFModel:
         # Is ppk really without a logarithm
         pp_k = data[1]
         
-        field = conditional_k(self.cxy,
-                              self.dx,
-                              self.lx,
-                              self.ang,
-                              self.pars['sigma'][0],
-                              self.pars,
-                              pp_k,
-                              pp_xy,
-                              )
+        if self.pars['condfl']:
+            field = conditional_k(self.cxy,
+                                  self.dx,
+                                  self.lx,
+                                  self.ang,
+                                  self.pars['sigma'][0],
+                                  self.pars,
+                                  pp_k,
+                                  pp_xy,
+                                  )
+        else:
+            field = Kriging(self.cxy,
+                                  self.dx,
+                                  self.lx,
+                                  self.ang,
+                                  self.pars['sigma'][0],
+                                  self.pars,
+                                  pp_k,
+                                  pp_xy,
+                                  )
         
         self.set_field([field[0]], ['npf'])
         

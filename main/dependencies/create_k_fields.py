@@ -1,7 +1,8 @@
 import numpy as np
 from dependencies.conditional_k import conditional_k
+from dependencies.Kriging import Kriging
 
-def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = []):
+def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = [], conditional = True, random = True):
     
     clx     = pars['lx']
     angles  = pars['ang']
@@ -36,6 +37,9 @@ def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = []):
     elif pars['covt'] == 'good':
         lx = clx[0]
         ang = np.deg2rad(angles[0])
+    if not random:
+        lx = clx[0]
+        ang = np.deg2rad(angles[0])
         
     if test_cov:
         lx = test_cov[0]
@@ -52,7 +56,10 @@ def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = []):
         # pp_k = np.random.uniform(mu-mu/4, mu+mu/4, len(pp_cid))
         # pp_k = pp_k + sig_meas * np.random.randn(*pp_k.shape)
     
-    field, field2f = conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy)
+    if conditional:
+        field, field2f = conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy)
+    else:
+        field, field2f = Kriging(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy)
     
     # The ellips is rotated counter-clockwise, thats why a minus is needed here
     D = pars['rotmat'](-ang)
