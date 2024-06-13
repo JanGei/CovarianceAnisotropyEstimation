@@ -114,21 +114,24 @@ def get():
         n_pre_run = 5
         printf = False
     elif setup == 'binnac':
-        n_mem  = 280
+        n_mem  = 140
         nprocs = psutil.cpu_count()
         up_temp = True
         n_pre_run = 20
         printf = False
+        inspection = False
     
-    conditional_flag = True
-    pilot_point_even = False
-    scramble_pp = False
+    
     choice = [1, 0]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     pp_flag = True
     l_red = 5 # possible are 5 and 10
     nPP = 50
+    
+    conditional_flag = True
+    pilot_point_even = False
+    scramble_pp = False
     
     h_damp = 0.15
     cov_damp = 0.05
