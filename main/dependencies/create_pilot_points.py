@@ -34,7 +34,7 @@ def create_pilot_points(gwf, pars:dict,):
     pp_xy_accepted = []
     
     n_test = nPP
-    sampler = qmc.Halton(2, scramble = False)
+    sampler = qmc.Halton(2, scramble = pars['scramb'])
     
     while len(pp_cid_accepted) != nPP:
         

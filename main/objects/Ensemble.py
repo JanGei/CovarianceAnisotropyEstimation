@@ -21,7 +21,7 @@ class Ensemble:
         self.obs        = []
         self.pilotp_flag= pilotp_flag
         self.meanlogk   = []
-        self.logmeank   = []
+        self.meank   = []
         if pilotp_flag:
             self.ellipses   = ellipses
             self.ellipses_par = ellipses_par
@@ -32,7 +32,9 @@ class Ensemble:
             self.mean_cov_par   = np.mean(ellipses_par, axis = 0)
             self.var_cov_par    = np.var(ellipses_par, axis = 0)
             self.meanlogppk = []
-            self.logmeanppk = []
+            self.varlogppk = []
+            self.meanppk = []
+            self.varppk = []
             self.pp_k = pp_k
         
         
@@ -156,11 +158,15 @@ class Ensemble:
             self.var_cov_par = np.var(np.array(self.ellipses_par), axis = 0)
             if 'npf' in params:
                 self.meanlogppk = np.mean(X[cl:len(self.pp_cid)+cl,:], axis = 1)
-                self.logmeanppk = np.log(np.mean(np.exp(X[cl:len(self.pp_cid)+cl,:]), axis = 1))
+                self.varlogppk = np.var(X[cl:len(self.pp_cid)+cl,:], axis = 1)
+                self.meanppk = np.mean(np.exp(X[cl:len(self.pp_cid)+cl,:]), axis = 1)
+                self.varppk = np.var(np.exp(X[cl:len(self.pp_cid)+cl,:]), axis = 1)
         else:
             if self.pilotp_flag:
                 self.meanlogppk = np.mean(X[:len(self.pp_cid),:], axis = 1)
-                self.logmeanppk = np.log(np.mean(np.exp(X[:len(self.pp_cid),:]), axis = 1))
+                self.varlogppk = np.var(X[:len(self.pp_cid),:], axis = 1)
+                self.meanppk = np.mean(np.exp(X[:len(self.pp_cid),:]), axis = 1)
+                self.varppk = np.var(np.exp(X[:len(self.pp_cid),:]), axis = 1)
                     
     def get_Kalman_X_Y(self, params: list):   
 
@@ -306,7 +312,7 @@ class Ensemble:
         k_fields = self.get_member_fields(['npf'])
         k_fields = np.array([field['npf'] for field in k_fields]).squeeze()
         self.meanlogk = np.mean(np.log(k_fields), axis = 0)
-        self.logmeank = np.log(np.mean(k_fields, axis = 0))
+        self.meank = np.mean(k_fields, axis = 0)
         
         direc = pars['resdir']
         
@@ -385,16 +391,24 @@ class Ensemble:
         if 'npf' in params:
             if self.pilotp_flag:
                 f = open(os.path.join(direc,  'meanlogppk.dat'),'a')
+                g = open(os.path.join(direc,  'varlogppk.dat'),'a')
                 for i in range(len(self.meanlogppk)):
                     f.write("{:.8f} ".format(self.meanlogppk[i]))
+                    g.write("{:.8f} ".format(self.varlogppk[i]))
                 f.write('\n')
+                g.write('\n')
                 f.close()
+                g.close()
                 
-                f = open(os.path.join(direc,  'logmeanppk.dat'),'a')
-                for i in range(len(self.logmeanppk)):
-                    f.write("{:.8f} ".format(self.logmeanppk[i]))
+                f = open(os.path.join(direc,  'meanppk.dat'),'a')
+                g = open(os.path.join(direc,  'varppk.dat'),'a')
+                for i in range(len(self.meanppk)):
+                    f.write("{:.8f} ".format(self.meanppk[i]))
+                    g.write("{:.8f} ".format(self.varppk[i]))
                 f.write('\n')
+                g.write('\n')
                 f.close()
+                g.close()
             
             f = open(os.path.join(direc,  'meanlogk.dat'),'a')
             for i in range(len(self.meanlogk)):
@@ -402,9 +416,9 @@ class Ensemble:
             f.write('\n')
             f.close()
             
-            f = open(os.path.join(direc,  'logmeank.dat'),'a')
-            for i in range(len(self.logmeank)):
-                f.write("{:.8f} ".format(self.logmeank[i]))
+            f = open(os.path.join(direc,  'meank.dat'),'a')
+            for i in range(len(self.meank)):
+                f.write("{:.8f} ".format(self.meank[i]))
             f.write('\n')
             f.close()
         
@@ -415,10 +429,12 @@ class Ensemble:
                       os.path.join(pars['resdir'], 'cov_variance.dat'),
                       os.path.join(pars['resdir'], 'covariance_data_par.dat'),
                       os.path.join(pars['resdir'], 'cov_variance_par.dat'),
-                      os.path.join(pars['resdir'], 'logmeanppk.dat'),
+                      os.path.join(pars['resdir'], 'meanppk.dat'),
+                      os.path.join(pars['resdir'], 'varppk.dat'),
                       os.path.join(pars['resdir'], 'meanlogppk.dat'),
+                      os.path.join(pars['resdir'], 'varlogppk.dat'),
                       os.path.join(pars['resdir'], 'obs_true.dat'),
-                      os.path.join(pars['resdir'], 'logmeank.dat'),
+                      os.path.join(pars['resdir'], 'meank.dat'),
                       os.path.join(pars['resdir'], 'meanlogk.dat'),
                       os.path.join(pars['resdir'], 'k_mean.dat'),
                       os.path.join(pars['resdir'], 'h_mean.dat'),
@@ -442,7 +458,6 @@ class Ensemble:
         
 
 
-        
         
         
         

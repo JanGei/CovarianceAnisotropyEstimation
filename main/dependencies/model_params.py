@@ -111,7 +111,7 @@ def get():
             nprocs = 1
         up_temp = True
         inspection = False
-        n_pre_run = 20
+        n_pre_run = 5
         printf = False
     elif setup == 'binnac':
         n_mem  = 280
@@ -122,7 +122,8 @@ def get():
     
     conditional_flag = True
     pilot_point_even = False
-    choice = [1, 0]
+    scramble_pp = False
+    choice = [0, 0]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     pp_flag = True
@@ -197,6 +198,7 @@ def get():
         'inspec': inspection,
         'printf': printf,
         'ppeven': pilot_point_even,
+        'scramb': scramble_pp,
         'sim_ws': os.path.join(Vrdir, 'model_files'),
         'vr_h_d': os.path.join(Vrdir, 'model_data', 'head_ref.npy'),
         'vr_o_d': os.path.join(Vrdir, 'model_data', 'obs_ref.npy'),

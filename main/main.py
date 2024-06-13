@@ -233,7 +233,7 @@ if __name__ == '__main__':
             if t_step%50 == 0:
                 k_fields = [Member.get_field(['npf'])['npf'].T for Member in MF_Ensemble.members[0:8]] 
                 plot_k_fields(gwf, pars,  k_fields)
-                compare_mean_true(gwf, [np.squeeze(VR_Model.npf.k.array), MF_Ensemble.logmeank]) 
+                compare_mean_true(gwf, [np.squeeze(VR_Model.npf.k.array), np.log(MF_Ensemble.meank)]) 
             
         if pars['printf']: print(f'Plotting and recording took {(time.time() - start_time):.2f} seconds')
     

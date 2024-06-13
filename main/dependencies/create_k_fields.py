@@ -47,14 +47,15 @@ def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = [], con
         
     # starting k values at pilot points
     if pars['valt'] == 'good':
-        pp_k = np.log(k_ref[pp_cid.astype(int)])   
-    elif pars['valt'] == 'random':
         pp_k = np.log(k_ref[pp_cid.astype(int)]) 
         pp_k = pp_k + sig_meas * np.random.randn(*pp_k.shape)
+    elif pars['valt'] == 'random':
         
         # random sampling from mean uniform distribution centered around mean
-        # pp_k = np.random.uniform(mu-mu/4, mu+mu/4, len(pp_cid))
-        # pp_k = pp_k + sig_meas * np.random.randn(*pp_k.shape)
+        mu = pars['mu'][0]
+        std = pars['sigma'][0]
+        pp_k = np.random.normal(mu, std, len(pp_cid)) #np.random.uniform(mu-mu/4, mu+mu/4, len(pp_cid))
+        pp_k = pp_k + sig_meas * np.random.randn(*pp_k.shape)
     
     if conditional:
         field, field2f = conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy)
