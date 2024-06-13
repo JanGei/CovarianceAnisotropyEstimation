@@ -120,7 +120,8 @@ def get():
         n_pre_run = 20
         printf = False
     
-    conditional_flag = False
+    conditional_flag = True
+    pilot_point_even = False
     choice = [1, 0]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
@@ -195,6 +196,7 @@ def get():
         'sname' : "Reference",
         'inspec': inspection,
         'printf': printf,
+        'ppeven': pilot_point_even,
         'sim_ws': os.path.join(Vrdir, 'model_files'),
         'vr_h_d': os.path.join(Vrdir, 'model_data', 'head_ref.npy'),
         'vr_o_d': os.path.join(Vrdir, 'model_data', 'obs_ref.npy'),

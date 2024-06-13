@@ -1,7 +1,7 @@
 from dependencies.model_params import get
 from dependencies.copy import create_Ensemble
 # from dependencies.convert_transient import convert_to_transient
-from dependencies.create_pilot_points import create_pilot_points_even
+from dependencies.create_pilot_points import create_pilot_points_even, create_pilot_points
 from dependencies.load_template_model import load_template_model
 from dependencies.create_k_fields import create_k_fields
 from dependencies.write_file import write_file
@@ -65,7 +65,11 @@ if __name__ == '__main__':
     
     
     if pars['pilotp']:
-        pp_cid, pp_xy, near_dist = create_pilot_points_even(gwf, pars)
+        if pars['ppeven']:
+            pp_cid, pp_xy, near_dist = create_pilot_points_even(gwf, pars)
+        else:
+            pp_cid, pp_xy, near_dist = create_pilot_points(gwf, pars)
+            
         write_file(pars,[pp_cid, pp_xy], ["pp_cid","pp_xy"], 0, intf = True)
         # create_k_fields
         result = Parallel(n_jobs=nprocs, backend = "threading")(delayed(create_k_fields)(
