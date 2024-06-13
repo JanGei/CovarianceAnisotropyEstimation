@@ -62,6 +62,7 @@ if __name__ == '__main__':
     k_fields = []
     cor_ellips = []
     l_angs = []
+    pp_k_ini = []
     
     
     if pars['pilotp']:
@@ -87,6 +88,7 @@ if __name__ == '__main__':
             k_fields.append(field)
             cor_ellips.append(ellips)
             l_angs.append(l_ang)
+            pp_k_ini.append(pilotpoints[1])
     else:
         k_fields = Parallel(n_jobs=nprocs, backend = "threading")(delayed(gsgenerator)(
             gwf,
@@ -141,7 +143,7 @@ if __name__ == '__main__':
                                np.array(cor_ellips),
                                pp_cid,
                                pp_xy,
-                               pilotpoints[1])
+                               pp_k_ini)
     
     # set their respective k-fields
     MF_Ensemble.set_field(k_fields, ['npf'])

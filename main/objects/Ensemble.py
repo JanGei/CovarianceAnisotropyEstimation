@@ -35,7 +35,7 @@ class Ensemble:
             self.varlogppk = []
             self.meanppk = []
             self.varppk = []
-            self.pp_k = pp_k
+            self.pp_k_ini = pp_k
         
         
     def set_field(self, field, pkg_name: list):
@@ -99,10 +99,7 @@ class Ensemble:
                     head[i]['h'] = head[i]['h'].flatten()
                     head[i]['h'][~self.h_mask] = X[cl:,i]
                     
-                    # This is not working as intended
-                    if i == 0:
-                        print(self.pp_k)
-                    data.append([X[:cl,i], self.pp_k])
+                    data.append([X[:cl,i], self.pp_k_ini[i]])
                     
             else:
                 head[i]['h'] = head[i]['h'].flatten()

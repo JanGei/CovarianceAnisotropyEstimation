@@ -123,7 +123,7 @@ def get():
     conditional_flag = True
     pilot_point_even = False
     scramble_pp = False
-    choice = [0, 0]
+    choice = [1, 0]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     pp_flag = True
