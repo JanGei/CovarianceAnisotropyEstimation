@@ -55,7 +55,7 @@ def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = [], con
         mu = pars['mu'][0]
         std = pars['sigma'][0]
         pp_k = np.random.normal(mu, std, len(pp_cid)) #np.random.uniform(mu-mu/4, mu+mu/4, len(pp_cid))
-        pp_k = pp_k + sig_meas * np.random.randn(*pp_k.shape)
+        # pp_k = pp_k + sig_meas * np.random.randn(*pp_k.shape)
     
     if conditional:
         field, field2f = conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy)
