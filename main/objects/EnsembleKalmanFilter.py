@@ -35,9 +35,9 @@ class EnsembleKalmanFilter:
         self.n_obs      = np.shape(Ysim)[0]
         self.Cyy        = np.zeros((self.n_obs, self.n_obs))
     
-    def update_X_Y(self, XY):
-        self.X      = XY[0]
-        self.Ysim   = XY[1]
+    def update_X_Y(self, X, Y):
+        self.X      = X
+        self.Ysim   = Y
     
     def analysis(self):
         
@@ -61,7 +61,7 @@ class EnsembleKalmanFilter:
     
     
     def Kalman_update(self,  Y_obs):
-        Y_obs = np.tile(Y_obs, (1, self.n_mem))
+        Y_obs = np.tile(Y_obs, (self.n_mem,1)).T
         self.X += 1/(self.n_mem-1) * (self.damp *
                     np.matmul(
                         self.X_prime, np.matmul(

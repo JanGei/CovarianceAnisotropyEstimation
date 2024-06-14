@@ -212,7 +212,7 @@ class Ensemble:
                     
             X[:,i] = x
 
-        return X, Ysim
+        return X, Ysim, np.mean(Ysim, axis = 1)
     
     def update_transient_data(self, rch_data, wel_data, riv_data):
 

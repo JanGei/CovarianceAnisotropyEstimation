@@ -10,6 +10,7 @@ from dependencies.intersect_with_grid import intersect_with_grid
 from dependencies.generate_mask import chd_mask
 from dependencies.plotting.ellipses import ellipses
 from dependencies.plotting.compare_mean import compare_mean_true
+from dependencies.plotting.check_observations import check_observations
 # from dependencies.plotting.plot_k_fields import plot_k_fields
 from dependencies.plotting.plot_k_fields import plot_k_fields
 from objects.Ensemble import Ensemble
@@ -57,7 +58,6 @@ if __name__ == '__main__':
     sim, gwf = load_template_model(pars)
     
     obs_cid = intersect_with_grid(gwf, pars['obsxy'])
-    Y_obs = VR_Model.get_observations(obs_cid)
     
     k_fields = []
     cor_ellips = []
@@ -164,10 +164,15 @@ if __name__ == '__main__':
     print(f'That makes {((time.time() - start_time)/(pars["nprern"] * n_mem)):.2f} seconds per model run')
     
     #%%
-    X, Ysim = MF_Ensemble.get_Kalman_X_Y(pars['EnKF_p'])
+    X, Ysim, _ = MF_Ensemble.get_Kalman_X_Y(pars['EnKF_p'])
     damp = MF_Ensemble.get_damp(X, pars['damp'],pars['EnKF_p'])
     EnKF = EnsembleKalmanFilter(X, Ysim, damp = damp, eps = pars['eps'])
     true_h = np.zeros((pars['nsteps'],len(VR_Model.cxy)))
+    mean_h = np.zeros((pars['nsteps'],len(VR_Model.cxy)))
+    true_obs = np.zeros((pars['nsteps'],len(obs_cid)))
+    mean_obs = np.zeros((pars['nsteps'],len(obs_cid)))
+    
+
     Assimilate = True
     # for t_step in range(pars['nsteps']):
     for t_step in range(pars['nsteps']):
@@ -194,19 +199,18 @@ if __name__ == '__main__':
         VR_Model.simulation()
         true_h[t_step,:] = VR_Model.update_ic()
         MF_Ensemble.propagate()
+        mean_h[t_step,:], _ = MF_Ensemble.get_mean_var()
+        
         if pars['printf']: print(f'Ensemble propagated in {(time.time() - start_time):.2f} seconds')
  
         if Assimilate:
             # print('---')
             start_time = time.time()
-            EnKF.update_X_Y(
-                MF_Ensemble.get_Kalman_X_Y(
-                    pars['EnKF_p']
-                    )
-                )
+            X, Ysim, mean_obs[t_step,:] = MF_Ensemble.get_Kalman_X_Y(pars['EnKF_p'])
+            EnKF.update_X_Y(X, Ysim)
             EnKF.analysis()
-            Y_obs = VR_Model.get_observations(obs_cid)
-            EnKF.Kalman_update(Y_obs)
+            true_obs[t_step,:] = np.squeeze(VR_Model.get_observations(obs_cid))
+            EnKF.Kalman_update(true_obs[t_step,:].T)
 
             if pars['printf']: print(f'Ensemble Kalman Filter performed in  {(time.time() - start_time):.2f} seconds')
             
@@ -232,10 +236,11 @@ if __name__ == '__main__':
                     )
         
             
-            if t_step%50 == 0:
-                k_fields = [Member.get_field(['npf'])['npf'].T for Member in MF_Ensemble.members[0:8]] 
-                plot_k_fields(gwf, pars,  k_fields)
-                compare_mean_true(gwf, [np.squeeze(VR_Model.npf.k.array), np.log(MF_Ensemble.meank)]) 
+            if t_step%50 == 20:
+                # k_fields = [Member.get_field(['npf'])['npf'].T for Member in MF_Ensemble.members[0:8]] 
+                # plot_k_fields(gwf, pars,  k_fields)
+                # check_observations(true_obs[:t_step+1,:], mean_obs[:t_step+1,:], true_h[:t_step+1,:], mean_h[:t_step+1,:])
+                compare_mean_true(gwf, [np.squeeze(VR_Model.npf.k.array), MF_Ensemble.meanlogk]) 
             
         if pars['printf']: print(f'Plotting and recording took {(time.time() - start_time):.2f} seconds')
     

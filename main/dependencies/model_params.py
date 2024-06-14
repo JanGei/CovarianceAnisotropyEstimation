@@ -105,7 +105,7 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 24
+        n_mem  = 32
         nprocs = np.min([n_mem, psutil.cpu_count()])
         if n_mem == 2:
             nprocs = 1
@@ -122,20 +122,20 @@ def get():
         inspection = False
     
     
-    choice = [1, 0]
+    choice = [0, 1]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     pp_flag = True
     l_red = 5 # possible are 5 and 10
-    nPP = 50
+    nPP = 30
     
     conditional_flag = True
     pilot_point_even = False
     scramble_pp = False
     
     h_damp = 0.15
-    cov_damp = 0.05
-    npf_damp = 0.05
+    cov_damp = 0.1
+    npf_damp = 0.1
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
     
     
@@ -175,7 +175,7 @@ def get():
         'up_tem': up_temp,
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
-        'lx'    : np.array([[2000,800], [5000,500]])/l_red, # corellation lengths
+        'lx'    : np.array([[1000,700], [5000,500]])/l_red*l_red, # corellation lengths
         'ang'   : np.array([17, 111]),                      # angle in ° (logK, recharge)
         'sigma' : np.array([1.7, 0.1]),                     # variance (logK, recharge)
         'mu'    : np.array([-8.5, -0.7]),                   # mean (log(ms-1), (mm/d))
