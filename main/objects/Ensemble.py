@@ -116,7 +116,7 @@ class Ensemble:
         
         if self.pilotp_flag:
             start_time = time.time()
-            result = Parallel(n_jobs=self.nprocs, #!!!!!!!!!!!!!!
+            result = Parallel(n_jobs=self.nprocs, 
                               backend="threading")(
                                   delayed(self.members[idx].kriging)(
                                       params, 
@@ -238,21 +238,17 @@ class Ensemble:
     def model_error(self,  true_h):
         
         mean_h, var_h = self.get_mean_var()
-        true_h = np.array(true_h).flatten()
+        true_h = np.array(true_h).squeeze()
         
         # analogous for ole
         mean_obs = mean_h[self.obs_cid]
         true_obs = true_h[self.obs_cid]
         self.obs = [true_obs, mean_obs]
         
-        self.ole_nsq.append(np.sum(np.square(true_obs - mean_obs)/0.1)/mean_obs.size)
-        
-        ole = 0
-        for i in range(len(self.ole_nsq)):
-            ole += self.ole_nsq[i] 
+        self.ole_nsq.append(np.sum(np.square(true_obs - mean_obs)/0.01**2)/mean_obs.size)
         
         # ole for the model up until the current time step
-        self.ole.append(np.sqrt(ole/len(self.ole_nsq)))
+        self.ole.append(np.sqrt(np.sum(self.ole_nsq)/len(self.ole_nsq)))
         
         # calculating nrmse without root for later summation
         true_h = true_h[~self.h_mask]
@@ -261,17 +257,11 @@ class Ensemble:
         var_te2 = (true_h + mean_h)/2
         
         self.te1_nsq.append(np.sum(np.square(true_h - mean_h)/var_h))
-        self.te2_nsq.append(np.sum(np.square(true_h - mean_h)/var_te2))
-        
-        te1 = 0
-        te2 = 0
-        for i in range(len(self.te1_nsq)):
-            te1 += self.te1_nsq[i]
-            te2 += self.te2_nsq[i]
+        self.te2_nsq.append(np.sum(np.square(true_h - mean_h)/var_te2**2))
         
         # nrmse for the model up until the current time step
-        self.te1.append(np.sqrt(te1/len(self.te1_nsq)/mean_h.size))
-        self.te2.append(np.sqrt(te2/len(self.te2_nsq)/mean_h.size))
+        self.te1.append(np.sqrt(np.sum(self.te1_nsq)/len(self.te1_nsq)/mean_h.size))
+        self.te2.append(np.sqrt(np.sum(self.te2_nsq)/len(self.te2_nsq)/mean_h.size))
     
     def get_member_fields(self, params):
         
@@ -285,23 +275,11 @@ class Ensemble:
         
 
     def get_mean_var(self):
-        h_fields = []
-        for member in self.members:
-            h_fields.append(member.get_field(['h'])['h'].flatten())
+        h_fields = self.get_member_fields(['h'])
         
-        mean_h = np.zeros_like(h_fields[0])
-        var_h = np.zeros_like(h_fields[0])
-        count = 0
+        h_f = np.array([np.squeeze(field['h']) for field in h_fields]).T
         
-        for field in h_fields:
-            mean_h += field
-            var_h += np.square(field)
-            count += 1
-            
-        mean_h = mean_h/count
-        var_h = (var_h / count) - np.square(mean_h)
-        
-        return mean_h, var_h
+        return np.mean(h_f, axis = 1), np.var(h_f, axis = 1)
     
     def record_state(self, pars: dict, params: list, true_h):
         
@@ -365,16 +343,16 @@ class Ensemble:
             f.close()
             
             f = open(os.path.join(direc, 'covariance_data_par.dat'),'a')
-            f.write("{:.10f} ".format(self.mean_cov_par[0,0]))
-            f.write("{:.10f} ".format(self.mean_cov_par[1,1]))
-            f.write("{:.10f} ".format(self.mean_cov_par[0,1]))
+            f.write("{:.10f} ".format(self.mean_cov_par[0]))
+            f.write("{:.10f} ".format(self.mean_cov_par[1]))
+            f.write("{:.10f} ".format(self.mean_cov_par[2]))
             f.write('\n')
             f.close()
             
             f = open(os.path.join(direc, 'cov_variance_par.dat'),'a')
-            f.write("{:.10f} ".format(self.var_cov_par[0,0]))
-            f.write("{:.10f} ".format(self.var_cov_par[1,1]))
-            f.write("{:.10f} ".format(self.var_cov_par[0,1]))
+            f.write("{:.10f} ".format(self.var_cov_par[0]))
+            f.write("{:.10f} ".format(self.var_cov_par[1]))
+            f.write("{:.10f} ".format(self.var_cov_par[2]))
             f.write('\n')
             f.close()
             

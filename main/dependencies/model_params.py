@@ -100,6 +100,7 @@ def get():
     q_idx       = [5, 9, 15, 27, 31]
     mask        = np.full(len(well_loc),True,dtype=bool)
     mask[q_idx] = False
+    years = 2
     
     cov_mods    = ['Exponential', 'Matern', 'Gaussian']
     computer = ['office', 'binnac']
@@ -112,7 +113,8 @@ def get():
         up_temp = True
         inspection = False
         n_pre_run = 5
-        printf = False
+        printf = True
+        asimdays = [2*years, 315*years]
     elif setup == 'binnac':
         n_mem  = 140
         nprocs = psutil.cpu_count()
@@ -120,6 +122,7 @@ def get():
         n_pre_run = 20
         printf = False
         inspection = False
+        asimdays = [25*years, 315*years]
     
     
     choice = [0, 1]
@@ -130,12 +133,13 @@ def get():
     nPP = 30
     
     conditional_flag = True
+    
     pilot_point_even = False
     scramble_pp = False
     
     h_damp = 0.15
-    cov_damp = 0.1
-    npf_damp = 0.1
+    cov_damp = 0.2
+    npf_damp = 0.2
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
     
     
@@ -168,6 +172,7 @@ def get():
         'nearPP': 4,
         'sig_me': 0.1,
         'geomea': 0.1,
+        'years' : years,
         'condfl': conditional_flag,
         'covt'  : covtype,
         'valt'  : valtype,
@@ -186,8 +191,8 @@ def get():
         'welxy' : np.array(well_loc[q_idx]),                # location of pumps
         'obsxy' : np.array(well_loc[mask]),                 # location of obs
         'welq'  : np.array([35, 18, 90, 20, 15])/3600,      # Q of wells [m3s-1]
-        'welst' : np.array([20, 300, 200, 0, 0]),           # start day of pump
-        'welnd' : np.array([150, 365, 360, 370, 300]),      # end day of pump
+        'welst' : np.array([20, int(315*years), 200, 0, 0]),# start day of pump
+        'welnd' : np.array([150, 365, 365, 200, 300])*years,# end day of pump
         'welay' : np.array(np.zeros(5)),                    # layer of wells
         'river' : np.array([[0.0,0], [5000,0]]),            # start / end of river
         'rivC'  : 5*1e-4,                                   # river conductance [ms-1]
@@ -196,6 +201,7 @@ def get():
         'chdh'  : 15,                                       # initial stage of riv
         'ss'    : 1e-5,                                     # specific storage
         'sy'    : 0.15,                                     # specific yield
+        'asim_d': asimdays,
         'mname' : "Reference",
         'sname' : "Reference",
         'inspec': inspection,
@@ -218,7 +224,7 @@ def get():
         'tm_ws' : os.path.join(ensemb_dir, 'template_model'),
         'trs_ws': os.path.join(Vrdir, 'transient_model') ,
         'resdir': os.path.join(parent_directory, 'output'),
-        'nsteps': int(365*24/6),
+        'nsteps': int(years*365*24/6),
         'nprern': n_pre_run,
         'rotmat': rotation_matrix,
         'mat2cv': extract_truth,

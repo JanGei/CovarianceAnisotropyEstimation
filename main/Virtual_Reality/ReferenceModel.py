@@ -131,8 +131,8 @@ def create_reference_model(pars):
                                   iconvert              = 1,
                                   ss                    = pars['ss'],
                                   sy                    = pars['sy'],
-                                  steady_state          = {0: True},)
-                                   # transient             = {0: True},)
+                                  steady_state          = {0: True},
+                                  transient             = {0: False})
 
     sim.write_simulation()
     #%% Generating and loading reference fields

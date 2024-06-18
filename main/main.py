@@ -150,18 +150,18 @@ if __name__ == '__main__':
     # plot_k_fields(gwf, pars,  k_fields, np.rad2deg(MF_Ensemble.ellipses[:,2]))
     if pars['printf']: print(f'Ensemble is initiated and respective k-fields are set in {(time.time() - start_time):.2f} seconds')
     #%% Running each model n times
-    start_time = time.time()
+    # start_time = time.time()
     
-    for idx in range(pars['nprern']):
-        MF_Ensemble.propagate()
-        MF_Ensemble.update_initial_heads()
-        VR_Model.simulation()
-        VR_Model.update_ic()
-        print(np.mean(VR_Model.get_field(['h'])['h']))
-    # print(MF_Ensemble.get_mean_var())
+    # for idx in range(pars['nprern']):
+    #     MF_Ensemble.propagate()
+    #     MF_Ensemble.update_initial_heads()
+    #     VR_Model.simulation()
+    #     VR_Model.update_ic()
+    #     print(np.mean(VR_Model.get_field(['h'])['h']))
+    # # print(MF_Ensemble.get_mean_var())
     
-    print(f'Each model is run and updated {pars["nprern"]} times which took {(time.time() - start_time):.2f} seconds')
-    print(f'That makes {((time.time() - start_time)/(pars["nprern"] * n_mem)):.2f} seconds per model run')
+    # print(f'Each model is run and updated {pars["nprern"]} times which took {(time.time() - start_time):.2f} seconds')
+    # print(f'That makes {((time.time() - start_time)/(pars["nprern"] * n_mem)):.2f} seconds per model run')
     
     #%%
     X, Ysim, _ = MF_Ensemble.get_Kalman_X_Y(pars['EnKF_p'])
@@ -173,23 +173,28 @@ if __name__ == '__main__':
     mean_obs = np.zeros((pars['nsteps'],len(obs_cid)))
     
 
-    Assimilate = True
     # for t_step in range(pars['nsteps']):
     for t_step in range(pars['nsteps']):
         if t_step == 0:
             MF_Ensemble.remove_current_files(pars)
-        if t_step == 2750:
+            
+        if (t_step*6/24) > pars['asim_d'][0] and (t_step*6/24) < pars['asim_d'][1]:
+            if t_step%4 == 0:
+                Assimilate = True
+            else:
+                Assimilate = False
+        else:
             Assimilate = False
                 
         print('--------')
         print(f'time step {t_step}')
-        start_time = time.time()
+        start_time_ts = time.time()
         rch_data, wel_data, riv_data = get_transient_data(pars, t_step)
         start_time = time.time()
         MF_Ensemble.update_transient_data(rch_data, wel_data, riv_data)
         VR_Model.update_transient_data(rch_data, wel_data, riv_data)
 
-        if pars['printf']: print(f'transient data loaded and applied in {(time.time() - start_time):.2f} seconds')
+        if pars['printf']: print(f'transient data loaded and applied in {(time.time() - start_time_ts):.2f} seconds')
         # print(MF_Ensemble.members[0].npf.k.array[0,542])
         # print(MF_Ensemble.members[0].rch.stress_period_data.get_data()[0][542])
         # print(MF_Ensemble.members[0].ic.strt.array[0,542])
@@ -226,9 +231,11 @@ if __name__ == '__main__':
         MF_Ensemble.model_error(true_h[t_step])
         MF_Ensemble.record_state(pars, pars['EnKF_p'], true_h[t_step])
         # visualize covariance structures
-        if pars['setup'] == 'office' and t_step%10 == 0:
+        if pars['setup'] == 'office' and Assimilate:
             if 'cov_data' in pars['EnKF_p']:
-                eigenvalues, eigenvectors = np.linalg.eig(MF_Ensemble.mean_cov_par)
+                m = MF_Ensemble.mean_cov_par
+                mat = np.array([[m[0], m[1]],[m[1], m[2]]])
+                eigenvalues, eigenvectors = np.linalg.eig(mat)
                 ellipses(
                     MF_Ensemble.ellipses,
                     pars['mat2cv'](eigenvalues, eigenvectors),
@@ -236,11 +243,12 @@ if __name__ == '__main__':
                     )
         
             
-            if t_step%50 == 20:
+            if t_step%40 == 20:
                 # k_fields = [Member.get_field(['npf'])['npf'].T for Member in MF_Ensemble.members[0:8]] 
                 # plot_k_fields(gwf, pars,  k_fields)
-                check_observations(true_obs[:t_step+1,:], mean_obs[:t_step+1,:], true_h[:t_step+1,:], mean_h[:t_step+1,:])
+                # check_observations(true_obs[:t_step+1,:], mean_obs[:t_step+1,:], true_h[:t_step+1,:], mean_h[:t_step+1,:])
                 compare_mean_true(gwf, [np.squeeze(VR_Model.npf.k.array), MF_Ensemble.meanlogk]) 
             
         if pars['printf']: print(f'Plotting and recording took {(time.time() - start_time):.2f} seconds')
+        if pars['printf']: print(f'Entire Step took {(time.time() - start_time_ts):.2f} seconds')
     

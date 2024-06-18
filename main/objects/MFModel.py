@@ -141,7 +141,7 @@ class MFModel:
                 elif self.n_neg_def == 1:
                     print('A new model got stuck')
                     
-            return [[l1, l2, angle%np.pi], self.ellips_mat, success]
+            return [[l1, l2, angle%np.pi], [self.ellips_mat[0,0], self.ellips_mat[1,0], self.ellips_mat[1,1]], success]
                 
         else:
             pp_k = data
