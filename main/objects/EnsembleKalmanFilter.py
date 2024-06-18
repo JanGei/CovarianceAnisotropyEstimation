@@ -62,6 +62,8 @@ class EnsembleKalmanFilter:
     
     def Kalman_update(self,  Y_obs):
         Y_obs = np.tile(Y_obs, (self.n_mem,1)).T
+        # perturb measurements
+        Y_obs -= np.random.randn(Y_obs.shape)*self.eps
         self.X += 1/(self.n_mem-1) * (self.damp *
                     np.matmul(
                         self.X_prime, np.matmul(
