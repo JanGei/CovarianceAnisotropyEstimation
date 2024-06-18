@@ -189,12 +189,13 @@ if __name__ == '__main__':
         print('--------')
         print(f'time step {t_step}')
         start_time_ts = time.time()
-        rch_data, wel_data, riv_data = get_transient_data(pars, t_step)
-        start_time = time.time()
-        MF_Ensemble.update_transient_data(rch_data, wel_data, riv_data)
-        VR_Model.update_transient_data(rch_data, wel_data, riv_data)
+        if t_step%4 == 0:
+            rch_data, wel_data, riv_data = get_transient_data(pars, t_step)
 
-        if pars['printf']: print(f'transient data loaded and applied in {(time.time() - start_time_ts):.2f} seconds')
+            MF_Ensemble.update_transient_data(rch_data, wel_data, riv_data)
+            VR_Model.update_transient_data(rch_data, wel_data, riv_data)
+
+            if pars['printf']: print(f'transient data loaded and applied in {(time.time() - start_time_ts):.2f} seconds')
         # print(MF_Ensemble.members[0].npf.k.array[0,542])
         # print(MF_Ensemble.members[0].rch.stress_period_data.get_data()[0][542])
         # print(MF_Ensemble.members[0].ic.strt.array[0,542])
