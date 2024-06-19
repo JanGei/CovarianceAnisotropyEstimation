@@ -33,18 +33,8 @@ def randomK(ang, sigma, Ctype, Kg, pars, grid = [], random = True, ftype = []):
             # Good choice for Exponential
             np.random.seed(6)
         elif pars['cov'] == 'Matern':
-            if pars['l_red'] == 1:
-                # Good choice for Matern 3/2
-                np.random.seed(2)
-            elif pars['l_red'] == 10:
-                # Good choice for Matern 3/2 with l_red = 10
-                np.random.seed(8)
-            elif pars['l_red'] == 5:
-                # Good choice for Matern 3/2 with l_red = 5
-                np.random.seed(9)  
-            elif pars['l_red'] == 7:
-                # Good choice for Matern 3/2 with l_red = 5
-                np.random.seed(11)  
+            np.random.seed(9)  
+
     else:
         Kg = pars['geomea']
         

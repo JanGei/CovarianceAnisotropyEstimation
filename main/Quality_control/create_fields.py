@@ -13,7 +13,7 @@ pars = get()
 sim, gwf = load_template_model(pars)
 pp_cid, pp_xy, neardist = create_pilot_points(gwf, pars)
 
-lx = np.linspace(500,1300,100)
+lx = np.linspace(500,1300,200)
 angle = np.deg2rad(pars['ang'][0])
 
 results = []
@@ -27,6 +27,6 @@ for i in range(len(lx)):
 
     
     alt_field = randomK(angle, pars['sigma'][0], pars['cov'], pars['mu'][0], pars, grid = [pars['nx'], pars['dx'], np.array([lx[i],100])],  ftype = 'K')
-    compare_conditional(gwf, pars, res[0], angle, res[3][1], pp_xy, np.exp(res[4])/100)
+    compare_conditional(gwf, pars, res[0], angle, np.exp(res[3][1]), pp_xy, np.exp(res[4])/100)
 
-plot_k_fields(gwf, pars,  k_fields)
+# plot_k_fields(gwf, pars,  k_fields)

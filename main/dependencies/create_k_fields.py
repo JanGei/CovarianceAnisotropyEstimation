@@ -16,15 +16,15 @@ def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = [], con
     sig_meas = pars['sig_me']
     
     if pars['estyp'] == "overestimate":
-        factor = 3
-    elif pars['estyp'] == "good":
-        factor = 2
-    elif pars['estyp'] == "underestimate":
         factor = 1
+    elif pars['estyp'] == "good":
+        factor = 0.5
+    elif pars['estyp'] == "underestimate":
+        factor = 0.25
     
     if pars['covt'] == 'random':
-        lx = np.array([np.random.randint(pars['dx'][0], clx[0][0]*factor),
-                       np.random.randint(pars['dx'][1], clx[0][1]*factor)])
+        lx = np.array([np.random.randint(pars['dx'][0], np.min(pars['nx'] * pars['dx']*factor)),
+                       np.random.randint(pars['dx'][1], np.min(pars['nx'] * pars['dx'])*factor)])
         ang = np.random.uniform(0, np.pi)
         if lx[0] < lx[1]:
             lx = np.flip(lx)
@@ -53,7 +53,7 @@ def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = [], con
         
         # random sampling from mean uniform distribution centered around mean
         mu = pars['mu'][0]
-        std = pars['sigma'][0]
+        std = np.sqrt(pars['sigma'][0])
         pp_k = np.random.normal(mu, std, len(pp_cid)) #np.random.uniform(mu-mu/4, mu+mu/4, len(pp_cid))
         # pp_k = pp_k + sig_meas * np.random.randn(*pp_k.shape)
     

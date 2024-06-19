@@ -61,4 +61,4 @@ def conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy):
     values_at_coordinates = griddata((Xint.ravel(order = 'F'), Yint.ravel(order = 'F')), np.exp(s_cond).ravel(order = 'F'),
                                      (cxy[:,0], cxy[:,1]), method='nearest')
 
-    return values_at_coordinates, sunc #s_cond_grid
+    return values_at_coordinates,s_cond_grid

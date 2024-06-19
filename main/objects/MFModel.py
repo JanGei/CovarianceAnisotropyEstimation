@@ -36,8 +36,10 @@ class MFModel:
             self.ellips_mat = np.array([[ellips[0], ellips[1]], [ellips[1], ellips[2]]])
             self.lx         = [l_angs[0], l_angs[1]]
             self.ang        = l_angs[2]
-            self.threshhold = maxcl
-            self.corrL_max  = maxcl/0.7            
+            self.a          = 0.33
+            self.corrL_max  = np.min(pars['nx'] * pars['dx'])
+            self.threshhold = self.corrL_max * self.a
+                     
         
     def set_field(self, field, pkg_name: list):
         for i, name in enumerate(pkg_name):
@@ -227,7 +229,7 @@ class MFModel:
             
     def reduce_corL(self, corL):
         # reducing correlation lengths based on monod kinetic model
-        return (self.corrL_max * corL) / (self.corrL_max*0.3 + corL)
+        return (self.corrL_max * corL) / (self.corrL_max*(1-self.a) + corL)
         
     def check_corrL(self, l1, l2, angle):
         if l2 > l1:

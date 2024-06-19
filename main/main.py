@@ -145,23 +145,18 @@ if __name__ == '__main__':
                                pp_xy,
                                pp_k_ini)
     
+    m = np.mean(cor_ellips, axis = 0)
+    mat = np.array([[m[0], m[1]],[m[1], m[2]]])
+    eigenvalues, eigenvectors = np.linalg.eig(mat)
+    ellipses(
+        MF_Ensemble.ellipses,
+        pars['mat2cv'](eigenvalues, eigenvectors),
+        pars
+        )
     # set their respective k-fields
     MF_Ensemble.set_field(k_fields, ['npf'])
-    # plot_k_fields(gwf, pars,  k_fields, np.rad2deg(MF_Ensemble.ellipses[:,2]))
+    
     if pars['printf']: print(f'Ensemble is initiated and respective k-fields are set in {(time.time() - start_time):.2f} seconds')
-    #%% Running each model n times
-    # start_time = time.time()
-    
-    # for idx in range(pars['nprern']):
-    #     MF_Ensemble.propagate()
-    #     MF_Ensemble.update_initial_heads()
-    #     VR_Model.simulation()
-    #     VR_Model.update_ic()
-    #     print(np.mean(VR_Model.get_field(['h'])['h']))
-    # # print(MF_Ensemble.get_mean_var())
-    
-    # print(f'Each model is run and updated {pars["nprern"]} times which took {(time.time() - start_time):.2f} seconds')
-    # print(f'That makes {((time.time() - start_time)/(pars["nprern"] * n_mem)):.2f} seconds per model run')
     
     #%%
     X, Ysim, _ = MF_Ensemble.get_Kalman_X_Y(pars['EnKF_p'])
@@ -232,7 +227,7 @@ if __name__ == '__main__':
         MF_Ensemble.model_error(true_h[t_step])
         MF_Ensemble.record_state(pars, pars['EnKF_p'], true_h[t_step])
         # visualize covariance structures
-        if pars['setup'] == 'office' and Assimilate:
+        if pars['setup'] == 'office' and Assimilate and t_step%20 == 0:
             if 'cov_data' in pars['EnKF_p']:
                 m = MF_Ensemble.mean_cov_par
                 mat = np.array([[m[0], m[1]],[m[1], m[2]]])

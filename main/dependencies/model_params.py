@@ -106,7 +106,7 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 40
+        n_mem  = 32
         nprocs = np.min([n_mem, psutil.cpu_count()])
         if n_mem == 2:
             nprocs = 1
@@ -114,7 +114,7 @@ def get():
         inspection = False
         n_pre_run = 5
         printf = True
-        asimdays = [2*years, 315*years]
+        asimdays = [4, 315*years]
     elif setup == 'binnac':
         n_mem  = 140
         nprocs = psutil.cpu_count()
@@ -122,37 +122,38 @@ def get():
         n_pre_run = 20
         printf = False
         inspection = False
-        asimdays = [25*years, 315*years]
+        asimdays = [25, 315*years]
     
     
     choice = [0, 1]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
-    pp_flag = True
-    l_red = 5 # possible are 5 and 10
-    nPP = 30
+    
+    nPP = 20
     
     conditional_flag = True
     
     pilot_point_even = False
     scramble_pp = False
     
-    h_damp = 0.15
-    cov_damp = 0.2
-    npf_damp = 0.2
+    h_damp = 0.25
+    cov_damp = 0.01
+    npf_damp = 0.05
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
     
     
     if choice[0] == 0:
         covtype = "random"
         valtype = "random"
-        
+        pp_flag = True   
     elif choice[0] == 1:
         covtype = "random"
         valtype = "good"
-        
+        pp_flag = True
+   
     elif choice[0] == 2:
         covtype = "random"
+        pp_flag = True
         if pp_flag:
             valtype = "random"
         else:
@@ -167,20 +168,19 @@ def get():
         'damp'  : damp[choice[0]],
         'estyp' : est_variants[choice[1]],
         'n_PP'  : nPP,
-        'eps'   : 0.05,
+        'eps'   : 0.01,
         'omitc' : 3,
         'nearPP': 4,
-        'sig_me': 0.1,
+        'sig_me': 0.01,
         'geomea': 0.1,
         'years' : years,
         'condfl': conditional_flag,
         'covt'  : covtype,
         'valt'  : valtype,
-        'l_red' : l_red,
         'up_tem': up_temp,
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
-        'lx'    : np.array([[1000,700], [5000,500]])/l_red*l_red, # corellation lengths
+        'lx'    : np.array([[1000,700], [2200,500]]),       # corellation lengths
         'ang'   : np.array([17, 111]),                      # angle in ° (logK, recharge)
         'sigma' : np.array([1.7, 0.1]),                     # variance (logK, recharge)
         'mu'    : np.array([-8.5, -0.7]),                   # mean (log(ms-1), (mm/d))
@@ -238,9 +238,5 @@ def get():
             print("You cant have a variogram with no pilotpoints - yet")
             print("Exiting...")
             sys.exit() 
-        if l_red < 5:
-            print("Your system must not be dominated by the correlation length, if you want to estimate it")
-            print("Exiting...")
-            sys.exit()
             
     return pars
