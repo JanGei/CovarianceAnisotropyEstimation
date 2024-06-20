@@ -15,7 +15,8 @@ def conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy):
 
     # Grid in Physical Coordinates
     Xint, Yint = np.meshgrid(xint, yint)
-    Xint_pw = np.column_stack((Xint.T.ravel(), Yint.T.ravel()))
+    # Xint_pw = np.column_stack((Xint.T.ravel(), Yint.T.ravel()))
+    Xint_pw = np.column_stack((Xint.ravel(order = 'F'), Yint.ravel(order = 'F')))
     
     # Construct covariance matrix of measurement error
     m = len(pp_k)

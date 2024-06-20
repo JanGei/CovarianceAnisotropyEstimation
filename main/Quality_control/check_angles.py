@@ -11,18 +11,18 @@ from dependencies.create_pilot_points import create_pilot_points
 from dependencies.compare_conditional import compare_conditional
 
 pars = get()
-sim, gwf = load_template_model(pars)
+sim, gwf = load_template_model(pars, VR = True)
 pp_cid, pp_xy, neardist = create_pilot_points(gwf, pars)
 
 lx = np.array([750,100])
-angles = np.deg2rad(np.arange(0, 180, 10))
+angles = np.deg2rad(np.arange(10, 180, 10))
 
 results = []
 
 pars['valt'] = "good"
 
 for i in range(len(angles)):
-    res = create_k_fields(gwf, pars, pp_xy, pp_cid, test_cov = [lx, angles[i]], conditional = False)
+    res = create_k_fields(gwf, pars, pp_xy, pp_cid, test_cov = [lx, angles[i]], conditional = True)
     results.append(res)
     # if i == 0:
     #     plot_angles(gwf, pars, res[0], res[1], angles[i], res[3], ref = True)

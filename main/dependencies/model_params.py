@@ -16,19 +16,9 @@ def distance_matrix(X1,X2,lx=1,ly=1):
     #dstmat
     # calculates the distances between all points in two (n x dim) matrices
     # that are odered pairwise according to their dimension
-    n = X1.shape[0]
-    m, dim = X2.shape
-    
-    X1_x_ex = np.reshape(X1[:,0],(len(X1),1)) @ np.ones((1,m))
-    X2_x_ex = np.ones((n,1)) @ np.reshape(X2[:, 0], (len(X2[:,0]),1)).T
-    
-    X1_y_ex = np.reshape(X1[:,1],(len(X1),1)) @ np.ones((1,m))
-    X2_y_ex = np.ones((n,1)) @ np.reshape(X2[:, 1], (len(X2[:,1]),1)).T
-    
-    deltaXnorm = (X1_x_ex - X2_x_ex) / lx
-    deltaYnorm = (X1_y_ex - X2_y_ex) / ly
-        
-    H = np.sqrt(deltaXnorm ** 2 + deltaYnorm ** 2)
+    X1 = X1 / np.array([lx, ly])
+    X2 = X2 / np.array([lx, ly])
+    H = np.linalg.norm(X1[:, np.newaxis] - X2, axis=2)
     
     return H
 
@@ -50,11 +40,12 @@ def rotation_matrix(angle):
     # HOWEVER, AS WE NEED TO ALIGN A VARIOGRAM WHICH HAS BEEN ROTATED COUNTER-
     # CLOCKWISE AND IS DESTINED TO BE ORIENTED ALONG THE X-AXIS, WE NEED TO 
     # ROTATE THE ENTIRE SYSTEM CLOCKWISE TO COMPENSATE THE ROTATION OF THE
-    # VARIOGRAM.
+    # VARIOGRAM 
     # ROTATION MATRIX CLOCKWISE
     # cos(a) sin(a)
     # -sin(a) cos(a)
-    return np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]]) 
+    return np.array([[np.cos(angle), -np.sin(angle)],
+                     [np.sin(angle), np.cos(angle)]]) 
 
 def rotate2Dfield(X,Y, angle):
     # rot2df
@@ -85,6 +76,10 @@ def extract_truth(eigenvalues, eigenvectors):
     
     return lx, ly, (theta-np.pi)%np.pi
 
+def ellips_to_matrix(lx1, lx2, ang):
+    
+    
+    return 
 
 def get():
     current_directory = os.path.dirname(os.path.abspath(__file__))
@@ -106,7 +101,7 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 32
+        n_mem  = 16
         nprocs = np.min([n_mem, psutil.cpu_count()])
         if n_mem == 2:
             nprocs = 1
@@ -125,11 +120,11 @@ def get():
         asimdays = [25, 315*years]
     
     
-    choice = [0, 1]
+    choice = [0, 0]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     
-    nPP = 20
+    nPP = 25
     
     conditional_flag = True
     
@@ -180,7 +175,7 @@ def get():
         'up_tem': up_temp,
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
-        'lx'    : np.array([[1000,700], [2200,500]]),       # corellation lengths
+        'lx'    : np.array([[1000,400], [2200,500]]),       # corellation lengths
         'ang'   : np.array([17, 111]),                      # angle in ° (logK, recharge)
         'sigma' : np.array([1.7, 0.1]),                     # variance (logK, recharge)
         'mu'    : np.array([-8.5, -0.7]),                   # mean (log(ms-1), (mm/d))

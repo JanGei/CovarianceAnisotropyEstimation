@@ -23,9 +23,9 @@ def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = [], con
         factor = 0.25
     
     if pars['covt'] == 'random':
-        lx = np.array([np.random.randint(pars['dx'][0], np.min(pars['nx'] * pars['dx']*factor)),
-                       np.random.randint(pars['dx'][1], np.min(pars['nx'] * pars['dx'])*factor)])
-        ang = np.random.uniform(0, np.pi)
+        lx = np.array([np.random.randint(pars['dx'][0]*3, np.min(pars['nx'] * pars['dx']*factor)),
+                       np.random.randint(pars['dx'][1]*3, np.min(pars['nx'] * pars['dx'])*factor)])
+        ang = np.random.uniform(0, 2*np.pi)
         if lx[0] < lx[1]:
             lx = np.flip(lx)
             if ang > np.pi/2:
@@ -62,8 +62,8 @@ def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = [], con
     else:
         field, field2f = Kriging(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy)
     
-    # The ellips is rotated counter-clockwise, thats why a minus is needed here
-    D = pars['rotmat'](-ang)
+    # The ellips is rotated counter-clockwise
+    D = pars['rotmat'](ang)
     M = np.matmul(np.matmul(D, np.array([[1/lx[0]**2, 0],[0, 1/lx[1]**2]])), D.T)
     
     if len(test_cov) != 0:
