@@ -196,9 +196,6 @@ if __name__ == '__main__':
             VR_Model.update_transient_data(rch_data, wel_data, riv_data)
 
             if pars['printf']: print(f'transient data loaded and applied in {(time.time() - start_time_ts):.2f} seconds')
-        # print(MF_Ensemble.members[0].npf.k.array[0,542])
-        # print(MF_Ensemble.members[0].rch.stress_period_data.get_data()[0][542])
-        # print(MF_Ensemble.members[0].ic.strt.array[0,542])
         
         if pars['printf']: print('---')
         start_time = time.time()
