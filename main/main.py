@@ -173,13 +173,18 @@ if __name__ == '__main__':
         if t_step == 0:
             MF_Ensemble.remove_current_files(pars)
             
-        if (t_step*6/24) > pars['asim_d'][0] and (t_step*6/24) < pars['asim_d'][1]:
+        if (t_step*6/24) < pars['asim_d'][0]:
+            period = "pre_run"
+            Assimilate = False
+        elif (t_step*6/24) > pars['asim_d'][1]:
+            period = "prediction"
+            Assimilate = False
+        else:
+            period = "assimilation"
             if t_step%4 == 0:
                 Assimilate = True
             else:
                 Assimilate = False
-        else:
-            Assimilate = False
                 
         print('--------')
         print(f'time step {t_step}')
@@ -224,27 +229,24 @@ if __name__ == '__main__':
             MF_Ensemble.update_initial_heads()
 
         start_time = time.time()
-        MF_Ensemble.model_error(true_h[t_step])
-        MF_Ensemble.record_state(pars, pars['EnKF_p'], true_h[t_step])
-        # visualize covariance structures
-        if pars['setup'] == 'office' and Assimilate and t_step%20 == 0:
-            if 'cov_data' in pars['EnKF_p']:
-                m = MF_Ensemble.mean_cov_par
-                mat = np.array([[m[0], m[1]],[m[1], m[2]]])
-                eigenvalues, eigenvectors = np.linalg.eig(mat)
-                ellipses(
-                    MF_Ensemble.ellipses,
-                    pars['mat2cv'](eigenvalues, eigenvectors),
-                    pars
-                    )
+        if period == "assimilation" or period == "prediction":
+            MF_Ensemble.model_error(true_h[t_step], period)
+            MF_Ensemble.record_state(pars, pars['EnKF_p'], true_h[t_step], period)
         
+            # visualize covariance structures
+            if pars['setup'] == 'office' and Assimilate and t_step%20 == 0:
+                if 'cov_data' in pars['EnKF_p']:
+                    m = MF_Ensemble.mean_cov_par
+                    mat = np.array([[m[0], m[1]],[m[1], m[2]]])
+                    eigenvalues, eigenvectors = np.linalg.eig(mat)
+                    ellipses(
+                        MF_Ensemble.ellipses,
+                        pars['mat2cv'](eigenvalues, eigenvectors),
+                        pars
+                        )
+                if t_step%40 == 20:
+                    compare_mean_true(gwf, [np.squeeze(VR_Model.npf.k.array), MF_Ensemble.meanlogk]) 
             
-            if t_step%40 == 20:
-                # k_fields = [Member.get_field(['npf'])['npf'].T for Member in MF_Ensemble.members[0:8]] 
-                # plot_k_fields(gwf, pars,  k_fields)
-                # check_observations(true_obs[:t_step+1,:], mean_obs[:t_step+1,:], true_h[:t_step+1,:], mean_h[:t_step+1,:])
-                compare_mean_true(gwf, [np.squeeze(VR_Model.npf.k.array), MF_Ensemble.meanlogk]) 
-            
-        if pars['printf']: print(f'Plotting and recording took {(time.time() - start_time):.2f} seconds')
-        if pars['printf']: print(f'Entire Step took {(time.time() - start_time_ts):.2f} seconds')
+            if pars['printf']: print(f'Plotting and recording took {(time.time() - start_time):.2f} seconds')
+            if pars['printf']: print(f'Entire Step took {(time.time() - start_time_ts):.2f} seconds')
     

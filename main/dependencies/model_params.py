@@ -95,7 +95,7 @@ def get():
     q_idx       = [5, 9, 15, 27, 31]
     mask        = np.full(len(well_loc),True,dtype=bool)
     mask[q_idx] = False
-    years = 2
+    years = 1
     
     cov_mods    = ['Exponential', 'Matern', 'Gaussian']
     computer = ['office', 'binnac']
@@ -109,7 +109,7 @@ def get():
         inspection = False
         n_pre_run = 5
         printf = True
-        asimdays = [4, 315*years]
+        asimdays = [4, 300*years]
     elif setup == 'binnac':
         n_mem  = 140
         nprocs = psutil.cpu_count()
@@ -117,7 +117,7 @@ def get():
         n_pre_run = 20
         printf = False
         inspection = False
-        asimdays = [25, 315*years]
+        asimdays = [25, 300*years]
     
     
     choice = [0, 0]
@@ -131,7 +131,7 @@ def get():
     pilot_point_even = False
     scramble_pp = False
     
-    h_damp = 0.25
+    h_damp = 0.6
     cov_damp = 0.01
     npf_damp = 0.05
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]

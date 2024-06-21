@@ -12,12 +12,12 @@ class Ensemble:
         self.obs_cid    = [int(i) for i in obs_cid]
         self.ny         = len(obs_cid)
         self.h_mask     = mask.astype(bool)
-        self.ole        = []
-        self.ole_nsq    = []
-        self.te1        = []
-        self.te1_nsq    = []
-        self.te2        = []
-        self.te2_nsq    = []
+        self.ole        = {'assimilation': [], 'prediction': []}
+        self.ole_nsq    = {'assimilation': [], 'prediction': []}
+        self.te1        = {'assimilation': [], 'prediction': []}
+        self.te1_nsq    = {'assimilation': [], 'prediction': []}
+        self.te2        = {'assimilation': [], 'prediction': []}
+        self.te2_nsq    = {'assimilation': [], 'prediction': []}
         self.obs        = []
         self.pilotp_flag= pilotp_flag
         self.meanlogk   = []
@@ -235,7 +235,7 @@ class Ensemble:
             )
 
     
-    def model_error(self,  true_h):
+    def model_error(self,  true_h, period):
         
         mean_h, var_h = self.get_mean_var()
         true_h = np.array(true_h).squeeze()
@@ -245,10 +245,10 @@ class Ensemble:
         true_obs = true_h[self.obs_cid]
         self.obs = [true_obs, mean_obs]
         
-        self.ole_nsq.append(np.sum(np.square(true_obs - mean_obs)/0.01**2)/mean_obs.size)
+        self.ole_nsq[period].append(np.sum(np.square(true_obs - mean_obs)/0.01**2)/mean_obs.size)
         
         # ole for the model up until the current time step
-        self.ole.append(np.sqrt(np.sum(self.ole_nsq)/len(self.ole_nsq)))
+        self.ole[period].append(np.sqrt(np.sum(self.ole_nsq[period])/len(self.ole_nsq[period])))
         
         # calculating nrmse without root for later summation
         true_h = true_h[~self.h_mask]
@@ -256,12 +256,12 @@ class Ensemble:
         var_h = var_h[~self.h_mask]
         var_te2 = (true_h + mean_h)/2
         
-        self.te1_nsq.append(np.sum(np.square(true_h - mean_h)/var_h))
-        self.te2_nsq.append(np.sum(np.square(true_h - mean_h)/var_te2**2))
+        self.te1_nsq[period].append(np.sum(np.square(true_h - mean_h)/var_h))
+        self.te2_nsq[period].append(np.sum(np.square(true_h - mean_h)/var_te2**2))
         
         # nrmse for the model up until the current time step
-        self.te1.append(np.sqrt(np.sum(self.te1_nsq)/len(self.te1_nsq)/mean_h.size))
-        self.te2.append(np.sqrt(np.sum(self.te2_nsq)/len(self.te2_nsq)/mean_h.size))
+        self.te1[period].append(np.sqrt(np.sum(self.te1_nsq[period])/len(self.te1_nsq[period])/mean_h.size))
+        self.te2[period].append(np.sqrt(np.sum(self.te2_nsq[period])/len(self.te2_nsq[period])/mean_h.size))
     
     def get_member_fields(self, params):
         
@@ -281,7 +281,7 @@ class Ensemble:
         
         return np.mean(h_f, axis = 1), np.var(h_f, axis = 1)
     
-    def record_state(self, pars: dict, params: list, true_h):
+    def record_state(self, pars: dict, params: list, true_h, period: str):
         
         mean_h, var_h = self.get_mean_var()
         k_fields = self.get_member_fields(['npf'])
@@ -305,10 +305,10 @@ class Ensemble:
         g.close()
         h.close()
         
-        f = open(os.path.join(direc,  'errors.dat'),'a')
-        f.write("{:.4f} ".format(self.ole[-1]))
-        f.write("{:.4f} ".format(self.te1[-1]))
-        f.write("{:.4f} ".format(self.te2[-1]))
+        f = open(os.path.join(direc,  'errors_'+period+'.dat'),'a')
+        f.write("{:.4f} ".format(self.ole[period][-1]))
+        f.write("{:.4f} ".format(self.te1[period][-1]))
+        f.write("{:.4f} ".format(self.te2[period][-1]))
         f.write('\n')
         f.close()
         
@@ -399,7 +399,8 @@ class Ensemble:
         
     def remove_current_files(self, pars):
         
-        file_paths = [os.path.join(pars['resdir'], 'errors.dat'),
+        file_paths = [os.path.join(pars['resdir'], 'errors_assimilation.dat'),
+                      os.path.join(pars['resdir'], 'errors_prediction.dat'),
                       os.path.join(pars['resdir'], 'covariance_data.dat'),
                       os.path.join(pars['resdir'], 'cov_variance.dat'),
                       os.path.join(pars['resdir'], 'covariance_data_par.dat'),
