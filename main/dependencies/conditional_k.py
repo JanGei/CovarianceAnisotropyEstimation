@@ -46,7 +46,7 @@ def conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy):
                                 int(indmeas[ii,0])] 
     
     # Perturb the measurements and subtract the unconditional realization
-    spert = np.squeeze(pp_k) + np.squeeze(pars['sig_me'] * np.random.randn(*pp_k.shape)) + np.squeeze(sunc_at_meas)
+    spert = np.squeeze(pp_k) + np.squeeze(pars['sig_me'] * np.random.randn(*pp_k.shape)) - np.squeeze(sunc_at_meas)
     
     # Solve the kriging equation
     sol = np.linalg.solve(krigmat, np.append(spert, 0))

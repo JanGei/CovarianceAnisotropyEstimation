@@ -2,7 +2,7 @@ import numpy as np
 
 def get_transient_data(pars: dict, t_step: int):
     
-
+    t_step = int(t_step%(365*24/6))
     r_ref = np.loadtxt(pars['r_r_d'], delimiter = ',')
     sfac  = np.genfromtxt(pars['sf_d'],delimiter = ',', names=True)['Wert']
     welst = pars['welst'] 

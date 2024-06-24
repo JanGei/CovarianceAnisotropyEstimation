@@ -76,6 +76,37 @@ def extract_truth(eigenvalues, eigenvectors):
     
     return lx, ly, (theta-np.pi)%np.pi
 
+def period(t_step, pars):
+    
+    day = int(t_step / 4)
+    if day > 365:
+        if day > pars['asim_d'][3]:
+            period = "prediction"
+            Assimilate = False
+        else:
+            period = "assimilation"
+            if t_step%4 == 0:
+                Assimilate = True
+            else:
+                Assimilate = False
+    else:
+        if day < pars['asim_d'][0]:
+            period = "pre_run"
+            Assimilate = False
+        elif day > pars['asim_d'][1]:
+            period = "prediction"
+            Assimilate = False
+        else:
+            period = "assimilation"
+            if t_step%4 == 0:
+                Assimilate = True
+            else:
+                Assimilate = False
+    
+    
+    return period, Assimilate, day
+
+
 def ellips_to_matrix(lx1, lx2, ang):
     
     
@@ -95,13 +126,13 @@ def get():
     q_idx       = [5, 9, 15, 27, 31]
     mask        = np.full(len(well_loc),True,dtype=bool)
     mask[q_idx] = False
-    years = 1
+    years = 2
     
     cov_mods    = ['Exponential', 'Matern', 'Gaussian']
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 16
+        n_mem  = 32
         nprocs = np.min([n_mem, psutil.cpu_count()])
         if n_mem == 2:
             nprocs = 1
@@ -109,7 +140,10 @@ def get():
         inspection = False
         n_pre_run = 5
         printf = True
-        asimdays = [4, 300*years]
+        if years == 1:
+            asimdays = [4, 300]
+        elif years == 2:
+            asimdays = [4, 300, 365, 665]
     elif setup == 'binnac':
         n_mem  = 140
         nprocs = psutil.cpu_count()
@@ -117,10 +151,12 @@ def get():
         n_pre_run = 20
         printf = False
         inspection = False
-        asimdays = [25, 300*years]
+        if years == 1:
+            asimdays = [25, 300]
+        elif years == 2:
+            asimdays = [25, 300, 365, 665]
     
-    
-    choice = [0, 0]
+    choice = [0, 1]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     
@@ -132,7 +168,7 @@ def get():
     scramble_pp = False
     
     h_damp = 0.6
-    cov_damp = 0.01
+    cov_damp = 0.05
     npf_damp = 0.05
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
     
@@ -167,7 +203,7 @@ def get():
         'omitc' : 3,
         'nearPP': 4,
         'sig_me': 0.01,
-        'geomea': 0.1,
+        'geomea': 1,
         'years' : years,
         'condfl': conditional_flag,
         'covt'  : covtype,
@@ -186,8 +222,8 @@ def get():
         'welxy' : np.array(well_loc[q_idx]),                # location of pumps
         'obsxy' : np.array(well_loc[mask]),                 # location of obs
         'welq'  : np.array([35, 18, 90, 20, 15])/3600,      # Q of wells [m3s-1]
-        'welst' : np.array([20, int(315*years), 200, 0, 0]),# start day of pump
-        'welnd' : np.array([150, 365, 365, 200, 300])*years,# end day of pump
+        'welst' : np.array([20, 300, 200, 0, 0]),           # start day of pump
+        'welnd' : np.array([150, 365, 365, 200, 300]),      # end day of pump
         'welay' : np.array(np.zeros(5)),                    # layer of wells
         'river' : np.array([[0.0,0], [5000,0]]),            # start / end of river
         'rivC'  : 5*1e-4,                                   # river conductance [ms-1]
@@ -226,6 +262,7 @@ def get():
         'rot2df': rotate2Dfield,
         'covmat': covariance_matrix,
         'dstmat': distance_matrix,
+        'period': period,
         }
     
     if choice == 0 or choice == 1:

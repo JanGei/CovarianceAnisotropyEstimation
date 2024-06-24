@@ -14,7 +14,7 @@ pars = get()
 sim, gwf = load_template_model(pars, VR = True)
 pp_cid, pp_xy, neardist = create_pilot_points(gwf, pars)
 
-lx = np.array([750,100])
+lx = np.array([750,250])
 angles = np.deg2rad(np.arange(10, 180, 10))
 
 results = []
@@ -28,6 +28,8 @@ for i in range(len(angles)):
     #     plot_angles(gwf, pars, res[0], res[1], angles[i], res[3], ref = True)
 
     # plot_angles(gwf, pars, res[0], res[2], angles[i], res[3])
-    alt_field = randomK(angles[i], pars['sigma'][0], pars['cov'], pars['mu'][0], pars, grid = [pars['nx'], pars['dx'], pars['lx'][0]],  ftype = 'K')
+    # alt_field = randomK(angles[i], pars['sigma'][0], pars['cov'], pars['mu'][0], pars, grid = [pars['nx'], pars['dx'], pars['lx'][0]],  ftype = 'K')
+    
+    alt_field = create_k_fields(gwf, pars, pp_xy, pp_cid, test_cov = [lx, angles[i]], conditional = True)[4]
     # compare_conditional(gwf, pars, res[0], angles[i], res[3][1], pp_xy, np.exp(res[4])/100)
-    compare_conditional(gwf, pars, res[0], angles[i], res[3][1], pp_xy, alt_field/100)
+    compare_conditional(gwf, pars, res[0], angles[i], res[3][1], pp_xy, alt_field)
