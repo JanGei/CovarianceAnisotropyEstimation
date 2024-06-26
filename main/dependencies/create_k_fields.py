@@ -24,8 +24,8 @@ def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = [], con
     
     if pars['covt'] == 'random':
         lx = np.array([np.random.randint(pars['dx'][0]*3, np.min(pars['nx'] * pars['dx']*factor)),
-                       np.random.randint(pars['dx'][1]*3, np.min(pars['nx'] * pars['dx'])*factor)])
-        ang = np.random.uniform(0, 2*np.pi)
+                       np.random.randint(pars['dx'][1]*3, np.min(pars['nx'] * pars['dx'])*factor/2)])
+        ang = np.random.uniform(-np.pi/2, np.pi/2)
         if lx[0] < lx[1]:
             lx = np.flip(lx)
             if ang > np.pi/2:
@@ -50,12 +50,10 @@ def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = [], con
         pp_k = np.log(k_ref[pp_cid.astype(int)]) 
         pp_k = pp_k + sig_meas * np.random.randn(*pp_k.shape)
     elif pars['valt'] == 'random':
-        
         # random sampling from mean uniform distribution centered around mean
         mu = pars['mu'][0]
         std = np.sqrt(pars['sigma'][0])
-        pp_k = np.random.normal(mu, std, len(pp_cid)) #np.random.uniform(mu-mu/4, mu+mu/4, len(pp_cid))
-        # pp_k = pp_k + sig_meas * np.random.randn(*pp_k.shape)
+        pp_k = np.random.normal(mu, std, len(pp_cid)) 
     
     if conditional:
         field, field2f = conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy)

@@ -99,7 +99,7 @@ class Virtual_Reality:
         return h_field
     
     def get_observations(self, obs_cid):
-        h = self.get_field(['h'])['h'].flatten()
+        h = np.squeeze(self.get_field(['h'])['h'])
         #perturb these measurements individually for every ensemble member - EnKF?
         ny = len(obs_cid)
         Ymeas = np.zeros((ny,1))

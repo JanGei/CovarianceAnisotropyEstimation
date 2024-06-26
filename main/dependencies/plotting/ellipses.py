@@ -5,7 +5,7 @@ import matplotlib.patches as patches
 def ellipses(cov_data, mean_cov, pars):
 
     center = (0, 0)  # center coordinates
-    l = np.max(pars['lx'][0]*2)
+    l = 2000
     
     x = np.linspace(-l, l, 300)
     y = np.linspace(-l, l, 300)

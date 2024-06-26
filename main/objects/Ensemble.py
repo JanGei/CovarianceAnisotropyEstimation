@@ -57,12 +57,14 @@ class Ensemble:
             for idx in range(self.n_mem)
             )
         
-    def get_damp(self, X, val, params):
+    def get_damp(self, X, pars):
+        val = pars['damp']
         damp = np.zeros((X[:,0].size)) + val[0]
-        if 'cov_data' in params:
+        if 'cov_data' in pars['EnKF_p']:
             cl = len(np.unique(self.members[0].ellips_mat))
-            damp[:cl] = val[1]
-            if 'npf' in params:
+            damp[0], damp[2] = val[1][0], val[1][0]
+            damp[1] = val[1][1]
+            if 'npf' in pars['EnKF_p']:
                 damp[cl:cl+len(self.pp_cid)] = val[2]
         else:
             if self.pilotp_flag:
@@ -79,77 +81,25 @@ class Ensemble:
                      for idx in range(self.n_mem)
                      )
         
-    def apply_X(self, params: list, X):
-
-        head = self.get_member_fields(['h'])
+    def apply_X(self, X, params):
         
-        data = []
+        result = Parallel(n_jobs=self.nprocs, backend="threading")(delayed(self.members[idx].apply_x)(
+            np.squeeze(X[:,idx]),
+            self.h_mask,
+            self.pp_xy,
+            self.pp_cid,
+            self.mean_cov_par,
+            self.var_cov_par
+            ) 
+            for idx in range(self.n_mem)
+            )
         
-        # Sort the corrected data
-        for i in range(self.n_mem):
-            if 'cov_data' in params:
-                cl = 3
-                if 'npf' in params:
-                    head[i]['h'] = head[i]['h'].flatten()
-                    head[i]['h'][~self.h_mask] = X[cl+len(self.pp_cid):,i]
-                    
-                    data.append([X[:cl,i], X[cl:len(self.pp_cid)+cl,i]])
-                      
-                else:
-                    head[i]['h'] = head[i]['h'].flatten()
-                    head[i]['h'][~self.h_mask] = X[cl:,i]
-                    
-                    data.append([X[:cl,i], self.pp_k_ini[i]])
-                    
-            else:
-                head[i]['h'] = head[i]['h'].flatten()
-                
-                
-                if self.pilotp_flag:
-                    head[i]['h'][~self.h_mask] = X[len(self.pp_cid):,i]
-                    data.append(X[:len(self.pp_cid),i])
-                else:
-                    head[i]['h'][~self.h_mask] = X[self.members[0].npf.k.array.size:,i]
-                    data.append(X[:self.members[0].npf.k.array.size,i])
-            
-            
-        
-        if self.pilotp_flag:
-            start_time = time.time()
-            result = Parallel(n_jobs=self.nprocs, 
-                              backend="threading")(
-                                  delayed(self.members[idx].kriging)(
-                                      params, 
-                                      data[idx], 
-                                      self.pp_xy,
-                                      self.pp_cid,
-                                      self.mean_cov_par, 
-                                      self.var_cov_par
-                                      ) 
-                                  for idx in range(self.n_mem)
-                                  )
-            print(f'Kriging alone took {(time.time() - start_time):.2f} seconds')
-            Parallel(n_jobs=self.nprocs,
-                     backend="threading")(
-                         delayed(self.members[idx].set_field)(
-                             [head[idx]['h']], ['h']
-                             ) 
-                         for idx in range(self.n_mem)
-                         )
-        else:
-            Parallel(n_jobs=self.nprocs,
-                     backend="threading")(
-                         delayed(self.members[idx].set_field)(
-                             [head[idx]['h'],np.exp(data[idx])], ['h', 'npf']
-                             ) 
-                         for idx in range(self.n_mem)
-                         )
-
+        cl = 3
         if 'cov_data' in params:
             # Only register ellipses that perfromed a successfull update
             self.ellipses = np.array([data[0] for data in result if data[2]])
             self.ellipses_par = [data[1] for data in result if data[2]]
-            self.mean_cov = np.mean(self.ellipses, axis = 0)
+            # self.mean_cov = np.mean(self.ellipses, axis = 0)
             self.var_cov = np.var(self.ellipses, axis = 0)
             self.mean_cov_par = np.mean(np.array(self.ellipses_par), axis = 0)
             self.var_cov_par = np.var(np.array(self.ellipses_par), axis = 0)
@@ -165,53 +115,24 @@ class Ensemble:
                 self.meanppk = np.mean(np.exp(X[:len(self.pp_cid),:]), axis = 1)
                 self.varppk = np.var(np.exp(X[:len(self.pp_cid),:]), axis = 1)
                     
-    def get_Kalman_X_Y(self, params: list):   
+    def get_Kalman_X_Y(self):   
 
-        head = self.get_member_fields(['h'])
-        data = self.get_member_fields(params)
+        result = Parallel(n_jobs=self.nprocs, backend="threading")(delayed(self.members[idx].Kalman_vec)(
+            self.h_mask,
+            self.obs_cid,
+            self.pp_cid 
+            ) 
+            for idx in range(self.n_mem)
+            )
         
+        xs = []
+        ysims = []
+        for tup in result:
+            xs.append(tup[0])
+            ysims.append(tup[1])
         
-        Ysim = np.zeros((self.ny,self.n_mem))
-        # account for fixed head cells --> need to be ommited
-        
-        for i in range(self.n_mem):
-            Ysim[:,i] = head[i]['h'].flatten()[self.obs_cid]
-            head[i]['h'] = head[i]['h'].flatten()[~self.h_mask]
-        
-        # number of states
-        nx  = head[0]['h'].size
-        if self.pilotp_flag:
-            for name in params:
-                if name == 'npf':
-                    nx += self.pp_cid.size
-                if name == 'cov_data':
-                    nx += np.array(data[0]['cov_data']).size
-        else:
-            nx += self.members[0].npf.k.array.size
-        
-        X = np.zeros((nx,self.n_mem))
-        
-        
-        # obtaining k_values at pilot points
-        for i in range(self.n_mem):
-            if 'cov_data' in params:
-                if 'npf' in params:
-                    x = np.concatenate((data[i]['cov_data'].flatten(),
-                                        np.log(data[i]['npf'][:,self.pp_cid].flatten()),
-                                        head[i]['h']))
-                else:
-                    x = np.concatenate((data[i]['cov_data'].flatten(),
-                                        head[i]['h']))
-            else:
-                if self.pilotp_flag:
-                    x = np.concatenate((np.log(data[i]['npf'][:,self.pp_cid].flatten()),
-                                        head[i]['h']))
-                else:
-                    x = np.concatenate((np.log(data[i]['npf'].flatten()),
-                                        head[i]['h']))
-                    
-            X[:,i] = x
-
+        X = np.vstack(xs).T
+        Ysim = np.vstack(ysims).T
         return X, Ysim, np.mean(Ysim, axis = 1)
     
     def update_transient_data(self, rch_data, wel_data, riv_data):
@@ -235,10 +156,11 @@ class Ensemble:
             )
 
     
-    def model_error(self,  true_h, period):
+    def model_error(self,  true_h, mean_h, var_h, period):
         
-        mean_h, var_h = self.get_mean_var()
-        true_h = np.array(true_h).squeeze()
+        mean_h = np.squeeze(mean_h)
+        var_h = np.squeeze(var_h)
+        true_h = np.squeeze(true_h)
         
         # analogous for ole
         mean_obs = mean_h[self.obs_cid]
@@ -274,16 +196,16 @@ class Ensemble:
         return data
         
 
-    def get_mean_var(self):
-        h_fields = self.get_member_fields(['h'])
+    def get_mean_var(self, h = 'h'):
+        h_fields = self.get_member_fields([h])
         
-        h_f = np.array([np.squeeze(field['h']) for field in h_fields]).T
+        h_f = np.array([np.squeeze(field[h]) for field in h_fields]).T
         
         return np.mean(h_f, axis = 1), np.var(h_f, axis = 1)
     
     def record_state(self, pars: dict, params: list, true_h, period: str):
         
-        mean_h, var_h = self.get_mean_var()
+        mean_h, var_h = self.get_mean_var(h = 'ic')
         k_fields = self.get_member_fields(['npf'])
         k_fields = np.array([field['npf'] for field in k_fields]).squeeze()
         self.meanlogk = np.mean(np.log(k_fields), axis = 0)
@@ -328,10 +250,14 @@ class Ensemble:
         if 'cov_data' in params:
             cov_data = self.get_member_fields(['cov_data'])
             
+            mat = np.array([[self.mean_cov_par[0], self.mean_cov_par[1]],
+                            [self.mean_cov_par[1], self.mean_cov_par[2]]])
+            res = pars['mat2cv'](mat)
+                
             f = open(os.path.join(direc, 'covariance_data.dat'),'a')
-            f.write("{:.10f} ".format(self.mean_cov[0]))
-            f.write("{:.10f} ".format(self.mean_cov[1]))
-            f.write("{:.10f} ".format(self.mean_cov[2]))
+            f.write("{:.10f} ".format(res[0]))
+            f.write("{:.10f} ".format(res[1]))
+            f.write("{:.10f} ".format(res[2]))
             f.write('\n')
             f.close()
             

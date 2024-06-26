@@ -14,8 +14,9 @@ pars = get()
 sim, gwf = load_template_model(pars, VR = True)
 pp_cid, pp_xy, neardist = create_pilot_points(gwf, pars)
 
-lx = np.array([750,250])
-angles = np.deg2rad(np.arange(10, 180, 10))
+lx = np.array([1000,400])
+angles = np.deg2rad(np.arange(10, 250, 10))
+angles = np.ones(100) * np.deg2rad(11)
 
 results = []
 

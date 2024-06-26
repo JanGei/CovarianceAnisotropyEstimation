@@ -55,7 +55,9 @@ def rotate2Dfield(X,Y, angle):
     
     return Xrot, Yrot
 
-def extract_truth(eigenvalues, eigenvectors):
+
+def extract_truth(M):
+    eigenvalues, eigenvectors = np.linalg.eigh(M)
     # Sort the eigenvalues and corresponding eigenvectors in ascending order
     idx = eigenvalues.argsort()  # Indices of sorted eigenvalues in ascending order
     eigenvalues = eigenvalues[idx]  # Sorted eigenvalues
@@ -74,7 +76,7 @@ def extract_truth(eigenvalues, eigenvectors):
     # Angle of orientation relative to the semi-major axis
     theta = np.arctan2(v1[1], v1[0])
     
-    return lx, ly, (theta-np.pi)%np.pi
+    return lx, ly, theta%np.pi
 
 def period(t_step, pars):
     
@@ -134,21 +136,23 @@ def get():
     if setup == 'office':
         n_mem  = 32
         nprocs = np.min([n_mem, psutil.cpu_count()])
-        if n_mem == 2:
-            nprocs = 1
-        up_temp = True
         inspection = False
-        n_pre_run = 5
         printf = True
         if years == 1:
             asimdays = [4, 300]
         elif years == 2:
             asimdays = [4, 300, 365, 665]
+        up_temp = False
+        
+        if n_mem == 2:
+            nprocs = 1
+            up_temp = False
+            asimdays = [1, 300]
+        
     elif setup == 'binnac':
         n_mem  = 140
         nprocs = psutil.cpu_count()
         up_temp = True
-        n_pre_run = 20
         printf = False
         inspection = False
         if years == 1:
@@ -167,8 +171,9 @@ def get():
     pilot_point_even = False
     scramble_pp = False
     
+    l_red = 2
     h_damp = 0.6
-    cov_damp = 0.05
+    cov_damp = [0.15, 0.05]
     npf_damp = 0.05
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
     
@@ -211,7 +216,8 @@ def get():
         'up_tem': up_temp,
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
-        'lx'    : np.array([[1000,400], [2200,500]]),       # corellation lengths
+        'l_red' : l_red,
+        'lx'    : np.array([[2000,600], [5000,500]])/l_red, # corellation lengths
         'ang'   : np.array([17, 111]),                      # angle in ° (logK, recharge)
         'sigma' : np.array([1.7, 0.1]),                     # variance (logK, recharge)
         'mu'    : np.array([-8.5, -0.7]),                   # mean (log(ms-1), (mm/d))
@@ -256,7 +262,6 @@ def get():
         'trs_ws': os.path.join(Vrdir, 'transient_model') ,
         'resdir': os.path.join(parent_directory, 'output'),
         'nsteps': int(years*365*24/6),
-        'nprern': n_pre_run,
         'rotmat': rotation_matrix,
         'mat2cv': extract_truth,
         'rot2df': rotate2Dfield,

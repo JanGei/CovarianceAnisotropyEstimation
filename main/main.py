@@ -147,10 +147,9 @@ if __name__ == '__main__':
     
     m = np.mean(cor_ellips, axis = 0)
     mat = np.array([[m[0], m[1]],[m[1], m[2]]])
-    eigenvalues, eigenvectors = np.linalg.eig(mat)
     ellipses(
         MF_Ensemble.ellipses,
-        pars['mat2cv'](eigenvalues, eigenvectors),
+        pars['mat2cv'](mat),
         pars
         )
     # set their respective k-fields
@@ -159,11 +158,12 @@ if __name__ == '__main__':
     if pars['printf']: print(f'Ensemble is initiated and respective k-fields are set in {(time.time() - start_time):.2f} seconds')
     
     #%%
-    X, Ysim, _ = MF_Ensemble.get_Kalman_X_Y(pars['EnKF_p'])
-    damp = MF_Ensemble.get_damp(X, pars['damp'],pars['EnKF_p'])
+    X, Ysim, _ = MF_Ensemble.get_Kalman_X_Y()
+    damp = MF_Ensemble.get_damp(X, pars)
     EnKF = EnsembleKalmanFilter(X, Ysim, damp = damp, eps = pars['eps'])
     true_h = np.zeros((pars['nsteps'],len(VR_Model.cxy)))
     mean_h = np.zeros((pars['nsteps'],len(VR_Model.cxy)))
+    var_h = np.zeros((pars['nsteps'],len(VR_Model.cxy)))
     true_obs = np.zeros((pars['nsteps'],len(obs_cid)))
     mean_obs = np.zeros((pars['nsteps'],len(obs_cid)))
     MF_Ensemble.remove_current_files(pars)
@@ -186,35 +186,36 @@ if __name__ == '__main__':
         if pars['printf']: print('---')
         start_time = time.time()
         VR_Model.simulation()
-        true_h[t_step,:] = VR_Model.update_ic()
         MF_Ensemble.propagate()
-        mean_h[t_step,:], _ = MF_Ensemble.get_mean_var()
         
         if pars['printf']: print(f'Ensemble propagated in {(time.time() - start_time):.2f} seconds')
  
         if Assimilate:
             # print('---')
             start_time = time.time()
-            X, Ysim, mean_obs[t_step,:] = MF_Ensemble.get_Kalman_X_Y(pars['EnKF_p'])
+            X, Ysim, mean_obs[t_step,:] = MF_Ensemble.get_Kalman_X_Y()
             EnKF.update_X_Y(X, Ysim)
             EnKF.analysis()
             true_obs[t_step,:] = np.squeeze(VR_Model.get_observations(obs_cid))
             EnKF.Kalman_update(true_obs[t_step,:].T)
 
             if pars['printf']: print(f'Ensemble Kalman Filter performed in  {(time.time() - start_time):.2f} seconds')
-            
+
             start_time = time.time()
-            MF_Ensemble.apply_X(pars['EnKF_p'], EnKF.X)
+            MF_Ensemble.apply_X(EnKF.X, pars['EnKF_p'])
 
             if pars['printf']: print(f'Application of results plus kriging took {(time.time() - start_time):.2f} seconds')
         else:
             # Very important: update initial conditions if youre not assimilating
             MF_Ensemble.update_initial_heads()
-
+        
+        true_h[t_step,:] = VR_Model.update_ic()
+        mean_h[t_step,:], var_h[t_step,:] = MF_Ensemble.get_mean_var(h = 'ic')
+        
         start_time = time.time()
         if period == "assimilation" or period == "prediction":
             if t_step%4 == 0:
-                MF_Ensemble.model_error(true_h[t_step], period)
+                MF_Ensemble.model_error(true_h[t_step], mean_h[t_step], var_h[t_step], period)
                 MF_Ensemble.record_state(pars, pars['EnKF_p'], true_h[t_step], period)
             
                 # visualize covariance structures
@@ -222,10 +223,9 @@ if __name__ == '__main__':
                     if 'cov_data' in pars['EnKF_p']:
                         m = MF_Ensemble.mean_cov_par
                         mat = np.array([[m[0], m[1]],[m[1], m[2]]])
-                        eigenvalues, eigenvectors = np.linalg.eig(mat)
                         ellipses(
                             MF_Ensemble.ellipses,
-                            pars['mat2cv'](eigenvalues, eigenvectors),
+                            pars['mat2cv'](mat),
                             pars
                             )
                     if t_step%40 == 20:

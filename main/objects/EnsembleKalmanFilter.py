@@ -41,7 +41,6 @@ class EnsembleKalmanFilter:
     
     def analysis(self):
         
-        # Compute mean of postX and Y_sim -> We do not need to tile it
         Xmean   = np.tile(np.array(np.mean(self.X, axis = 1)).T, (self.n_mem, 1)).T
         Ymean   = np.tile(np.array(np.mean(self.Ysim,  axis  = 1)).T, (self.n_mem, 1)).T
         

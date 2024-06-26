@@ -31,7 +31,7 @@ X, Y = np.meshgrid(x, y)
 
 ang = np.deg2rad(pars['ang'][0])
 
-for i in [38]:
+for i in range(n):
 
     
 

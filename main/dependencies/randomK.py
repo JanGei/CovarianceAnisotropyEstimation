@@ -36,7 +36,10 @@ def randomK(ang, sigma, Ctype, Kg, pars, grid = [], random = True, ftype = [], r
             if randn:
                 np.random.seed(randn)
             else:
-                np.random.seed(38)  
+                if pars['l_red'] == 1:
+                    np.random.seed(30)  
+                elif pars['l_red'] == 2:
+                    np.random.seed(10)
 
     else:
         Kg = pars['geomea']
