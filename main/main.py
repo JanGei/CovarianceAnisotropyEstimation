@@ -154,6 +154,7 @@ if __name__ == '__main__':
         )
     # set their respective k-fields
     MF_Ensemble.set_field(k_fields, ['npf'])
+    # MF_Ensemble.set_field([VR_Model.npf.k.array for i in range(len(models))], ['npf'])
     
     if pars['printf']: print(f'Ensemble is initiated and respective k-fields are set in {(time.time() - start_time):.2f} seconds')
     
@@ -171,7 +172,9 @@ if __name__ == '__main__':
     # for t_step in range(pars['nsteps']):
     for t_step in range(pars['nsteps']):
         
-        period, Assimilate, day = pars['period'](t_step, pars)        
+        period, Assimilate, day, year = pars['period'](t_step, pars)  
+        if day == 365:
+            MF_Ensemble.reset_errors()
         print('--------')
         print(f'time step {t_step}')
         start_time_ts = time.time()
@@ -211,12 +214,12 @@ if __name__ == '__main__':
         
         true_h[t_step,:] = VR_Model.update_ic()
         mean_h[t_step,:], var_h[t_step,:] = MF_Ensemble.get_mean_var(h = 'ic')
-        
+
         start_time = time.time()
         if period == "assimilation" or period == "prediction":
             if t_step%4 == 0:
                 MF_Ensemble.model_error(true_h[t_step], mean_h[t_step], var_h[t_step], period)
-                MF_Ensemble.record_state(pars, pars['EnKF_p'], true_h[t_step], period)
+                MF_Ensemble.record_state(pars, pars['EnKF_p'], true_h[t_step], period, year)
             
                 # visualize covariance structures
                 if pars['setup'] == 'office' and Assimilate and t_step%20 == 0:

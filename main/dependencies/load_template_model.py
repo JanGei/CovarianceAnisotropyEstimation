@@ -1,9 +1,11 @@
 import flopy
 
-def load_template_model(pars: dict, VR = False):
+def load_template_model(pars: dict, VR = False, SS = False):
     
     if VR:
         temp_m_ws = pars['trs_ws']
+    elif SS:
+        temp_m_ws = pars['ss_ws']
     else:
         temp_m_ws = pars['tm_ws']
     mname = pars['mname']

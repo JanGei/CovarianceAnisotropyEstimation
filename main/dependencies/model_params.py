@@ -80,8 +80,8 @@ def extract_truth(M):
 
 def period(t_step, pars):
     
-    day = int(t_step / 4)
-    if day > 365:
+    day = np.floor(t_step / 4)
+    if day >= 365:
         if day > pars['asim_d'][3]:
             period = "prediction"
             Assimilate = False
@@ -91,6 +91,7 @@ def period(t_step, pars):
                 Assimilate = True
             else:
                 Assimilate = False
+        year = 2
     else:
         if day < pars['asim_d'][0]:
             period = "pre_run"
@@ -104,9 +105,9 @@ def period(t_step, pars):
                 Assimilate = True
             else:
                 Assimilate = False
+        year = 1
     
-    
-    return period, Assimilate, day
+    return period, Assimilate, day, year
 
 
 def ellips_to_matrix(lx1, lx2, ang):
@@ -134,7 +135,7 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 32
+        n_mem  = 8
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         printf = True
@@ -142,7 +143,7 @@ def get():
             asimdays = [4, 300]
         elif years == 2:
             asimdays = [4, 300, 365, 665]
-        up_temp = False
+        up_temp = True
         
         if n_mem == 2:
             nprocs = 1
@@ -173,7 +174,7 @@ def get():
     
     l_red = 2
     h_damp = 0.6
-    cov_damp = [0.15, 0.05]
+    cov_damp = [0.05, 0.01]
     npf_damp = 0.05
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
     
@@ -259,7 +260,8 @@ def get():
         'sf_d'  : os.path.join(Vrdir, 'model_data','sfac.csv'),
         'n_mem' : n_mem,
         'tm_ws' : os.path.join(ensemb_dir, 'template_model'),
-        'trs_ws': os.path.join(Vrdir, 'transient_model') ,
+        'trs_ws': os.path.join(Vrdir, 'transient_model'),
+        'ss_ws' : os.path.join(Vrdir, 'model_files'),
         'resdir': os.path.join(parent_directory, 'output'),
         'nsteps': int(years*365*24/6),
         'rotmat': rotation_matrix,

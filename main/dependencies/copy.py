@@ -3,10 +3,11 @@ import shutil
 
 def create_Ensemble(pars: dict) -> list:
     ens_m_dir = []
-    orig_dir    = pars['tm_ws']
+    # orig_dir    = pars['tm_ws']
     mem_ws      = pars['mem_ws']
     n_mem       = pars['n_mem']
     ens_ws      = pars['ens_ws']
+    vr_dir      = pars['trs_ws']
     
     # removing old members
     directories = [d for d in os.listdir(ens_ws) if os.path.isdir(os.path.join(ens_ws, d))]
@@ -18,7 +19,7 @@ def create_Ensemble(pars: dict) -> list:
         mem_dir = mem_ws + f'{i}'
     
         # Copy the model folder to new folder
-        shutil.copytree(orig_dir, mem_dir)
+        shutil.copytree(vr_dir, mem_dir)
         ens_m_dir.append(mem_dir)
         
     return ens_m_dir
