@@ -2,9 +2,8 @@ import flopy
 from dependencies.copy import copy_model
 import numpy as np
 
-def convert_to_transient(target_dir: str, pars: dict, nsteps: int = 1):
+def convert_to_transient(model_dir: str, target_dir: str, pars: dict, nsteps: int = 1):
     
-    steady_model_dir    = pars['sim_ws']
     sname               = pars['sname']
     mname               = pars['mname']
     sfac                = np.genfromtxt(pars['sf_d'],delimiter = ',', names=True)['Wert']
@@ -15,7 +14,7 @@ def convert_to_transient(target_dir: str, pars: dict, nsteps: int = 1):
     welnd               = pars['welnd'] 
     
     
-    copy_model(steady_model_dir, target_dir)
+    copy_model(model_dir, target_dir)
     
     sim = flopy.mf6.MFSimulation.load(sname,
                                       sim_ws = target_dir,

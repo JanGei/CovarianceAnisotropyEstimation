@@ -9,11 +9,13 @@ from flopy.discretization.structuredgrid import StructuredGrid
 from flopy.utils.gridgen import Gridgen
 from shapely.geometry import LineString, MultiPoint
 import numpy as np
+import shutil
 from Virtual_Reality.Field_Generation import generate_fields
 from dependencies.convert_transient import convert_to_transient
 # from Virtual_Reality.transient_run import transient_run
 from dependencies.plotting.plot_fields import plot_fields
 import sys
+import os
 
 def create_reference_model(pars):
     #%% Model Parameters
@@ -37,16 +39,19 @@ def create_reference_model(pars):
     botm    =  np.array([np.zeros((nx[1],nx[0]))])
     
     strgrd = StructuredGrid(delc=delc.astype(int), delr=delr.astype(int), top=top, botm=botm, nlay=nlay)
-    
+    if os.path.exists(gg_ws):
+        shutil.rmtree(gg_ws)
     g = Gridgen(strgrd, model_ws=gg_ws)
-    
     #%% Well Location
     welxy   = pars['welxy']
     welq    = pars['welq']
     welay   = pars['welay']
     
-    # possible refinements
-    g.add_refinement_features(welxy, "point", 4, range(nlay))
+    if pars['refine']:
+        # possible refinements
+        g.add_refinement_features(welxy, "point", 4, range(nlay))
+    else:
+        os.mkdir(gg_ws)
     
     #%% Southern Boudnary - river
     river           = pars['river']
@@ -55,8 +60,9 @@ def create_reference_model(pars):
     rivC            = pars['rivC']
     riv_line        = [tuple(xy) for xy in river]
     
-    # possible refinements
-    g.add_refinement_features([riv_line], "line", 3, range(nlay))
+    if pars['refine']:
+        # possible refinements
+        g.add_refinement_features([riv_line], "line", 3, range(nlay))
     
     #%% Northern Boudnary - Fixed head
     chdl            = pars['chd']
@@ -64,7 +70,7 @@ def create_reference_model(pars):
     # chd_line        = [tuple(xy) for xy in river]
     
     #%% Buildng Grid
-    
+
     g.build()
     disv_props  = g.get_gridprops_vertexgrid()
     vgrid       = flopy.discretization.VertexGrid(**disv_props)
@@ -155,7 +161,10 @@ def create_reference_model(pars):
     result      = ixs.intersect(MultiPoint(welxy))
     well_list   = []
     for i, index in zip(result.cellids, range(len(result.cellids))):
-        pump    = welq[index].astype(float)
+        if pars['welst'][index] > 0:
+            pump = 0
+        else:
+            pump    = welq[index].astype(float)
         layer   = welay[index].astype(int)
         well_list.append([(layer,i),-pump])
         
@@ -219,7 +228,7 @@ def create_reference_model(pars):
     
     
     #%% Run transient simulation
-    sim = convert_to_transient(pars['trs_ws'], pars)
+    convert_to_transient(sim_ws, pars['trs_ws'], pars)
     
     # transient_run(pars)
     

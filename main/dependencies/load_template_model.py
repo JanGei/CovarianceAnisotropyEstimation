@@ -1,13 +1,11 @@
 import flopy
 
-def load_template_model(pars: dict, VR = False, SS = False):
+def load_template_model(pars: dict,  SS = False):
     
-    if VR:
-        temp_m_ws = pars['trs_ws']
-    elif SS:
+    if SS:
         temp_m_ws = pars['ss_ws']
     else:
-        temp_m_ws = pars['tm_ws']
+        temp_m_ws = pars['trs_ws']
     mname = pars['mname']
     
     sim        = flopy.mf6.modflow.MFSimulation.load(

@@ -166,7 +166,10 @@ class Ensemble:
         mean_obs = mean_h[self.obs_cid]
         true_obs = true_h[self.obs_cid]
         self.obs = [true_obs, mean_obs]
-        
+        int1 = true_obs - mean_obs
+        int2 = np.square(int1)
+        int3 = int2/(0.01**2)
+        int4 = np.sum(int3)/len(int3)
         self.ole_nsq[period].append(np.sum(np.square(true_obs - mean_obs)/0.01**2)/mean_obs.size)
         
         # ole for the model up until the current time step
@@ -203,7 +206,7 @@ class Ensemble:
         
         return np.mean(h_f, axis = 1), np.var(h_f, axis = 1)
     
-    def record_state(self, pars: dict, params: list, true_h, period: str, year):
+    def record_state(self, pars: dict, params: list, true_h, period: str):
         
         mean_h, var_h = self.get_mean_var(h = 'ic')
         k_fields = self.get_member_fields(['npf'])
@@ -227,7 +230,7 @@ class Ensemble:
         g.close()
         h.close()
         
-        f = open(os.path.join(direc,  'errors_'+period+str(year)+'.dat'),'a')
+        f = open(os.path.join(direc,  'errors_'+period+'.dat'),'a')
         f.write("{:.4f} ".format(self.ole[period][-1]))
         f.write("{:.4f} ".format(self.te1[period][-1]))
         f.write("{:.4f} ".format(self.te2[period][-1]))
@@ -327,8 +330,6 @@ class Ensemble:
         
         file_paths = [os.path.join(pars['resdir'], 'errors_assimilation.dat'),
                       os.path.join(pars['resdir'], 'errors_prediction.dat'),
-                      os.path.join(pars['resdir'], 'errors_assimilation2.dat'),
-                      os.path.join(pars['resdir'], 'errors_prediction2.dat'),
                       os.path.join(pars['resdir'], 'covariance_data.dat'),
                       os.path.join(pars['resdir'], 'cov_variance.dat'),
                       os.path.join(pars['resdir'], 'covariance_data_par.dat'),
@@ -360,8 +361,6 @@ class Ensemble:
                 os.remove(file_path)
 
         
-
-
     def reset_errors(self):
         self.ole        = {'assimilation': [], 'prediction': []}
         self.ole_nsq    = {'assimilation': [], 'prediction': []}

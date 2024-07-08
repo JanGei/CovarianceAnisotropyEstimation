@@ -172,8 +172,8 @@ if __name__ == '__main__':
     # for t_step in range(pars['nsteps']):
     for t_step in range(pars['nsteps']):
         
-        period, Assimilate, day, year = pars['period'](t_step, pars)  
-        if day == 365:
+        period, Assimilate = pars['period'](t_step, pars)  
+        if t_step/4 == pars['asim_d'][1]:
             MF_Ensemble.reset_errors()
         print('--------')
         print(f'time step {t_step}')
@@ -219,7 +219,7 @@ if __name__ == '__main__':
         if period == "assimilation" or period == "prediction":
             if t_step%4 == 0:
                 MF_Ensemble.model_error(true_h[t_step], mean_h[t_step], var_h[t_step], period)
-                MF_Ensemble.record_state(pars, pars['EnKF_p'], true_h[t_step], period, year)
+                MF_Ensemble.record_state(pars, pars['EnKF_p'], true_h[t_step], period)
             
                 # visualize covariance structures
                 if pars['setup'] == 'office' and Assimilate and t_step%20 == 0:
@@ -231,7 +231,7 @@ if __name__ == '__main__':
                             pars['mat2cv'](mat),
                             pars
                             )
-                    if t_step%40 == 20:
+                    if t_step%40 == 60:
                         compare_mean_true(gwf, [np.squeeze(VR_Model.npf.k.array), MF_Ensemble.meanlogk]) 
                 
                 if pars['printf']: print(f'Plotting and recording took {(time.time() - start_time):.2f} seconds')

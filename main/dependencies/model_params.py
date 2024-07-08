@@ -10,6 +10,7 @@ def create_wells(row_well, col_well, dx):
             well_loc[i*col_well + j, 0] = (19.5 + 10*j) *dx[0] 
             well_loc[i*col_well + j, 1] = (8.5 + 10*i) *dx[1]
     # pumping wells should be at (5, 9, 15, 27, 31)
+    # pumping wells should be at (27, 9, 31, 5, 15)
     return well_loc
 
 def distance_matrix(X1,X2,lx=1,ly=1):
@@ -80,34 +81,22 @@ def extract_truth(M):
 
 def period(t_step, pars):
     
-    day = np.floor(t_step / 4)
-    if day >= 365:
-        if day > pars['asim_d'][3]:
-            period = "prediction"
-            Assimilate = False
-        else:
-            period = "assimilation"
-            if t_step%4 == 0:
-                Assimilate = True
-            else:
-                Assimilate = False
-        year = 2
-    else:
-        if day < pars['asim_d'][0]:
-            period = "pre_run"
-            Assimilate = False
-        elif day > pars['asim_d'][1]:
-            period = "prediction"
-            Assimilate = False
-        else:
-            period = "assimilation"
-            if t_step%4 == 0:
-                Assimilate = True
-            else:
-                Assimilate = False
-        year = 1
+    day = np.floor(t_step / 4) + 1 
     
-    return period, Assimilate, day, year
+    if day > pars['asim_d'][0]:
+        if day > pars['asim_d'][1]:
+            period = "prediction"
+            Assimilate = False
+        else:
+            period = "assimilation"
+            if t_step%4 == 0:
+                Assimilate = True
+            else:
+                Assimilate = False
+    else:
+        period = "pre_run"
+        Assimilate = False
+    return period, Assimilate
 
 
 def ellips_to_matrix(lx1, lx2, ang):
@@ -126,7 +115,7 @@ def get():
     col_well    = 9
     well_loc    = create_wells(row_well, col_well, dx)
     
-    q_idx       = [5, 9, 15, 27, 31]
+    q_idx       = [27, 9, 31, 5, 15]
     mask        = np.full(len(well_loc),True,dtype=bool)
     mask[q_idx] = False
     years = 2
@@ -135,47 +124,47 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 8
+        n_mem  = 80
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         printf = True
         if years == 1:
-            asimdays = [4, 300]
+            asimdays = [50, 300]
         elif years == 2:
-            asimdays = [4, 300, 365, 665]
+            asimdays = [50, 665]
         up_temp = True
         
         if n_mem == 2:
             nprocs = 1
-            up_temp = False
+            up_temp = True #!!
             asimdays = [1, 300]
         
     elif setup == 'binnac':
-        n_mem  = 140
+        n_mem  = 48
         nprocs = psutil.cpu_count()
         up_temp = True
         printf = False
         inspection = False
         if years == 1:
-            asimdays = [25, 300]
+            asimdays = [50, 300]
         elif years == 2:
-            asimdays = [25, 300, 365, 665]
+            asimdays = [50, 665]
     
-    choice = [0, 1]
+    choice = [0, 0]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     
-    nPP = 25
+    nPP = 35
     
-    conditional_flag = True
+    conditional_flag = False
     
     pilot_point_even = False
     scramble_pp = False
     
     l_red = 2
     h_damp = 0.6
-    cov_damp = [0.05, 0.01]
-    npf_damp = 0.05
+    cov_damp = [0.15, 0.05]
+    npf_damp = 0.1
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
     
     
@@ -198,6 +187,7 @@ def get():
 
     
     pars    = {
+        'refine': False,
         'pilotp': pp_flag,
         'nprocs': nprocs,
         'setup' : setup,
@@ -227,10 +217,10 @@ def get():
         'bot'   : np.array([0]),                            # Bottom of aquifer
         'top'   : np.array([50]),                           # Top of aquifer
         'welxy' : np.array(well_loc[q_idx]),                # location of pumps
-        'obsxy' : np.array(well_loc[mask]),                 # location of obs
-        'welq'  : np.array([35, 18, 90, 20, 15])/3600,      # Q of wells [m3s-1]
-        'welst' : np.array([20, 300, 200, 0, 0]),           # start day of pump
-        'welnd' : np.array([150, 365, 365, 200, 300]),      # end day of pump
+        'obsxy' : np.array(well_loc),                       # location of obs
+        'welq'  : np.array([9, 18, 90, 0.09, 0.9])/3600,    # Q of wells [m3s-1]
+        'welst' : np.array([20, asimdays[1], 200, 0, 0]),   # start day of pump
+        'welnd' : np.array([150, 365, 365, 200, 300])*years,# end day of pump
         'welay' : np.array(np.zeros(5)),                    # layer of wells
         'river' : np.array([[0.0,0], [5000,0]]),            # start / end of river
         'rivC'  : 5*1e-4,                                   # river conductance [ms-1]
@@ -261,7 +251,6 @@ def get():
         'n_mem' : n_mem,
         'tm_ws' : os.path.join(ensemb_dir, 'template_model'),
         'trs_ws': os.path.join(Vrdir, 'transient_model'),
-        'ss_ws' : os.path.join(Vrdir, 'model_files'),
         'resdir': os.path.join(parent_directory, 'output'),
         'nsteps': int(years*365*24/6),
         'rotmat': rotation_matrix,

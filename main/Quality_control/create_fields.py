@@ -20,8 +20,8 @@ results = []
 k_fields = []
 pars['valt'] = "good"
 
-for i in range(len(lx)):
-    res = create_k_fields(gwf, pars, pp_xy, pp_cid, test_cov = [[lx[i],100], angle])
+for i in range(10):
+    res = create_k_fields(gwf, pars, pp_xy, pp_cid, test_cov = [[lx[10],100], angle])
     results.append(res)
     k_fields.append(res[0])
 
