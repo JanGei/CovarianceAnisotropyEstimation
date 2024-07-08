@@ -9,11 +9,12 @@ def create_Ensemble(pars: dict) -> list:
     ens_ws      = pars['ens_ws']
     vr_dir      = pars['trs_ws']
     
-    # removing old members
-    directories = [d for d in os.listdir(ens_ws) if os.path.isdir(os.path.join(ens_ws, d))]
-    for d in directories:
-        if d.startswith('member'):
-            shutil.rmtree(os.path.join(ens_ws, d))
+    # removing old Ensemble
+    if os.path.exists(ens_ws) and os.path.isdir(ens_ws):
+        shutil.rmtree(ens_ws)
+        os.mkdir(ens_ws)
+    else:
+        os.mkdir(ens_ws)
         
     for i in range(n_mem):
         mem_dir = mem_ws + f'{i}'
