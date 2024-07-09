@@ -9,7 +9,7 @@ sys.path.append('..')
 
 class MFModel:
     
-    def __init__(self, direc: str,  pars, maxcl = [], l_angs = [], ellips = []):
+    def __init__(self, direc: str,  pars, obs_cid, maxcl = [], l_angs = [], ellips = []):
         self.direc      = direc
         self.mname      = pars['mname']
         self.pars       = pars
@@ -32,6 +32,7 @@ class MFModel:
         self.old_npf    = []
         self.n_failure  = 0
         self.n_neg_def  = 0
+        self.obs_cid    = [int(i) for i in obs_cid]
         if pars['pilotp']:
             self.ellips_mat = np.array([[ellips[0], ellips[1]], [ellips[1], ellips[2]]])
             self.lx         = [l_angs[0], l_angs[1]]
@@ -52,10 +53,10 @@ class MFModel:
         self.ic.strt.set_data(self.get_field('h')['h'])
         self.ic.write()
        
-    def Kalman_vec(self, h_mask, obs_cid, pp_cid = []):
+    def Kalman_vec(self, h_mask, pp_cid = []):
         data = self.get_field(['h', 'npf', 'cov_data'])
         
-        ysim = np.squeeze(data['h'][obs_cid])
+        ysim = np.squeeze(data['h'][self.obs_cid])
         h_nobc = data['h'][~h_mask]
 
         if 'cov_data' in self.pars['EnKF_p']:

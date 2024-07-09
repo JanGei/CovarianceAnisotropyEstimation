@@ -12,6 +12,7 @@ from dependencies.plotting.ellipses import ellipses
 from dependencies.plotting.compare_mean import compare_mean_true
 from dependencies.plotting.check_observations import check_observations
 # from dependencies.plotting.plot_k_fields import plot_k_fields
+from dependencies.shoutout_difference import shout_dif
 from dependencies.plotting.plot_k_fields import plot_k_fields
 from objects.Ensemble import Ensemble
 from objects.MFModel import MFModel
@@ -45,8 +46,7 @@ if __name__ == '__main__':
     
     if pars['up_tem']:
         create_reference_model(pars)
-        
-    VR_Model = Virtual_Reality(pars)
+    
     
     print(f'Joblib initiated with {nprocs} processors')
     print(f'The template model is located in {pars["tm_ws"]}')
@@ -58,6 +58,7 @@ if __name__ == '__main__':
     sim, gwf = load_template_model(pars)
     
     obs_cid = intersect_with_grid(gwf, pars['obsxy'])
+    VR_Model = Virtual_Reality(pars, obs_cid)
     
     k_fields = []
     cor_ellips = []
@@ -123,9 +124,11 @@ if __name__ == '__main__':
     models = Parallel(n_jobs=nprocs, backend="threading")(delayed(MFModel)(
         model_dir[idx],
         pars,
+        obs_cid,
         near_dist,
         l_angs[idx],
-        cor_ellips[idx]) 
+        cor_ellips[idx],
+        ) 
         for idx in range(n_mem)
         )
     
@@ -136,8 +139,8 @@ if __name__ == '__main__':
     
     MF_Ensemble     = Ensemble(models,
                                pars['pilotp'],
-                               nprocs,
                                obs_cid,
+                               nprocs,
                                mask_chd,
                                np.array(l_angs),
                                np.array(cor_ellips),
@@ -159,14 +162,10 @@ if __name__ == '__main__':
     if pars['printf']: print(f'Ensemble is initiated and respective k-fields are set in {(time.time() - start_time):.2f} seconds')
     
     #%%
-    X, Ysim, _ = MF_Ensemble.get_Kalman_X_Y()
+    X, Ysim = MF_Ensemble.get_Kalman_X_Y()
     damp = MF_Ensemble.get_damp(X, pars)
     EnKF = EnsembleKalmanFilter(X, Ysim, damp = damp, eps = pars['eps'])
-    true_h = np.zeros((pars['nsteps'],len(VR_Model.cxy)))
-    mean_h = np.zeros((pars['nsteps'],len(VR_Model.cxy)))
-    var_h = np.zeros((pars['nsteps'],len(VR_Model.cxy)))
     true_obs = np.zeros((pars['nsteps'],len(obs_cid)))
-    mean_obs = np.zeros((pars['nsteps'],len(obs_cid)))
     MF_Ensemble.remove_current_files(pars)
 
     # for t_step in range(pars['nsteps']):
@@ -175,6 +174,7 @@ if __name__ == '__main__':
         period, Assimilate = pars['period'](t_step, pars)  
         if t_step/4 == pars['asim_d'][1]:
             MF_Ensemble.reset_errors()
+            
         print('--------')
         print(f'time step {t_step}')
         start_time_ts = time.time()
@@ -195,31 +195,38 @@ if __name__ == '__main__':
  
         if Assimilate:
             # print('---')
+            
             start_time = time.time()
-            X, Ysim, mean_obs[t_step,:] = MF_Ensemble.get_Kalman_X_Y()
+            X, Ysim = MF_Ensemble.get_Kalman_X_Y()
             EnKF.update_X_Y(X, Ysim)
             EnKF.analysis()
-            true_obs[t_step,:] = np.squeeze(VR_Model.get_observations(obs_cid))
+            true_obs[t_step,:] = np.squeeze(VR_Model.get_observations())
+            shout_dif(true_obs[t_step,:], np.mean(Ysim, axis = 1))
             EnKF.Kalman_update(true_obs[t_step,:].T)
 
             if pars['printf']: print(f'Ensemble Kalman Filter performed in  {(time.time() - start_time):.2f} seconds')
 
             start_time = time.time()
             MF_Ensemble.apply_X(EnKF.X, pars['EnKF_p'])
+            
+            
+            interim = [int(i+48-100) for i in obs_cid]
+            shout_dif(true_obs[t_step,:], np.mean(EnKF.X, axis = 1)[interim])
 
             if pars['printf']: print(f'Application of results plus kriging took {(time.time() - start_time):.2f} seconds')
         else:
             # Very important: update initial conditions if youre not assimilating
             MF_Ensemble.update_initial_heads()
         
-        true_h[t_step,:] = VR_Model.update_ic()
-        mean_h[t_step,:], var_h[t_step,:] = MF_Ensemble.get_mean_var(h = 'ic')
+        # Update the intial conditiopns of the "true model"
+        true_h = VR_Model.update_ic()
 
         start_time = time.time()
         if period == "assimilation" or period == "prediction":
             if t_step%4 == 0:
-                MF_Ensemble.model_error(true_h[t_step], mean_h[t_step], var_h[t_step], period)
-                MF_Ensemble.record_state(pars, pars['EnKF_p'], true_h[t_step], period)
+
+                var_h = MF_Ensemble.model_error(true_h, period)
+                MF_Ensemble.record_state(pars, pars['EnKF_p'], np.squeeze(true_h), period)
             
                 # visualize covariance structures
                 if pars['setup'] == 'office' and Assimilate and t_step%20 == 0:
@@ -231,8 +238,8 @@ if __name__ == '__main__':
                             pars['mat2cv'](mat),
                             pars
                             )
-                    if t_step%40 == 60:
-                        compare_mean_true(gwf, [np.squeeze(VR_Model.npf.k.array), MF_Ensemble.meanlogk]) 
+                    if t_step%60 == 0:
+                        compare_mean_true(gwf, [np.squeeze(VR_Model.npf.k.array), MF_Ensemble.meanlogk, var_h], pp_xy[pars['f_m_id']]) 
                 
                 if pars['printf']: print(f'Plotting and recording took {(time.time() - start_time):.2f} seconds')
                 if pars['printf']: print(f'Entire Step took {(time.time() - start_time_ts):.2f} seconds')

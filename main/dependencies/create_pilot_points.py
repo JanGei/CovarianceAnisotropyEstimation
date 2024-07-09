@@ -72,7 +72,6 @@ def create_pilot_points(gwf, pars:dict,):
 
     neardist = np.mean(np.array(dist))
 
-    
     return pp_cid_accepted.astype(int), pp_xy_accepted.astype(int), neardist
 
 

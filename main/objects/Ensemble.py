@@ -1,16 +1,13 @@
 from joblib import Parallel, delayed
 import numpy as np
 import os
-import time
     
 class Ensemble:
     
-    def __init__(self, members: list, pilotp_flag, nprocs: int, obs_cid: list, mask, ellipses = [], ellipses_par = [], pp_cid = [], pp_xy = [], pp_k = []):
+    def __init__(self, members: list, pilotp_flag, obs_cid, nprocs: int, mask, ellipses = [], ellipses_par = [], pp_cid = [], pp_xy = [], pp_k = []):
         self.members    = members
         self.nprocs     = nprocs
         self.n_mem      = len(self.members)
-        self.obs_cid    = [int(i) for i in obs_cid]
-        self.ny         = len(obs_cid)
         self.h_mask     = mask.astype(bool)
         self.ole        = {'assimilation': [], 'prediction': []}
         self.ole_nsq    = {'assimilation': [], 'prediction': []}
@@ -20,6 +17,7 @@ class Ensemble:
         self.te2_nsq    = {'assimilation': [], 'prediction': []}
         self.obs        = []
         self.pilotp_flag= pilotp_flag
+        self.obs_cid    = [int(i) for i in obs_cid]
         self.meanlogk   = []
         self.meank   = []
         if pilotp_flag:
@@ -66,6 +64,10 @@ class Ensemble:
             damp[1] = val[1][1]
             if 'npf' in pars['EnKF_p']:
                 damp[cl:cl+len(self.pp_cid)] = val[2]
+                
+                if pars['f_meas']:
+                    ids = cl + pars['f_m_id']
+                    damp[ids] = val[2] / 10
         else:
             if self.pilotp_flag:
                 damp[:len(self.pp_cid)] = val[1]
@@ -119,7 +121,6 @@ class Ensemble:
 
         result = Parallel(n_jobs=self.nprocs, backend="threading")(delayed(self.members[idx].Kalman_vec)(
             self.h_mask,
-            self.obs_cid,
             self.pp_cid 
             ) 
             for idx in range(self.n_mem)
@@ -133,7 +134,7 @@ class Ensemble:
         
         X = np.vstack(xs).T
         Ysim = np.vstack(ysims).T
-        return X, Ysim, np.mean(Ysim, axis = 1)
+        return X, Ysim
     
     def update_transient_data(self, rch_data, wel_data, riv_data):
 
@@ -156,20 +157,16 @@ class Ensemble:
             )
 
     
-    def model_error(self,  true_h, mean_h, var_h, period):
+    def model_error(self,  true_h, period):
         
-        mean_h = np.squeeze(mean_h)
-        var_h = np.squeeze(var_h)
+        mean_h, var_h = self.get_mean_var(h = 'ic')
         true_h = np.squeeze(true_h)
         
         # analogous for ole
         mean_obs = mean_h[self.obs_cid]
         true_obs = true_h[self.obs_cid]
         self.obs = [true_obs, mean_obs]
-        int1 = true_obs - mean_obs
-        int2 = np.square(int1)
-        int3 = int2/(0.01**2)
-        int4 = np.sum(int3)/len(int3)
+
         self.ole_nsq[period].append(np.sum(np.square(true_obs - mean_obs)/0.01**2)/mean_obs.size)
         
         # ole for the model up until the current time step

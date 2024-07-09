@@ -15,7 +15,10 @@ def create_Ensemble(pars: dict) -> list:
         os.mkdir(ens_ws)
     else:
         os.mkdir(ens_ws)
-        
+    
+    # create template model
+    shutil.copytree(vr_dir, pars['tm_ws'])
+    
     for i in range(n_mem):
         mem_dir = mem_ws + f'{i}'
     

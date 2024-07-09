@@ -3,7 +3,7 @@ import numpy as np
 
 class Virtual_Reality:
     
-    def __init__(self,  pars):
+    def __init__(self,  pars, obs_cid):
         self.direc      = pars['trs_ws']
         self.mname      = pars['mname']
         self.pars       = pars
@@ -21,6 +21,7 @@ class Virtual_Reality:
         self.ic         = self.gwf.ic
         self.chd        = self.gwf.chd
         self.mg         = self.gwf.modelgrid
+        self.obs_cid    = [int(i) for i in obs_cid]
         self.cxy        = np.vstack((self.mg.xyzcellcenters[0], self.mg.xyzcellcenters[1])).T
         self.dx         = pars['dx']
 
@@ -98,12 +99,7 @@ class Virtual_Reality:
         self.ic.write()
         return h_field
     
-    def get_observations(self, obs_cid):
-        h = np.squeeze(self.get_field(['h'])['h'])
-        #perturb these measurements individually for every ensemble member - EnKF?
-        ny = len(obs_cid)
-        Ymeas = np.zeros((ny,1))
-        for i in range(ny):
-            Ymeas[i,0] = h[obs_cid[i]]
-        
-        return Ymeas
+    def get_observations(self):
+        data = np.squeeze(self.get_field(['h'])['h'])
+        ysim = data[self.obs_cid]
+        return ysim

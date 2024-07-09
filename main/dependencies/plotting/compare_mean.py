@@ -3,7 +3,7 @@ import numpy as np
 import flopy
 from cmcrameri import cm
 
-def compare_mean_true(gwf, k_fields):
+def compare_mean_true(gwf, k_fields, poi):
     
     kmin = np.min(np.log(k_fields[0]))
     kmax = np.max(np.log(k_fields[0]))
@@ -33,6 +33,12 @@ def compare_mean_true(gwf, k_fields):
     axf2 = flopy.plot.PlotMapView(model=gwf, ax=ax2)
     c2 = axf2.plot_array((gwf.npf.k.array), cmap=cm.roma, alpha=1)
     ax2.set_aspect('equal')
+    
+    # ax2 = axes[2]
+    # gwf.npf.k.set_data((k_fields[1])/ np.log((k_fields[0])))
+    # axf2 = flopy.plot.PlotMapView(model=gwf, ax=ax2)
+    # c2 = axf2.plot_array((gwf.npf.k.array), cmap=cm.roma, alpha=1)
+    # ax2.set_aspect('equal')
 
 
     # Add colorbars
@@ -45,5 +51,10 @@ def compare_mean_true(gwf, k_fields):
     # Set custom bounds for colorbars
     cbar0.mappable.set_clim(vmin=kmin, vmax=kmax)
     cbar1.mappable.set_clim(vmin=0.5, vmax=1.5)
-
+    
+    if poi.any():
+        ax0.scatter(poi[:,0], poi[:,1], c = 'black', marker = 'x', s = 3)
+        ax1.scatter(poi[:,0], poi[:,1], c = 'black', marker = 'x', s = 6)
+        ax2.scatter(poi[:,0], poi[:,1], c = 'black', marker = 'x', s = 9)
+        
     plt.show()    

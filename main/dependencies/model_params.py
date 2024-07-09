@@ -8,8 +8,11 @@ def create_wells(row_well, col_well, dx):
     for i in range(row_well):
         for j in range(col_well):
             well_loc[i*col_well + j, 0] = (19.5 + 10*j) *dx[0] 
-            well_loc[i*col_well + j, 1] = (8.5 + 10*i) *dx[1]
-    # pumping wells should be at (5, 9, 15, 27, 31)
+            well_loc[i*col_well + j, 1] = (48.5 - 10*i) *dx[1] 
+            # well_loc[i*col_well + j, 0] = (19.5 + 10*j) *dx[0] 
+            # well_loc[i*col_well + j, 1] = (8.5 + 10*i) *dx[1]
+
+
     # pumping wells should be at (27, 9, 31, 5, 15)
     return well_loc
 
@@ -124,23 +127,23 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 80
+        n_mem  = 40
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         printf = True
         if years == 1:
-            asimdays = [50, 300]
+            asimdays = [10, 300]
         elif years == 2:
-            asimdays = [50, 665]
+            asimdays = [10, 665]
         up_temp = True
         
         if n_mem == 2:
             nprocs = 1
-            up_temp = True #!!
+            up_temp = True 
             asimdays = [1, 300]
         
     elif setup == 'binnac':
-        n_mem  = 48
+        n_mem  = 448
         nprocs = psutil.cpu_count()
         up_temp = True
         printf = False
@@ -150,21 +153,21 @@ def get():
         elif years == 2:
             asimdays = [50, 665]
     
-    choice = [0, 0]
+    choice = [0, 1]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     
-    nPP = 35
+    nPP = 45
     
     conditional_flag = False
-    
+    field_meas_flag = True
     pilot_point_even = False
     scramble_pp = False
     
     l_red = 2
     h_damp = 0.6
-    cov_damp = [0.15, 0.05]
-    npf_damp = 0.1
+    cov_damp = [0.05, 0.05]
+    npf_damp = 0.05
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
     
     
@@ -185,7 +188,11 @@ def get():
         else:
             valtype = "random"
 
+    if field_meas_flag:
+        np.random.seed(42)
+        meas_loc = np.random.randint(0, nPP, 5)
     
+        
     pars    = {
         'refine': False,
         'pilotp': pp_flag,
@@ -232,9 +239,11 @@ def get():
         'asim_d': asimdays,
         'mname' : "Reference",
         'sname' : "Reference",
+        'f_meas': field_meas_flag,
         'inspec': inspection,
         'printf': printf,
         'ppeven': pilot_point_even,
+        'f_m_id': meas_loc,
         'scramb': scramble_pp,
         'sim_ws': os.path.join(Vrdir, 'model_files'),
         'vr_h_d': os.path.join(Vrdir, 'model_data', 'head_ref.npy'),

@@ -23,8 +23,8 @@ def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = [], con
         factor = 0.25
     
     if pars['covt'] == 'random':
-        lx = np.array([np.random.randint(pars['dx'][0]*3, np.min(pars['nx'] * pars['dx']*factor)),
-                       np.random.randint(pars['dx'][1]*3, np.min(pars['nx'] * pars['dx'])*factor/2)])
+        lx = np.array([np.random.randint(pars['dx'][0]*3, np.min(pars['nx'] * pars['dx'])*factor),
+                       np.random.randint(pars['dx'][1]*3, np.min(pars['nx'] * pars['dx'])*factor/3)])
         ang = np.random.uniform(-np.pi/2, np.pi/2)
         if lx[0] < lx[1]:
             lx = np.flip(lx)
@@ -54,6 +54,13 @@ def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = [], con
         mu = pars['mu'][0]
         std = np.sqrt(pars['sigma'][0])
         pp_k = np.random.normal(mu, std, len(pp_cid)) 
+    
+    #correcting a few pilot points if measurements are available
+    if pars['f_meas']:
+        true_ppk = np.log(k_ref[pp_cid.astype(int)]) 
+        true_ppk_pert = true_ppk + 0.05 * np.random.randn(*pp_k.shape) * true_ppk
+        pp_k[pars['f_m_id']] = true_ppk_pert[pars['f_m_id']]
+
     
     if conditional:
         field, field2f = conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy)
