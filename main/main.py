@@ -9,9 +9,10 @@ from dependencies.get_transient_data import get_transient_data
 from dependencies.intersect_with_grid import intersect_with_grid
 from dependencies.generate_mask import chd_mask
 from dependencies.plotting.ellipses import ellipses
-from dependencies.plotting.compare_mean import compare_mean_true
+from dependencies.plotting.compare_mean import compare_mean_true 
+from dependencies.plotting.compare_mean_h import compare_mean_true_head
 from dependencies.plotting.check_observations import check_observations
-# from dependencies.plotting.plot_k_fields import plot_k_fields
+from dependencies.plotting.poi import plot_POI
 from dependencies.shoutout_difference import shout_dif
 from dependencies.plotting.plot_k_fields import plot_k_fields
 from objects.Ensemble import Ensemble
@@ -77,6 +78,7 @@ if __name__ == '__main__':
         result = Parallel(n_jobs=nprocs, backend = "threading")(delayed(create_k_fields)(
             gwf,
             pars, 
+            VR_Model.npf.k.array,
             pp_xy,
             pp_cid,
             conditional = pars['condfl']
@@ -107,10 +109,10 @@ if __name__ == '__main__':
             cor_ellips.append([])
             l_angs.append([])
             pp_xy, pp_cid = [], []
-        
+
     # save original fields
-    if pars['setup'] == 'binnac':
-        np.save(os.path.join(pars['resdir'] ,'k_ensemble_ini.npy'), k_fields)
+    # if pars['setup'] == 'binnac':
+    #     np.save(os.path.join(pars['resdir'] ,'k_ensemble_ini.npy'), k_fields)
     
     mask_chd = chd_mask(gwf)
     
@@ -179,10 +181,10 @@ if __name__ == '__main__':
         print(f'time step {t_step}')
         start_time_ts = time.time()
         if t_step%4 == 0:
-            rch_data, wel_data, riv_data = get_transient_data(pars, t_step)
+            data, packages = get_transient_data(pars, t_step)
 
-            MF_Ensemble.update_transient_data(rch_data, wel_data, riv_data)
-            VR_Model.update_transient_data(rch_data, wel_data, riv_data)
+            MF_Ensemble.update_transient_data(data, packages)
+            VR_Model.update_transient_data(data, packages)
 
             if pars['printf']: print(f'transient data loaded and applied in {(time.time() - start_time_ts):.2f} seconds')
         
@@ -210,7 +212,7 @@ if __name__ == '__main__':
             MF_Ensemble.apply_X(EnKF.X, pars['EnKF_p'])
             
             
-            interim = [int(i+48-100) for i in obs_cid]
+            interim = [int(i+pars['n_PP']+3-100) for i in obs_cid]
             shout_dif(true_obs[t_step,:], np.mean(EnKF.X, axis = 1)[interim])
 
             if pars['printf']: print(f'Application of results plus kriging took {(time.time() - start_time):.2f} seconds')
@@ -225,7 +227,7 @@ if __name__ == '__main__':
         if period == "assimilation" or period == "prediction":
             if t_step%4 == 0:
 
-                var_h = MF_Ensemble.model_error(true_h, period)
+                mean_h, var_h = MF_Ensemble.model_error(true_h, period)
                 MF_Ensemble.record_state(pars, pars['EnKF_p'], np.squeeze(true_h), period)
             
                 # visualize covariance structures
@@ -238,8 +240,9 @@ if __name__ == '__main__':
                             pars['mat2cv'](mat),
                             pars
                             )
-                    if t_step%60 == 0:
-                        compare_mean_true(gwf, [np.squeeze(VR_Model.npf.k.array), MF_Ensemble.meanlogk, var_h], pp_xy[pars['f_m_id']]) 
+                    if t_step%20 == 0:
+                        compare_mean_true(gwf, [np.squeeze(VR_Model.npf.k.array), MF_Ensemble.meanlogk, MF_Ensemble.varlogk], pp_xy[pars['f_m_id']])
+                        compare_mean_true_head(gwf, [np.squeeze(true_h), np.squeeze(mean_h), np.squeeze(var_h)], pp_xy[pars['f_m_id']]) 
                 
                 if pars['printf']: print(f'Plotting and recording took {(time.time() - start_time):.2f} seconds')
                 if pars['printf']: print(f'Entire Step took {(time.time() - start_time_ts):.2f} seconds')

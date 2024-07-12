@@ -121,20 +121,20 @@ def get():
     q_idx       = [27, 9, 31, 5, 15]
     mask        = np.full(len(well_loc),True,dtype=bool)
     mask[q_idx] = False
-    years = 2
+    years = 1
     
     cov_mods    = ['Exponential', 'Matern', 'Gaussian']
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 40
+        n_mem  = 140
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         printf = True
         if years == 1:
-            asimdays = [10, 300]
+            asimdays = [50, 300]
         elif years == 2:
-            asimdays = [10, 665]
+            asimdays = [50, 665]
         up_temp = True
         
         if n_mem == 2:
@@ -157,12 +157,12 @@ def get():
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     
-    nPP = 45
+    nPP = 40
     
     conditional_flag = False
-    field_meas_flag = True
+    field_meas_flag = False
     pilot_point_even = False
-    scramble_pp = False
+    scramble_pp = True
     
     l_red = 2
     h_damp = 0.6
@@ -189,8 +189,11 @@ def get():
             valtype = "random"
 
     if field_meas_flag:
-        np.random.seed(42)
-        meas_loc = np.random.randint(0, nPP, 5)
+        np.random.seed(85)
+        # meas_loc = np.random.randint(0, nPP, 7)
+        meas_loc = np.random.choice(np.arange(0, nPP), np.min([nPP,5]), replace=False)
+    else:
+        meas_loc = []
     
         
     pars    = {
@@ -235,7 +238,7 @@ def get():
         'chd'   : np.array([[0.0,2500], [5000,2500]]),      # start / end of river
         'chdh'  : 15,                                       # initial stage of riv
         'ss'    : 1e-5,                                     # specific storage
-        'sy'    : 0.15,                                     # specific yield
+        'sy'    : 0.4,                                      # specific yield
         'asim_d': asimdays,
         'mname' : "Reference",
         'sname' : "Reference",

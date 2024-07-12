@@ -29,7 +29,7 @@ def compare_mean_true(gwf, k_fields, poi):
 
     # Plot lower
     ax2 = axes[2]
-    gwf.npf.k.set_data((k_fields[1])/ np.log((k_fields[0])))
+    gwf.npf.k.set_data(k_fields[2])
     axf2 = flopy.plot.PlotMapView(model=gwf, ax=ax2)
     c2 = axf2.plot_array((gwf.npf.k.array), cmap=cm.roma, alpha=1)
     ax2.set_aspect('equal')
@@ -50,7 +50,8 @@ def compare_mean_true(gwf, k_fields, poi):
     
     # Set custom bounds for colorbars
     cbar0.mappable.set_clim(vmin=kmin, vmax=kmax)
-    cbar1.mappable.set_clim(vmin=0.5, vmax=1.5)
+    # cbar1.mappable.set_clim(vmin=0, vmax=1.5)
+    # cbar1.mappable.set_clim(vmin=0.5, vmax=1.5)
     
     if poi.any():
         ax0.scatter(poi[:,0], poi[:,1], c = 'black', marker = 'x', s = 3)

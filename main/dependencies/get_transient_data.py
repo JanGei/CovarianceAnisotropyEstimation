@@ -11,13 +11,22 @@ def get_transient_data(pars: dict, t_step: int):
     rivh  = np.genfromtxt(pars['rh_d'],delimiter = ',', names=True)['Wert']
 
     rch_data = abs(np.array(r_ref).flatten()) * sfac[t_step]
-    wel_data = np.zeros(5)
-    time = 0.25 * t_step
-    
-    for i in range(len(welq)):
-        if welst[i] <= time%365 and welnd[i] > time%365:
-            wel_data[i] = -welq[i]
     riv_data = rivh[t_step]
     
+    # check if we need to set up new wel files
+    day = 0.25 * t_step
+    
+    if int(day) in pars['welst'] or int(day) in pars['welnd']:
         
-    return rch_data, wel_data, riv_data
+        wel_data = np.zeros(5)
+        for i in range(len(welq)):
+            if welst[i] <= day and welnd[i] > day:
+                wel_data[i] = -welq[i]
+                
+        return [rch_data, riv_data, wel_data], ['rch', 'riv', 'wel']
+    else:
+        return [rch_data, riv_data], ['rch', 'riv']
+    
+    
+        
+    

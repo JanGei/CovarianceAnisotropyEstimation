@@ -69,21 +69,24 @@ class Virtual_Reality:
                 
         return fields
     
-    def update_transient_data(self,rch_data, wel_data, riv_data):
-        
-        spds = self.get_field(['rch', 'wel', 'riv'])
-        
-        rch_spd = spds['rch']
-        wel_spd = spds['wel']
-        riv_spd = spds['riv']
+    def update_transient_data(self, data, packages):
 
+        spds = self.get_field(packages)
+        rch_spd = spds['rch']
+        riv_spd = spds['riv']
         rivhl = np.ones(np.shape(riv_spd[0]['cellid']))
         
-        rch_spd[0]['recharge'] = rch_data
-        riv_spd[0]['stage'] = rivhl * riv_data
-        wel_spd[0]['q'] = wel_data
+        rch_spd[0]['recharge'] = data[0]
+        riv_spd[0]['stage'] = rivhl * data[1]
         
-        self.set_field([rch_spd, wel_spd, riv_spd],['rch', 'wel', 'riv']) 
+        if 'wel' in packages:
+            wel_spd = spds['wel']
+            wel_spd[0]['q'] = data[2]
+            spds = [rch_spd, riv_spd, wel_spd]
+        else:
+            spds = [rch_spd, riv_spd]
+        
+        self.set_field(spds, packages) 
         
     def simulation(self):
         success, buff = self.sim.run_simulation()

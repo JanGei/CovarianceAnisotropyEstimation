@@ -49,7 +49,7 @@ class EnsembleKalmanFilter:
         Y_prime = self.Ysim  - Ymean
         
         # Measurement uncertainty matrix
-        R       = np.identity(self.n_obs) * self.eps 
+        R       = np.identity(self.n_obs) * self.eps**2
         
         # Covariance matrix
         Cyy     = 1/(self.n_mem-1)*np.matmul((Y_prime),(Y_prime).T) + R 
@@ -63,7 +63,7 @@ class EnsembleKalmanFilter:
         Y_obs = np.tile(Y_obs, (self.n_mem,1)).T
         # perturb measurements
         # HERE COULD BE A SOURCE FOR LARGER ERRORS
-        Y_obs -= np.random.normal(loc=0, scale=np.sqrt(self.eps), size=Y_obs.shape)
+        Y_obs -= np.random.normal(loc=0, scale=self.eps, size=Y_obs.shape)
         self.X += 1/(self.n_mem-1) * (self.damp *
                     np.matmul(
                         self.X_prime, np.matmul(

@@ -20,6 +20,7 @@ class Ensemble:
         self.obs_cid    = [int(i) for i in obs_cid]
         self.meanlogk   = []
         self.meank   = []
+        self.vark   = []
         if pilotp_flag:
             self.ellipses   = ellipses
             self.ellipses_par = ellipses_par
@@ -67,7 +68,7 @@ class Ensemble:
                 
                 if pars['f_meas']:
                     ids = cl + pars['f_m_id']
-                    damp[ids] = val[2] / 10
+                    damp[ids] = val[2] / 50
         else:
             if self.pilotp_flag:
                 damp[:len(self.pp_cid)] = val[1]
@@ -136,22 +137,27 @@ class Ensemble:
         Ysim = np.vstack(ysims).T
         return X, Ysim
     
-    def update_transient_data(self, rch_data, wel_data, riv_data):
+    def update_transient_data(self, data, packages):
 
-        spds = self.members[0].get_field(['rch', 'wel', 'riv'])
+        spds = self.members[0].get_field(packages)
         rch_spd = spds['rch']
-        wel_spd = spds['wel']
         riv_spd = spds['riv']
         rivhl = np.ones(np.shape(riv_spd[0]['cellid']))
-        rch_spd[0]['recharge'] = rch_data
-        riv_spd[0]['stage'] = rivhl * riv_data
-        wel_spd[0]['q'] = wel_data
+        
+        rch_spd[0]['recharge'] = data[0]
+        riv_spd[0]['stage'] = rivhl * data[1]
+        
+        if 'wel' in packages:
+            wel_spd = spds['wel']
+            wel_spd[0]['q'] = data[2]
+            spds = [rch_spd, riv_spd, wel_spd]
+        else:
+            spds = [rch_spd, riv_spd]
 
         
-        # this is the part that takes the most time 
         Parallel(n_jobs=self.nprocs)(delayed(self.members[idx].set_field)(
-            [rch_spd, wel_spd, riv_spd],
-            ['rch', 'wel', 'riv']
+            spds,
+            packages
             ) 
             for idx in range(self.n_mem)
             )
@@ -162,28 +168,38 @@ class Ensemble:
         mean_h, var_h = self.get_mean_var(h = 'ic')
         true_h = np.squeeze(true_h)
         
-        # analogous for ole
         mean_obs = mean_h[self.obs_cid]
         true_obs = true_h[self.obs_cid]
         self.obs = [true_obs, mean_obs]
-
-        self.ole_nsq[period].append(np.sum(np.square(true_obs - mean_obs)/0.01**2)/mean_obs.size)
-        
-        # ole for the model up until the current time step
-        self.ole[period].append(np.sqrt(np.sum(self.ole_nsq[period])/len(self.ole_nsq[period])))
         
         # calculating nrmse without root for later summation
-        true_h = true_h[~self.h_mask]
-        mean_h = mean_h[~self.h_mask]
-        var_h = var_h[~self.h_mask]
+        true_h_m = true_h[~self.h_mask]
+        mean_h_m = mean_h[~self.h_mask]
+        var_h_m = var_h[~self.h_mask]
         var_te2 = (true_h + mean_h)/2
         
-        self.te1_nsq[period].append(np.sum(np.square(true_h - mean_h)/var_h))
-        self.te2_nsq[period].append(np.sum(np.square(true_h - mean_h)/var_te2**2))
         
-        # nrmse for the model up until the current time step
-        self.te1[period].append(np.sqrt(np.sum(self.te1_nsq[period])/len(self.te1_nsq[period])/mean_h.size))
-        self.te2[period].append(np.sqrt(np.sum(self.te2_nsq[period])/len(self.te2_nsq[period])/mean_h.size))
+        # Computing normalized squared error only considering nodes
+        node_ole = np.mean(true_obs - mean_obs)**2/(0.01**2)
+        node_te1 = np.mean(true_h_m - mean_h_m)**2/var_h_m
+        node_te2 = np.mean(true_h_m - mean_h_m)**2/(var_te2**2)
+        
+        # Append node error to list
+        self.ole_nsq[period].append(node_ole)
+        self.te1_nsq[period].append(node_te1)
+        self.te2_nsq[period].append(node_te2)
+
+        # Calculate NRMSE over all node calculations
+        time_ole = np.sqrt(np.mean(self.ole_nsq[period]))
+        time_te1 = np.sqrt(np.mean(self.te1_nsq[period]))
+        time_te2 = np.sqrt(np.mean(self.te2_nsq[period]))
+
+        # Append error to resulting list
+        self.ole[period].append(time_ole)
+        self.te1[period].append(time_te1)
+        self.te2[period].append(time_te2)
+        
+        return mean_h, var_h
     
     def get_member_fields(self, params):
         
@@ -209,6 +225,7 @@ class Ensemble:
         k_fields = self.get_member_fields(['npf'])
         k_fields = np.array([field['npf'] for field in k_fields]).squeeze()
         self.meanlogk = np.mean(np.log(k_fields), axis = 0)
+        self.varlogk = np.var(np.log(k_fields), axis = 0)
         self.meank = np.mean(k_fields, axis = 0)
         
         direc = pars['resdir']
@@ -312,10 +329,14 @@ class Ensemble:
                 g.close()
             
             f = open(os.path.join(direc,  'meanlogk.dat'),'a')
+            g = open(os.path.join(direc,  'varlogk.dat'),'a')
             for i in range(len(self.meanlogk)):
                 f.write("{:.8f} ".format(self.meanlogk[i]))
+                f.write("{:.8f} ".format(self.varlogk[i]))
             f.write('\n')
+            g.write('\n')
             f.close()
+            g.close()
             
             f = open(os.path.join(direc,  'meank.dat'),'a')
             for i in range(len(self.meank)):
@@ -338,7 +359,7 @@ class Ensemble:
                       os.path.join(pars['resdir'], 'obs_true.dat'),
                       os.path.join(pars['resdir'], 'meank.dat'),
                       os.path.join(pars['resdir'], 'meanlogk.dat'),
-                      os.path.join(pars['resdir'], 'k_mean.dat'),
+                      os.path.join(pars['resdir'], 'varlogk.dat'),
                       os.path.join(pars['resdir'], 'h_mean.dat'),
                       os.path.join(pars['resdir'], 'h_var.dat'),
                       os.path.join(pars['resdir'], 'obs_mean.dat'),

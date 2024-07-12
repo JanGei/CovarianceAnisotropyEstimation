@@ -2,12 +2,11 @@ import numpy as np
 from dependencies.conditional_k import conditional_k
 from dependencies.Kriging import Kriging
 
-def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = [], conditional = True, random = True):
+def create_k_fields(gwf, pars: dict, k_ref, pp_xy = [], pp_cid = [], test_cov = [], conditional = True, random = True):
     
     clx     = pars['lx']
     angles  = pars['ang']
     sigma   = pars['sigma'][0]
-    k_ref   = np.loadtxt(pars['k_r_d'], delimiter = ',')
     dx      = pars['dx']
     
     mg = gwf.modelgrid
@@ -57,7 +56,7 @@ def create_k_fields(gwf, pars: dict, pp_xy = [], pp_cid = [], test_cov = [], con
     
     #correcting a few pilot points if measurements are available
     if pars['f_meas']:
-        true_ppk = np.log(k_ref[pp_cid.astype(int)]) 
+        true_ppk = np.log(np.squeeze(k_ref)[pp_cid.astype(int)]) 
         true_ppk_pert = true_ppk + 0.05 * np.random.randn(*pp_k.shape) * true_ppk
         pp_k[pars['f_m_id']] = true_ppk_pert[pars['f_m_id']]
 
