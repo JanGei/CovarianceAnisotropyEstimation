@@ -80,7 +80,7 @@ def extract_truth(M):
     # Angle of orientation relative to the semi-major axis
     theta = np.arctan2(v1[1], v1[0])
     
-    return lx, ly, theta%np.pi
+    return lx, ly, np.mod(theta + np.pi/2, np.pi) - np.pi/2
 
 def period(t_step, pars):
     
@@ -125,7 +125,7 @@ def get():
     
     cov_mods    = ['Exponential', 'Matern', 'Gaussian']
     computer = ['office', 'binnac']
-    setup = computer[0]
+    setup = computer[1]
     if setup == 'office':
         n_mem  = 140
         nprocs = np.min([n_mem, psutil.cpu_count()])
@@ -143,7 +143,7 @@ def get():
             asimdays = [1, 300]
         
     elif setup == 'binnac':
-        n_mem  = 448
+        n_mem  = 4
         nprocs = psutil.cpu_count()
         up_temp = True
         printf = False
@@ -157,15 +157,15 @@ def get():
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     
-    nPP = 40
+    nPP = 30
     
-    conditional_flag = False
+    conditional_flag = True
     field_meas_flag = False
     pilot_point_even = False
-    scramble_pp = True
+    scramble_pp = False
     
-    l_red = 2
-    h_damp = 0.6
+    l_red = 1
+    h_damp = 0.1
     cov_damp = [0.05, 0.05]
     npf_damp = 0.05
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
@@ -218,7 +218,7 @@ def get():
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
         'l_red' : l_red,
-        'lx'    : np.array([[2000,600], [5000,500]])/l_red, # corellation lengths
+        'lx'    : np.array([[1100,500], [2500,1000]])/l_red, # corellation lengths
         'ang'   : np.array([17, 111]),                      # angle in ° (logK, recharge)
         'sigma' : np.array([1.7, 0.1]),                     # variance (logK, recharge)
         'mu'    : np.array([-8.5, -0.7]),                   # mean (log(ms-1), (mm/d))

@@ -16,7 +16,7 @@ from scipy.interpolate import griddata
 random_seeds = np.arange(0,100,1)
 
 pars = get()
-sim, gwf = load_template_model(pars, VR = True)
+sim, gwf = load_template_model(pars)
 pp_cid, pp_xy, neardist = create_pilot_points(gwf, pars)
 
 mg = gwf.modelgrid

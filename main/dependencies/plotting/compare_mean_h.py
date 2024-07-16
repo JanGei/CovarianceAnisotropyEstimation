@@ -9,10 +9,10 @@ def compare_mean_true_head(gwf, h_fields, poi):
     hmax = 17
     
     varmin = 0
-    varmax = 1e-4
+    varmax = 1e-3
     
-    ratmin = -0.5
-    ratmax = 0.5
+    ratmin = -0.25
+    ratmax = 0.25
     
     fig, axes = plt.subplots(nrows=2, ncols=2, figsize= (16,6))
 

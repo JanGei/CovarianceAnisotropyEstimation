@@ -12,7 +12,7 @@ from dependencies.create_pilot_points import create_pilot_points
 
 
 pars = get()
-sim, gwf = load_template_model(pars, VR = True)
+sim, gwf = load_template_model(pars)
 pp_cid, pp_xy, neardist = create_pilot_points(gwf, pars)
 plot_POI(gwf, pp_xy, pars, bc = True)
 

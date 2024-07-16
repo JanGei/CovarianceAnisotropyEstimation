@@ -27,7 +27,7 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy = [], pp_cid = [], test_cov = 
         ang = np.random.uniform(-np.pi/2, np.pi/2)
         if lx[0] < lx[1]:
             lx = np.flip(lx)
-            if ang > np.pi/2:
+            if ang > 0:
                 ang -= np.pi/2
             else:
                 ang += np.pi/2

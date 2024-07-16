@@ -216,7 +216,7 @@ def create_reference_model(pars):
     
     if pars['inspec'] and pars['setup'] == 'office':
         print(pars['mu'][0], np.mean(np.log(k_ref)))
-        print(pars['mu'][1]/(86400), np.mean(r_ref))
+        print(pars['mu'][1]/(86400*1000), np.mean(r_ref))
         plot_fields(gwf, pars, np.log(k_ref), r_ref)
         sys.exit()
     

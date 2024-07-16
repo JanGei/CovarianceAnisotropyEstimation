@@ -24,7 +24,7 @@ error_cases = []
 for i in range(n_target):
     lx = np.array([np.random.randint(pars['dx'][0], clx[0][0]*2),
                    np.random.randint(pars['dx'][1], clx[0][1]*2)])
-    ang = np.random.uniform(-np.pi, np.pi)
+    ang = np.random.uniform(-np.pi/2, np.pi/2)
     sigma = np.random.uniform(0.5, 3)
     
     if lx[0] == lx[1]:
@@ -37,25 +37,31 @@ for i in range(n_target):
 
     a_ext, b_ext, theta_ext = pars['mat2cv'](M)
     
-    if lx[0] > lx[1]:
-        if a_ext > b_ext:
-            res[i, 3:] = a_ext, b_ext, theta_ext
-        else:
-            res[i, 3:] = b_ext, a_ext, theta_ext+np.pi/2
-    else:
-        if a_ext > b_ext:
-            res[i, 3:] = a_ext, b_ext, theta_ext+np.pi/2
-        else:
-            res[i, 3:] = b_ext, a_ext, theta_ext
+    res[i, 3:] = a_ext, b_ext, theta_ext
+    # if lx[0] > lx[1]:
+    #     if a_ext > b_ext:
+    #         res[i, 3:] = a_ext, b_ext, theta_ext
+    #     else:
+    #         res[i, 3:] = b_ext, a_ext, theta_ext+np.pi/2
+    # else:
+    #     if a_ext > b_ext:
+    #         res[i, 3:] = a_ext, b_ext, theta_ext+np.pi/2
+    #     else:
+    #         res[i, 3:] = b_ext, a_ext, theta_ext
             
     
         
     difference[i, 0:3] = np.abs(res[i, 0:3] - res[i, 3:])
-    difference[i,3] = (difference[i,2]+0.00001)%np.pi
+    # difference[i,3] = (difference[i,2]+0.00001)%np.pi
+    difference[difference < 1e-9] = 0
     
     
-    if difference[i,3] > 1:
-        error_cases.append((lx[0], lx[1], ang, a_ext, b_ext, theta_ext, i ))
+    if difference[i,0] > 0:
+        if difference[i,2] == 0:
+            error_cases.append((lx[0], lx[1], ang, a_ext, b_ext, theta_ext, i ))
+    elif difference[i,2] > 0:
+        if difference[i,0] == 0:
+            error_cases.append((lx[0], lx[1], ang, a_ext, b_ext, theta_ext, i ))
 
 
 
@@ -64,40 +70,44 @@ center = (0, 0)  # center coordinates
 
 print(f"Total cases with 90° error: {len(error_cases)}")
 print("Parameter combinations with 90° error:")
-for idx, case in enumerate(error_cases):
+for idx, cas in enumerate(error_cases):
     print(f"Case {idx + 1}:")
-    print(f"  Index: {case[6]}")
-    print(f"  Semi-major axis length: {case[0]}")
-    print(f"  Semi-minor axis length: {case[1]}")
-    print(f"  Rotation angle: {case[2]}")
-    print(f"  Extracted semi-major axis length: {case[3]}")
-    print(f"  Extracted semi-minor axis length: {case[4]}")
-    print(f"  Extracted rotation angle: {case[5]}")
+    print(f"  Index: {cas[6]}")
+    print(f"  Semi-major axis length: {cas[0]}")
+    print(f"  Semi-minor axis length: {cas[1]}")
+    print(f"  Rotation angle: {cas[2]}")
+    print(f"  Extracted semi-major axis length: {cas[3]}")
+    print(f"  Extracted semi-minor axis length: {cas[4]}")
+    print(f"  Extracted rotation angle: {cas[5]}")
     print()
     
     fig, ax = plt.subplots()
     ellipse1 = patches.Ellipse(center,
-                              case[0]*2,
-                              case[1]*2,
-                              angle=np.rad2deg(case[2]),
+                              cas[0]*2,
+                              cas[1]*2,
+                              angle=np.rad2deg(cas[2]),
                               fill=False,
                               color='red',
                               alpha = 0.5,
                               zorder = 1)
     ellipse2 = patches.Ellipse(center,
-                              case[3]*2,
-                              case[4]*2,
-                              angle=np.rad2deg(case[5]),
+                              cas[3]*2,
+                              cas[4]*2,
+                              angle=np.rad2deg(cas[5]),
                               fill=False,
                               color='blue',
                               alpha = 0.5,
                               zorder = 1)
     ax.add_patch(ellipse1)
-    ax.add_patch(ellipse2)
-    ax.set_title(f"Case {idx + 1} with Index {case[6]}")
-    l = np.max([case[0]*2, case[1]*2, case[3]*2, case[4]*2])
+    # ax.add_patch(ellipse2)
+    ax.set_title(f"Case {idx + 1} with Index {cas[6]}")
+    l = np.max([cas[0]*2, cas[1]*2, cas[3]*2, cas[4]*2])
     ax.set_xlim([-l, l])
     ax.set_ylim([-l, l])
+    ax.set_aspect('equal', 'box')
+    
+    # Display the plot
+    plt.grid(True)
     plt.show()
 
 

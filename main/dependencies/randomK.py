@@ -25,10 +25,6 @@ def randomK(ang, sigma, Ctype, Kg, pars, grid = [], random = True, ftype = [], r
 
     '''
     if not random:
-        if ftype == 'K':
-            Kg = np.exp(pars['mu'][0])
-        elif ftype == 'R':
-            Kg = pars['mu'][1]
         if pars['cov'] == 'Exponential':
             # Good choice for Exponential
             np.random.seed(6)
@@ -37,9 +33,17 @@ def randomK(ang, sigma, Ctype, Kg, pars, grid = [], random = True, ftype = [], r
                 np.random.seed(randn)
             else:
                 if pars['l_red'] == 1:
-                    np.random.seed(30)  
+                    np.random.seed(11)  
                 elif pars['l_red'] == 2:
                     np.random.seed(10)
+                    
+        if ftype == 'K':
+            Kg = np.exp(pars['mu'][0])
+            lx = pars['lx'][0]
+        elif ftype == 'R':
+            Kg = pars['mu'][1]
+            lx = pars['lx'][1]
+        
 
     else:
         Kg = pars['geomea']
@@ -51,9 +55,9 @@ def randomK(ang, sigma, Ctype, Kg, pars, grid = [], random = True, ftype = [], r
     else:
         nx = pars['nx']
         dx = pars['dx']
-        lx = pars['lx'][0]
+        
     # np.random.seed(42)
-    nx_ex = nx + np.round(5*np.array(lx)/np.array(dx))
+    nx_ex = nx + np.round(8*np.array(lx)/np.array(dx))
     nx_ex = np.array([np.max(nx_ex), np.max(nx_ex)])
     # total number of nodes
     ntot = np.prod(nx_ex)

@@ -176,13 +176,13 @@ class Ensemble:
         true_h_m = true_h[~self.h_mask]
         mean_h_m = mean_h[~self.h_mask]
         var_h_m = var_h[~self.h_mask]
-        var_te2 = (true_h + mean_h)/2
+        var_te2 = (true_h_m + mean_h_m)/2
         
         
         # Computing normalized squared error only considering nodes
-        node_ole = np.mean(true_obs - mean_obs)**2/(0.01**2)
-        node_te1 = np.mean(true_h_m - mean_h_m)**2/var_h_m
-        node_te2 = np.mean(true_h_m - mean_h_m)**2/(var_te2**2)
+        node_ole = np.mean((true_obs - mean_obs)**2/(0.01**2))
+        node_te1 = np.mean((true_h_m - mean_h_m)**2/var_h_m)
+        node_te2 = np.mean((true_h_m - mean_h_m)**2/(var_te2**2))
         
         # Append node error to list
         self.ole_nsq[period].append(node_ole)

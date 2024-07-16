@@ -7,6 +7,9 @@ def compare_mean_true(gwf, k_fields, poi):
     
     kmin = np.min(np.log(k_fields[0]))
     kmax = np.max(np.log(k_fields[0]))
+    vmin = 0
+    vmax = 2
+    
     
     fig, axes = plt.subplots(nrows=3, ncols=1, sharex='col', sharey=True, figsize= (16,6))
     # gs = GridSpec(3, 1, height_ratios=[1, 1, 1], hspace=0.3)
@@ -31,7 +34,7 @@ def compare_mean_true(gwf, k_fields, poi):
     ax2 = axes[2]
     gwf.npf.k.set_data(k_fields[2])
     axf2 = flopy.plot.PlotMapView(model=gwf, ax=ax2)
-    c2 = axf2.plot_array((gwf.npf.k.array), cmap=cm.roma, alpha=1)
+    c2 = axf2.plot_array((gwf.npf.k.array), cmap=cm.roma, alpha=1,vmin=vmin, vmax=vmax)
     ax2.set_aspect('equal')
     
     # ax2 = axes[2]
