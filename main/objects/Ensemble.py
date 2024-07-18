@@ -4,8 +4,9 @@ import os
     
 class Ensemble:
     
-    def __init__(self, members: list, pilotp_flag, obs_cid, nprocs: int, mask, ellipses = [], ellipses_par = [], pp_cid = [], pp_xy = [], pp_k = []):
+    def __init__(self, members: list, pars, obs_cid, nprocs: int, mask, ellipses = [], ellipses_par = [], pp_cid = [], pp_xy = [], pp_k = []):
         self.members    = members
+        self.pars       = pars
         self.nprocs     = nprocs
         self.n_mem      = len(self.members)
         self.h_mask     = mask.astype(bool)
@@ -16,12 +17,12 @@ class Ensemble:
         self.te2        = {'assimilation': [], 'prediction': []}
         self.te2_nsq    = {'assimilation': [], 'prediction': []}
         self.obs        = []
-        self.pilotp_flag= pilotp_flag
+        self.pilotp_flag= pars['pilotp']
         self.obs_cid    = [int(i) for i in obs_cid]
         self.meanlogk   = []
         self.meank   = []
         self.vark   = []
-        if pilotp_flag:
+        if pars['pilotp']:
             self.ellipses   = ellipses
             self.ellipses_par = ellipses_par
             self.pp_cid     = pp_cid
@@ -38,36 +39,36 @@ class Ensemble:
         
         
     def set_field(self, field, pkg_name: list):
-        Parallel(n_jobs=self.nprocs, backend="threading")(delayed(self.members[idx].set_field)(
+        Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].set_field)(
             [field[idx]],
             pkg_name) 
             for idx in range(self.n_mem)
             )
         
     def propagate(self):
-        Parallel(n_jobs=self.nprocs, backend="threading")(delayed(self.members[idx].simulation)(
+        Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].simulation)(
             ) 
             for idx in range(self.n_mem)
             )
         
     def update_initial_heads(self):
-        Parallel(n_jobs=self.nprocs, backend="threading")(delayed(self.members[idx].update_ic)(
+        Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].update_ic)(
             ) 
             for idx in range(self.n_mem)
             )
         
-    def get_damp(self, X, pars):
-        val = pars['damp']
+    def get_damp(self, X):
+        val = self.pars['damp']
         damp = np.zeros((X[:,0].size)) + val[0]
-        if 'cov_data' in pars['EnKF_p']:
+        if 'cov_data' in self.pars['EnKF_p']:
             cl = len(np.unique(self.members[0].ellips_mat))
             damp[0], damp[2] = val[1][0], val[1][0]
             damp[1] = val[1][1]
-            if 'npf' in pars['EnKF_p']:
+            if 'npf' in self.pars['EnKF_p']:
                 damp[cl:cl+len(self.pp_cid)] = val[2]
                 
-                if pars['f_meas']:
-                    ids = cl + pars['f_m_id']
+                if self.pars['f_meas']:
+                    ids = cl +self.pars['f_m_id']
                     damp[ids] = val[2] / 50
         else:
             if self.pilotp_flag:
@@ -79,14 +80,14 @@ class Ensemble:
         
     def write_simulations(self):
         Parallel(n_jobs=self.nprocs,
-                 backend="threading")(
+                 backend=self.pars['backnd'])(
                      delayed(self.members[idx].write_sim)()
                      for idx in range(self.n_mem)
                      )
         
     def apply_X(self, X, params):
         
-        result = Parallel(n_jobs=self.nprocs, backend="threading")(delayed(self.members[idx].apply_x)(
+        result = Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].apply_x)(
             np.squeeze(X[:,idx]),
             self.h_mask,
             self.pp_xy,
@@ -120,7 +121,7 @@ class Ensemble:
                     
     def get_Kalman_X_Y(self):   
 
-        result = Parallel(n_jobs=self.nprocs, backend="threading")(delayed(self.members[idx].Kalman_vec)(
+        result = Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].Kalman_vec)(
             self.h_mask,
             self.pp_cid 
             ) 
@@ -155,7 +156,7 @@ class Ensemble:
             spds = [rch_spd, riv_spd]
 
         
-        Parallel(n_jobs=self.nprocs)(delayed(self.members[idx].set_field)(
+        Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].set_field)(
             spds,
             packages
             ) 
@@ -203,7 +204,7 @@ class Ensemble:
     
     def get_member_fields(self, params):
         
-        data = Parallel(n_jobs=self.nprocs, backend="threading")(delayed(self.members[idx].get_field)(
+        data = Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].get_field)(
             params
             ) 
             for idx in range(self.n_mem)

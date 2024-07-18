@@ -75,7 +75,7 @@ if __name__ == '__main__':
             
         write_file(pars,[pp_cid, pp_xy], ["pp_cid","pp_xy"], 0, intf = True)
         # create_k_fields
-        result = Parallel(n_jobs=nprocs, backend = "threading")(delayed(create_k_fields)(
+        result = Parallel(n_jobs=nprocs, backend = pars['backnd'])(delayed(create_k_fields)(
             gwf,
             pars, 
             VR_Model.npf.k.array,
@@ -93,7 +93,7 @@ if __name__ == '__main__':
             l_angs.append(l_ang)
             pp_k_ini.append(pilotpoints[1])
     else:
-        k_fields = Parallel(n_jobs=nprocs, backend = "threading")(delayed(gsgenerator)(
+        k_fields = Parallel(n_jobs=nprocs, backend = pars['backnd'])(delayed(gsgenerator)(
             gwf,
             pars,
             pars['lx'][0], 
@@ -140,7 +140,7 @@ if __name__ == '__main__':
     start_time = time.time()
     
     MF_Ensemble     = Ensemble(models,
-                               pars['pilotp'],
+                               pars,
                                obs_cid,
                                nprocs,
                                mask_chd,
@@ -165,7 +165,7 @@ if __name__ == '__main__':
     
     #%%
     X, Ysim = MF_Ensemble.get_Kalman_X_Y()
-    damp = MF_Ensemble.get_damp(X, pars)
+    damp = MF_Ensemble.get_damp(X)
     EnKF = EnsembleKalmanFilter(X, Ysim, damp = damp, eps = pars['eps'])
     true_obs = np.zeros((pars['nsteps'],len(obs_cid)))
     MF_Ensemble.remove_current_files(pars)

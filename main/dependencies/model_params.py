@@ -125,7 +125,7 @@ def get():
     
     cov_mods    = ['Exponential', 'Matern', 'Gaussian']
     computer = ['office', 'binnac']
-    setup = computer[1]
+    setup = computer[0]
     if setup == 'office':
         n_mem  = 140
         nprocs = np.min([n_mem, psutil.cpu_count()])
@@ -134,7 +134,7 @@ def get():
         if years == 1:
             asimdays = [50, 300]
         elif years == 2:
-            asimdays = [50, 665]
+            asimdays = [25, 665]
         up_temp = True
         
         if n_mem == 2:
@@ -157,15 +157,17 @@ def get():
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     
-    nPP = 30
+    nPP = 40
     
     conditional_flag = True
+    scramble_pp = True
+    
+    
     field_meas_flag = False
     pilot_point_even = False
-    scramble_pp = False
     
     l_red = 1
-    h_damp = 0.1
+    h_damp = 0.6
     cov_damp = [0.05, 0.05]
     npf_damp = 0.05
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
@@ -218,7 +220,7 @@ def get():
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
         'l_red' : l_red,
-        'lx'    : np.array([[1100,500], [2500,1000]])/l_red, # corellation lengths
+        'lx'    : np.array([[1100,500], [2500,1000]])/l_red,# corellation lengths
         'ang'   : np.array([17, 111]),                      # angle in ° (logK, recharge)
         'sigma' : np.array([1.7, 0.1]),                     # variance (logK, recharge)
         'mu'    : np.array([-8.5, -0.7]),                   # mean (log(ms-1), (mm/d))
@@ -271,6 +273,7 @@ def get():
         'covmat': covariance_matrix,
         'dstmat': distance_matrix,
         'period': period,
+        'backnd': "threading",
         }
     
     if choice == 0 or choice == 1:
