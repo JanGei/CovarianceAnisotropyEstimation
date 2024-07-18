@@ -182,14 +182,15 @@ if __name__ == '__main__':
         start_time_ts = time.time()
         if t_step%4 == 0:
             data, packages = get_transient_data(pars, t_step)
-
-            MF_Ensemble.update_transient_data(data, packages)
+            
             VR_Model.update_transient_data(data, packages)
+            MF_Ensemble.update_transient_data(packages)
 
             if pars['printf']: print(f'transient data loaded and applied in {(time.time() - start_time_ts):.2f} seconds')
         
         if pars['printf']: print('---')
         start_time = time.time()
+        print(models[3].riv.stress_period_data.get_data()[0]['stage'][0])
         VR_Model.simulation()
         MF_Ensemble.propagate()
         

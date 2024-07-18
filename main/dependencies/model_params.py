@@ -9,8 +9,6 @@ def create_wells(row_well, col_well, dx):
         for j in range(col_well):
             well_loc[i*col_well + j, 0] = (19.5 + 10*j) *dx[0] 
             well_loc[i*col_well + j, 1] = (48.5 - 10*i) *dx[1] 
-            # well_loc[i*col_well + j, 0] = (19.5 + 10*j) *dx[0] 
-            # well_loc[i*col_well + j, 1] = (8.5 + 10*i) *dx[1]
 
 
     # pumping wells should be at (27, 9, 31, 5, 15)
@@ -118,7 +116,8 @@ def get():
     col_well    = 9
     well_loc    = create_wells(row_well, col_well, dx)
     
-    q_idx       = [27, 9, 31, 5, 15]
+    q_idx       = [9,13,27,33,41]
+    
     mask        = np.full(len(well_loc),True,dtype=bool)
     mask[q_idx] = False
     years = 1
@@ -127,7 +126,7 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 140
+        n_mem  = 60
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         printf = True

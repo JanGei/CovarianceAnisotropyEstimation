@@ -1,6 +1,8 @@
 import flopy
 import numpy as np
 import sys
+import os 
+import shutil
 from dependencies.conditional_k import conditional_k
 from dependencies.Kriging import Kriging
 
@@ -48,7 +50,13 @@ class MFModel:
             self.set_field([self.old_npf], ['npf'])
             self.sim.run_simulation()
             self.n_failure += 1
-       
+     
+    def copy_transient(self, packages):
+        for pkg in packages:
+            file = os.path.join(self.pars['trs_ws'], self.pars['mname']+'.'+pkg)
+            shutil.copy(file, self.direc)
+
+            
     def update_ic(self):
         self.ic.strt.set_data(self.get_field('h')['h'])
         self.ic.write()

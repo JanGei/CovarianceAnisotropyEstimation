@@ -138,30 +138,36 @@ class Ensemble:
         Ysim = np.vstack(ysims).T
         return X, Ysim
     
-    def update_transient_data(self, data, packages):
+    def update_transient_data(self,packages):
 
-        spds = self.members[0].get_field(packages)
-        rch_spd = spds['rch']
-        riv_spd = spds['riv']
-        rivhl = np.ones(np.shape(riv_spd[0]['cellid']))
-        
-        rch_spd[0]['recharge'] = data[0]
-        riv_spd[0]['stage'] = rivhl * data[1]
-        
-        if 'wel' in packages:
-            wel_spd = spds['wel']
-            wel_spd[0]['q'] = data[2]
-            spds = [rch_spd, riv_spd, wel_spd]
-        else:
-            spds = [rch_spd, riv_spd]
-
-        
-        Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].set_field)(
-            spds,
+        Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].copy_transient)(
             packages
             ) 
             for idx in range(self.n_mem)
             )
+
+        # spds = self.members[0].get_field(packages)
+        # rch_spd = spds['rch']
+        # riv_spd = spds['riv']
+        # rivhl = np.ones(np.shape(riv_spd[0]['cellid']))
+        
+        # rch_spd[0]['recharge'] = data[0]
+        # riv_spd[0]['stage'] = rivhl * data[1]
+        
+        # if 'wel' in packages:
+        #     wel_spd = spds['wel']
+        #     wel_spd[0]['q'] = data[2]
+        #     spds = [rch_spd, riv_spd, wel_spd]
+        # else:
+        #     spds = [rch_spd, riv_spd]
+
+        
+        # Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].set_field)(
+        #     spds,
+        #     packages
+        #     ) 
+        #     for idx in range(self.n_mem)
+        #     )
 
     
     def model_error(self,  true_h, period):

@@ -146,14 +146,14 @@ def create_reference_model(pars):
     print('Fields are generated')
     k_ref = np.loadtxt(pars['k_r_d'], delimiter = ',')
     r_ref = np.loadtxt(pars['r_r_d'], delimiter = ',')
-    sfac  = np.genfromtxt(pars['sf_d'],delimiter = ',', names=True)['Wert']
+
     
     #%% Intersecting model grid with model features
     
     rch_cells       = np.arange(vgrid.ncpl)
     rch_lay         = np.zeros(vgrid.ncpl, dtype = int)
     rch_cell2d      = list(zip(rch_lay,rch_cells))
-    rch_list        = list(zip(rch_cell2d, abs(r_ref.flatten())*sfac[0]))
+    rch_list        = list(zip(rch_cell2d, abs(r_ref.flatten())))
     for i in range(vgrid.ncpl):
         rch_list[i] = list(rch_list[i])
     
