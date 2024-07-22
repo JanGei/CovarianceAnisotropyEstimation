@@ -146,28 +146,6 @@ class Ensemble:
             for idx in range(self.n_mem)
             )
 
-        # spds = self.members[0].get_field(packages)
-        # rch_spd = spds['rch']
-        # riv_spd = spds['riv']
-        # rivhl = np.ones(np.shape(riv_spd[0]['cellid']))
-        
-        # rch_spd[0]['recharge'] = data[0]
-        # riv_spd[0]['stage'] = rivhl * data[1]
-        
-        # if 'wel' in packages:
-        #     wel_spd = spds['wel']
-        #     wel_spd[0]['q'] = data[2]
-        #     spds = [rch_spd, riv_spd, wel_spd]
-        # else:
-        #     spds = [rch_spd, riv_spd]
-
-        
-        # Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].set_field)(
-        #     spds,
-        #     packages
-        #     ) 
-        #     for idx in range(self.n_mem)
-        #     )
 
     
     def model_error(self,  true_h, period):
@@ -339,7 +317,7 @@ class Ensemble:
             g = open(os.path.join(direc,  'varlogk.dat'),'a')
             for i in range(len(self.meanlogk)):
                 f.write("{:.8f} ".format(self.meanlogk[i]))
-                f.write("{:.8f} ".format(self.varlogk[i]))
+                g.write("{:.8f} ".format(self.varlogk[i]))
             f.write('\n')
             g.write('\n')
             f.close()

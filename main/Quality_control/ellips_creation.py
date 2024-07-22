@@ -20,7 +20,7 @@ clx         = pars['lx']
 lx1 = 500
 lx2 = 300
 
-angles = np.array() #np.deg2rad(np.arange(0,180,10))
+angles = np.deg2rad(np.arange(0,180,10))
 # ang = np.radians(pars['ang'][0])
 
 # Plot the ellipse contour

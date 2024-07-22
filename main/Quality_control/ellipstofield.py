@@ -24,9 +24,11 @@ data[:,2] = np.array([1, 3, 2])
 l = 1.15 * np.max(np.max(data))
 results = []
 
+k_ref = np.loadtxt(pars['k_r_d'])
+
 pars['valt'] = 'good'
 for i in range(len(data)):
-    res = create_k_fields(gwf, pars, pp_xy, pp_cid, test_cov = [data[i,0:2], data[i,2]])
+    res = create_k_fields(gwf, pars, k_ref, pp_xy, pp_cid, test_cov = [data[i,0:2], data[i,2]])
     results.append(res)
 
 

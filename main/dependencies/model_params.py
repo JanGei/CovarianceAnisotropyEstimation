@@ -126,7 +126,7 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 60
+        n_mem  = 70
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         printf = True
@@ -161,12 +161,11 @@ def get():
     conditional_flag = True
     scramble_pp = True
     
-    
     field_meas_flag = False
     pilot_point_even = False
     
     l_red = 1
-    h_damp = 0.6
+    h_damp = 0.3
     cov_damp = [0.05, 0.05]
     npf_damp = 0.05
     damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
@@ -198,6 +197,7 @@ def get():
     
         
     pars    = {
+        'Erdalx': False,
         'refine': False,
         'pilotp': pp_flag,
         'nprocs': nprocs,
@@ -219,7 +219,7 @@ def get():
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
         'l_red' : l_red,
-        'lx'    : np.array([[1100,500], [2500,1000]])/l_red,# corellation lengths
+        'lx'    : np.array([[1100,500], [2500,250]])/l_red,# corellation lengths
         'ang'   : np.array([17, 111]),                      # angle in ° (logK, recharge)
         'sigma' : np.array([1.7, 0.1]),                     # variance (logK, recharge)
         'mu'    : np.array([-8.5, -0.7]),                   # mean (log(ms-1), (mm/d))

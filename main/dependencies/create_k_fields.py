@@ -22,9 +22,11 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
         factor = 0.25
     
     if pars['covt'] == 'random':
-        lx = np.array([np.random.randint(pars['dx'][0]*3, np.min(pars['nx'] * pars['dx'])*factor),
-                       np.random.randint(pars['dx'][1]*3, np.min(pars['nx'] * pars['dx'])*factor/3)])
+        lx = np.array([np.random.randint(pars['dx'][0]*5, np.min(pars['nx'] * pars['dx'])*factor),
+                       np.random.randint(pars['dx'][1]*5, np.min(pars['nx'] * pars['dx'])*factor/3)])
         ang = np.random.uniform(-np.pi/2, np.pi/2)
+        if pars['Erdalx'] == True:
+            lx = clx[0]
         if lx[0] < lx[1]:
             lx = np.flip(lx)
             if ang > 0:
@@ -48,7 +50,7 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
         pp_k = np.log(k_ref[pp_cid.astype(int)]) 
         pp_k = pp_k + sig_meas * np.random.randn(*pp_k.shape)
     elif pars['valt'] == 'random':
-        mu = pars['mu'][0]
+        mu = np.mean(np.log(k_ref)) #pars['mu'][0]
         std = np.sqrt(pars['sigma'][0])
         pp_k = np.random.normal(mu, std, len(pp_cid)) 
     

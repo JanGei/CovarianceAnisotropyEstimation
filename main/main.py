@@ -190,7 +190,6 @@ if __name__ == '__main__':
         
         if pars['printf']: print('---')
         start_time = time.time()
-        print(models[3].riv.stress_period_data.get_data()[0]['stage'][0])
         VR_Model.simulation()
         MF_Ensemble.propagate()
         

@@ -43,6 +43,7 @@ def randomK(ang, sigma, Ctype, Kg, pars, grid = [], random = True, ftype = [], r
         elif ftype == 'R':
             Kg = pars['mu'][1]
             lx = pars['lx'][1]
+            np.random.seed(24) 
         
 
     else:
