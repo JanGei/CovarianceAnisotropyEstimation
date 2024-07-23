@@ -230,9 +230,9 @@ class Ensemble:
         h.close()
         
         f = open(os.path.join(direc,  'errors_'+period+'.dat'),'a')
-        f.write("{:.4f} ".format(self.ole[period][-1]))
-        f.write("{:.4f} ".format(self.te1[period][-1]))
-        f.write("{:.4f} ".format(self.te2[period][-1]))
+        f.write("{:.3f} ".format(self.ole[period][-1]))
+        f.write("{:.3f} ".format(self.te1[period][-1]))
+        f.write("{:.6f} ".format(self.te2[period][-1]))
         f.write('\n')
         f.close()
         
