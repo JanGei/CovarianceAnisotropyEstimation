@@ -126,12 +126,12 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 2
+        n_mem  = 40
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         printf = True
         if years == 1:
-            asimdays = [50, 300]
+            asimdays = [1, 300]
         elif years == 2:
             asimdays = [25, 665]
         up_temp = True
@@ -156,13 +156,13 @@ def get():
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     
-    nPP = 40
+    nPP = 36
     
     conditional_flag = True
     scramble_pp = True
     
     field_meas_flag = False
-    pilot_point_even = False
+    pilot_point_even = True
     
     l_red = 1
     h_damp = 0.3
@@ -218,7 +218,7 @@ def get():
         'up_tem': up_temp,
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
-        'wel_k' : True,
+        'wel_k' : False,
         'l_red' : l_red,
         'lx'    : np.array([[1100,500], [2500,250]])/l_red,# corellation lengths
         'ang'   : np.array([17, 111]),                      # angle in ° (logK, recharge)

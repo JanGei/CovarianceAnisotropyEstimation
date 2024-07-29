@@ -58,6 +58,7 @@ if __name__ == '__main__':
     # copy template model to ensemble folder
     model_dir, bench_dir = create_Ensemble(pars)
     sim, gwf = load_template_model(pars)
+    mask_chd = chd_mask(gwf)
     
     obs_cid = intersect_with_grid(gwf, pars['obsxy'])
     VR_Model = Virtual_Reality(pars, obs_cid)
@@ -112,15 +113,12 @@ if __name__ == '__main__':
             pp_xy, pp_cid = [], []
     
     # Benchmark Model
-    Bench_Mod = B_Model(bench_dir, pars, obs_cid)
+    Bench_Mod = B_Model(bench_dir, pars, obs_cid, mask_chd)
     Bench_Mod.set_field([benchmark_field], ['npf'])
     
     # save original fields
     # if pars['setup'] == 'binnac':
     #     np.save(os.path.join(pars['resdir'] ,'k_ensemble_ini.npy'), k_fields)
-    
-    mask_chd = chd_mask(gwf)
-    
     print(f'The model has {len(obs_cid)} observation points')
     if pars['pilotp']:
         print(f'The model has {len(pp_cid)} pilot points points')
