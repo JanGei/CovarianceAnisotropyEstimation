@@ -71,9 +71,9 @@ if __name__ == '__main__':
     
     if pars['pilotp']:
         if pars['ppeven']:
-            pp_cid, pp_xy, near_dist = create_pilot_points_even(gwf, pars)
+            pp_cid, pp_xy = create_pilot_points_even(gwf, pars)
         else:
-            pp_cid, pp_xy, near_dist = create_pilot_points(gwf, pars)
+            pp_cid, pp_xy = create_pilot_points(gwf, pars)
             
         write_file(pars,[pp_cid, pp_xy], ["pp_cid","pp_xy"], 0, intf = True)
         # create_k_fields
@@ -130,7 +130,6 @@ if __name__ == '__main__':
         model_dir[idx],
         pars,
         obs_cid,
-        near_dist,
         l_angs[idx],
         cor_ellips[idx],
         ) 

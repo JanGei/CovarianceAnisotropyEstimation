@@ -22,19 +22,16 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
         factor = 0.25
     
     if pars['covt'] == 'random':
-        lx = np.array([np.random.randint(pars['dx'][0]*5, np.min(pars['nx'] * pars['dx'])*factor),
-                       np.random.randint(pars['dx'][1]*5, np.min(pars['nx'] * pars['dx'])*factor/3)])
+        lx = np.array([np.random.randint(pars['dx'][0]*7.5, np.min(pars['nx'] * pars['dx'])*factor),
+                       np.random.randint(pars['dx'][1]*7.5, np.min(pars['nx'] * pars['dx'])*factor/3)])
         ang = np.random.uniform(-np.pi/2, np.pi/2)
         if pars['Erdalx'] == True:
             lx = clx[0]
         if lx[0] < lx[1]:
             lx = np.flip(lx)
-            if ang > 0:
-                ang -= np.pi/2
-            else:
-                ang += np.pi/2
         elif lx[0] == lx[1]:
             lx[0] += 1
+            
     elif pars['covt'] == 'good':
         lx = clx[0]
         ang = np.deg2rad(angles[0])

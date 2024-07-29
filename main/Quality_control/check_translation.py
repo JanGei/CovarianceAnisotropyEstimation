@@ -18,6 +18,8 @@ n_target = 1000
 res = np.zeros((n_target, 6))
 difference = np.zeros((len(res), 4))
 
+matrices = np.zeros((n_target, 4))
+
 # Arrays to store parameters for cases with 90° error
 error_cases = []
 
@@ -25,7 +27,15 @@ for i in range(n_target):
     lx = np.array([np.random.randint(pars['dx'][0], clx[0][0]*2),
                    np.random.randint(pars['dx'][1], clx[0][1]*2)])
     ang = np.random.uniform(-np.pi/2, np.pi/2)
+    # ang = np.random.uniform(0, np.pi)
     sigma = np.random.uniform(0.5, 3)
+    
+    if lx[0] < lx[1]:
+        lx = np.flip(lx)
+        if ang > 0:
+            ang -= np.pi/2
+        else:
+            ang += np.pi/2
     
     if lx[0] == lx[1]:
         lx[0] += 1
@@ -34,7 +44,8 @@ for i in range(n_target):
 
     D = pars['rotmat'](ang)
     M = D @ np.array([[1/lx[0]**2, 0], [0, 1/lx[1]**2]]) @ D.T
-
+    
+    matrices[i,:] = [M[0,0], M[1,1], M[1,1]<M[0,0], M[1,0]]
     a_ext, b_ext, theta_ext = pars['mat2cv'](M)
     
     res[i, 3:] = a_ext, b_ext, theta_ext

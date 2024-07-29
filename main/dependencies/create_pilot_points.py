@@ -61,18 +61,18 @@ def create_pilot_points(gwf, pars:dict,):
         elif len(pp_cid_accepted) < nPP:
             n_test += int((nPP - len(pp_cid_proposal) ) /2)
             
-    distance_vector = pdist(pp_xy_accepted, metric='euclidean')  
-    distance_matrix = squareform(distance_vector)    
+    # distance_vector = pdist(pp_xy_accepted, metric='euclidean')  
+    # distance_matrix = squareform(distance_vector)    
     
-    dist = []
-    for i in range(len(distance_matrix)):
-        distances = list(distance_matrix[:,i])
-        distances.sort()
-        dist.append(distances[1:1+pars['nearPP']])
+    # dist = []
+    # for i in range(len(distance_matrix)):
+    #     distances = list(distance_matrix[:,i])
+    #     distances.sort()
+    #     dist.append(distances[1:1+pars['nearPP']])
 
-    neardist = np.mean(np.array(dist))
+    # neardist = np.mean(np.array(dist))
 
-    return pp_cid_accepted.astype(int), pp_xy_accepted.astype(int), neardist
+    return pp_cid_accepted.astype(int), pp_xy_accepted.astype(int)
 
 def best_fitting_grid(n, ratio):
     min_diff = float('inf')
@@ -170,21 +170,9 @@ def create_pilot_points_even(gwf, pars:dict,):
             print(count)
         if len(pp_cid_accepted) == nPPprod:
             pp_xy_accepted = np.array([xy[int(i)] for i in pp_cid_accepted])
-    
-
-    distance_vector = pdist(pp_xy_accepted, metric='euclidean')  
-    distance_matrix = squareform(distance_vector)    
-    
-    dist = []
-    for i in range(len(distance_matrix)):
-        distances = list(distance_matrix[:,i])
-        distances.sort()
-        dist.append(distances[1:1+pars['nearPP']])
-
-    neardist = np.mean(np.array(dist))
 
     
-    return pp_cid_accepted.astype(int), pp_xy_accepted.astype(int), neardist
+    return pp_cid_accepted.astype(int), pp_xy_accepted.astype(int)
 
 
 

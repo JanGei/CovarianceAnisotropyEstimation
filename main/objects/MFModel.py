@@ -11,7 +11,7 @@ sys.path.append('..')
 
 class MFModel:
     
-    def __init__(self, direc: str,  pars, obs_cid, maxcl = [], l_angs = [], ellips = []):
+    def __init__(self, direc: str,  pars, obs_cid, l_angs = [], ellips = []):
         self.direc      = direc
         self.mname      = pars['mname']
         self.pars       = pars
