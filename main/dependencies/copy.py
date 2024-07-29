@@ -8,6 +8,7 @@ def create_Ensemble(pars: dict) -> list:
     n_mem       = pars['n_mem']
     ens_ws      = pars['ens_ws']
     vr_dir      = pars['trs_ws']
+    bench_dir   = pars['bmodws']
     
     # removing old Ensemble
     if os.path.exists(ens_ws) and os.path.isdir(ens_ws):
@@ -18,6 +19,7 @@ def create_Ensemble(pars: dict) -> list:
     
     # create template model
     shutil.copytree(vr_dir, pars['tm_ws'])
+    shutil.copytree(vr_dir, pars['bmodws'])
     
     for i in range(n_mem):
         mem_dir = mem_ws + f'{i}'
@@ -26,7 +28,7 @@ def create_Ensemble(pars: dict) -> list:
         shutil.copytree(vr_dir, mem_dir)
         ens_m_dir.append(mem_dir)
         
-    return ens_m_dir
+    return ens_m_dir, bench_dir
 
 
 def copy_model(orig_dir:str, model_dir: str) -> None:

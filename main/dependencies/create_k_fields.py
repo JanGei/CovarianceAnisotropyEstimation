@@ -64,13 +64,15 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
     else:
         field, field2f = Kriging(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy)
     
+    benchmark_field, _ = Kriging(cxy, dx, lx, pars['ang'][0], pars['sigma'][0], pars, np.log(np.squeeze(k_ref)[pp_cid.astype(int)]), pp_xy)
+    
     D = pars['rotmat'](ang)
     M = np.matmul(np.matmul(D, np.array([[1/lx[0]**2, 0],[0, 1/lx[1]**2]])), D.T)
     
     if len(test_cov) != 0:
         return field, [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k], field2f
     else:
-        return field, [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k]
+        return field, [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k], benchmark_field
 
 
 

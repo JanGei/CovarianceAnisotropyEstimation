@@ -333,6 +333,8 @@ class Ensemble:
         
         file_paths = [os.path.join(pars['resdir'], 'errors_assimilation.dat'),
                       os.path.join(pars['resdir'], 'errors_prediction.dat'),
+                      os.path.join(pars['resdir'], 'errors_assimilation_benchmark.dat'),
+                      os.path.join(pars['resdir'], 'errors_prediction_benchmark.dat'),
                       os.path.join(pars['resdir'], 'covariance_data.dat'),
                       os.path.join(pars['resdir'], 'cov_variance.dat'),
                       os.path.join(pars['resdir'], 'covariance_data_par.dat'),

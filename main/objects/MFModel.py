@@ -256,6 +256,10 @@ class MFModel:
         for i, name in enumerate(pkg_name):
             if name == 'npf':
                 self.old_npf =  self.npf.k.get_data()
+                if self.pars['wel_k']:
+                    wel = self.get_field(['wel'])['wel']
+                    wel_cid = [i[-1] for i in wel[0]['cellid'][wel[0]['q'] != 0]]
+                    field[i][wel_cid] = 1
                 self.npf.k.set_data(np.reshape(field[i],self.npf.k.array.shape))
                 self.npf.write()
             elif name == 'rch':

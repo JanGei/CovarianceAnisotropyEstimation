@@ -17,6 +17,7 @@ from dependencies.shoutout_difference import shout_dif
 from dependencies.plotting.plot_k_fields import plot_k_fields
 from objects.Ensemble import Ensemble
 from objects.MFModel import MFModel
+from objects.Benchmark_Model import B_Model
 from objects.Virtual_Reality import Virtual_Reality
 from objects.EnsembleKalmanFilter import EnsembleKalmanFilter
 from Virtual_Reality.ReferenceModel import create_reference_model
@@ -55,7 +56,7 @@ if __name__ == '__main__':
     start_time = time.time()
     
     # copy template model to ensemble folder
-    model_dir = create_Ensemble(pars)
+    model_dir, bench_dir = create_Ensemble(pars)
     sim, gwf = load_template_model(pars)
     
     obs_cid = intersect_with_grid(gwf, pars['obsxy'])
@@ -87,7 +88,7 @@ if __name__ == '__main__':
             )
         # sorting the results
         for tup in result:
-            field, ellips, l_ang, pilotpoints = tup
+            field, ellips, l_ang, pilotpoints, benchmark_field = tup
             k_fields.append(field)
             cor_ellips.append(ellips)
             l_angs.append(l_ang)
@@ -109,7 +110,11 @@ if __name__ == '__main__':
             cor_ellips.append([])
             l_angs.append([])
             pp_xy, pp_cid = [], []
-
+    
+    # Benchmark Model
+    Bench_Mod = B_Model(bench_dir, pars, obs_cid)
+    Bench_Mod.set_field([benchmark_field], ['npf'])
+    
     # save original fields
     # if pars['setup'] == 'binnac':
     #     np.save(os.path.join(pars['resdir'] ,'k_ensemble_ini.npy'), k_fields)
@@ -176,6 +181,7 @@ if __name__ == '__main__':
         period, Assimilate = pars['period'](t_step, pars)  
         if t_step/4 == pars['asim_d'][1]:
             MF_Ensemble.reset_errors()
+            Bench_Mod.reset_errors()
             
         print('--------')
         print(f'time step {t_step}')
@@ -185,12 +191,14 @@ if __name__ == '__main__':
             
             VR_Model.update_transient_data(data, packages)
             MF_Ensemble.update_transient_data(packages)
+            Bench_Mod.copy_transient(packages)
 
             if pars['printf']: print(f'transient data loaded and applied in {(time.time() - start_time_ts):.2f} seconds')
         
         if pars['printf']: print('---')
         start_time = time.time()
         VR_Model.simulation()
+        Bench_Mod.simulation()
         MF_Ensemble.propagate()
         
         if pars['printf']: print(f'Ensemble propagated in {(time.time() - start_time):.2f} seconds')
@@ -229,6 +237,7 @@ if __name__ == '__main__':
 
                 mean_h, var_h = MF_Ensemble.model_error(true_h, period)
                 MF_Ensemble.record_state(pars, pars['EnKF_p'], np.squeeze(true_h), period)
+                Bench_Mod.model_error(true_h, period)
             
                 # visualize covariance structures
                 if pars['setup'] == 'office' and Assimilate and t_step%20 == 0:

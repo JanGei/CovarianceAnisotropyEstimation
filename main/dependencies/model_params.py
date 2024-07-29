@@ -126,7 +126,7 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 70
+        n_mem  = 2
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         printf = True
@@ -142,7 +142,7 @@ def get():
             asimdays = [1, 300]
         
     elif setup == 'binnac':
-        n_mem  = 4
+        n_mem  = 125
         nprocs = psutil.cpu_count()
         up_temp = True
         printf = False
@@ -218,6 +218,7 @@ def get():
         'up_tem': up_temp,
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
+        'wel_k' : True,
         'l_red' : l_red,
         'lx'    : np.array([[1100,500], [2500,250]])/l_red,# corellation lengths
         'ang'   : np.array([17, 111]),                      # angle in ° (logK, recharge)
@@ -263,6 +264,7 @@ def get():
         'sf_d'  : os.path.join(Vrdir, 'model_data','sfac.csv'),
         'n_mem' : n_mem,
         'tm_ws' : os.path.join(ensemb_dir, 'template_model'),
+        'bmodws': os.path.join(ensemb_dir, 'benchmark_model'),
         'trs_ws': os.path.join(Vrdir, 'transient_model'),
         'resdir': os.path.join(parent_directory, 'output'),
         'nsteps': int(years*365*24/6),
