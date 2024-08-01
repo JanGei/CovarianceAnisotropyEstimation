@@ -5,6 +5,7 @@ import os
 import shutil
 from dependencies.conditional_k import conditional_k
 from dependencies.Kriging import Kriging
+from dependencies.convert_transient import convert_to_transient
 
 
 sys.path.append('..')
@@ -42,6 +43,10 @@ class MFModel:
             self.a          = 0.33
             self.corrL_max  = np.min(pars['nx'] * pars['dx'])
             self.threshhold = self.corrL_max * self.a
+        if pars['val1st']:
+            self.params     = pars['EnKF_p'][0]
+        else:
+            self.params     = pars['EnKF_p']
                      
                        
     def simulation(self):
@@ -67,26 +72,29 @@ class MFModel:
         ysim = np.squeeze(data['h'][self.obs_cid])
         h_nobc = data['h'][~h_mask]
 
-        if 'cov_data' in self.pars['EnKF_p']:
-            if 'npf' in self.pars['EnKF_p']:
+        if 'cov_data' in self.params:
+            if 'npf' in self.params:
                 x = np.concatenate([data['cov_data'], np.log(data['npf'][pp_cid]), h_nobc])
             else:
                 x = np.concatenate([data['cov_data'], h_nobc])
         else:
-            if self.pars['pilot_p']:
+            if self.pars['pilotp']:
                 x = np.concatenate([np.log(data['npf'][pp_cid]), h_nobc])
             else:
                 x = np.concatenate([data['npf'], h_nobc])
     
         return x, ysim
-        
+    
+    def updateFilter(self):
+        self.params = self.pars['EnKF_p'][1]
+    
     def apply_x(self, x, h_mask, pp_xy, pp_cid, mean_cov_par, var_cov_par):
         
         data = self.get_field(['h', 'npf', 'cov_data'])
         cl = 3
 
-        if 'cov_data' in self.pars['EnKF_p']:
-            if 'npf' in self.pars['EnKF_p']:
+        if 'cov_data' in self.params:
+            if 'npf' in self.params:
                 data['h'][~h_mask] = x[self.pars['n_PP']+cl:]
                 res = self.kriging([x[0:cl], x[cl:self.pars['n_PP']+cl]],
                                    pp_xy,
@@ -101,24 +109,24 @@ class MFModel:
                                    mean_cov_par,
                                    var_cov_par)
         else:
-            if self.pars['pilot_p']:
+            if self.pars['pilotp']:
                 data['h'][~h_mask] = x[self.pars['n_PP']:]
-              
-                field = conditional_k(self.cxy,
+                
+                field, _ = conditional_k(self.cxy,
                                       self.dx,
                                       self.lx,
                                       self.ang,
                                       self.pars['sigma'][0],
                                       self.pars,
-                                      np.exp(x[0:self.pars['n_PP']:]),
+                                      x[0:self.pars['n_PP']:],
                                       pp_xy,
                                       )
                 
-                self.set_field([np.exp(field)], ['npf'])
-            # else:
-                # THIS NEEDS TO BE REVISED - EnKF without PP
-                # data['h'][~h_mask] = x[self.pars['nPP']+cl:]
-                # self.kriging()
+                self.set_field([field], ['npf'])
+                res = []
+            else:
+                print('this is not functional yeat')
+
         
         self.set_field([data['h']], ['h'])
     
@@ -231,10 +239,10 @@ class MFModel:
             l2 = self.reduce_corL(l2)
             correction = True
             
-        while angle > np.pi/2:
+        while angle > np.pi:
             angle -= np.pi
             correction = True
-        while angle < -np.pi/2:
+        while angle < 0:
             angle += np.pi
             correction = True
             
@@ -277,7 +285,14 @@ class MFModel:
             else:
                 print(f'The package {name} that you requested is not part of the model')
             
+    def update_initial_conditions(self):
+        self.sim.run_simulation()
+        self.ic.strt.set_data(self.gwf.output.head().get_data())
+        self.ic.write()
+        self.copy_transient(['rch', 'riv', 'sto', 'wel'])
+
         
+    
     def get_field(self, pkg_name: list) -> dict:
         fields = {}
         for name in pkg_name:

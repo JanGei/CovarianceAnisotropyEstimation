@@ -39,6 +39,9 @@ class EnsembleKalmanFilter:
         self.X      = X
         self.Ysim   = Y
     
+    def update_damp(self, damp_new):
+        self.damp = damp_new
+        
     def analysis(self):
         
         Xmean   = np.tile(np.array(np.mean(self.X, axis = 1)).T, (self.n_mem, 1)).T

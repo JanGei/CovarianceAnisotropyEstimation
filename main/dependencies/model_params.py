@@ -78,7 +78,7 @@ def extract_truth(M):
     # Angle of orientation relative to the semi-major axis
     theta = np.arctan2(v1[1], v1[0])
     
-    return lx, ly, np.mod(theta + np.pi/2, np.pi) - np.pi/2
+    return lx, ly, np.mod(theta, np.pi)
 
 def period(t_step, pars):
     
@@ -126,7 +126,7 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 125
+        n_mem  = 250
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         printf = True
@@ -152,23 +152,32 @@ def get():
         elif years == 2:
             asimdays = [50, 665]
     
-    choice = [0, 2]
+    choice = [0, 1]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     
-    nPP = 36
+    nPP = 45
     
     conditional_flag = True
     pilot_point_even = True
     scramble_pp = True
-    
     field_meas_flag = False
+    val_first = False
     
     l_red = 1
-    h_damp = 0.2
+    h_damp = 0.3
     cov_damp = [0.05, 0.05]
     npf_damp = 0.05
-    damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
+    
+    if val_first:
+        damp_choice = [[h_damp, npf_damp], [h_damp, cov_damp, npf_damp]]
+        est_dat = cov_variants[choice[0]].copy()
+        est_dat.remove('cov_data')
+        cov_choice = [est_dat, cov_variants[choice[0]]]
+    else:
+        damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
+        cov_choice = cov_variants[choice[0]]
+        damp_choice = damp[choice[0]]
     
     
     if choice[0] == 0:
@@ -202,8 +211,10 @@ def get():
         'pilotp': pp_flag,
         'nprocs': nprocs,
         'setup' : setup,
-        'EnKF_p': cov_variants[choice[0]], 
-        'damp'  : damp[choice[0]],
+        'EnKF_p': cov_choice, 
+        'damp'  : damp_choice,
+        'val1st': val_first,
+        'valday': 10,
         'estyp' : est_variants[choice[1]],
         'n_PP'  : nPP,
         'eps'   : 0.01,
@@ -219,9 +230,10 @@ def get():
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size
         'wel_k' : False,
+        'rch_is': False,                                    # Flag rch isotropy
         'l_red' : l_red,
-        'lx'    : np.array([[1100,500], [2500,250]])/l_red,# corellation lengths
-        'ang'   : np.array([17, 111]),                      # angle in ° (logK, recharge)
+        'lx'    : np.array([[1100,500], [2500,600]])/l_red, # corellation lengths
+        'ang'   : np.array([111, 17]),                      # angle in ° (logK, recharge)
         'sigma' : np.array([1.7, 0.1]),                     # variance (logK, recharge)
         'mu'    : np.array([-8.5, -0.7]),                   # mean (log(ms-1), (mm/d))
         'cov'   : cov_mods[1],                              # Covariance models
@@ -235,12 +247,12 @@ def get():
         'welnd' : np.array([150, 365, 365, 200, 300])*years,# end day of pump
         'welay' : np.array(np.zeros(5)),                    # layer of wells
         'river' : np.array([[0.0,0], [5000,0]]),            # start / end of river
-        'rivC'  : 5*1e-4,                                   # river conductance [ms-1]
+        'rivC'  : 1e-4,                                     # river conductance [ms-1]
         'rivd'  : 2,                                        # depth of river [m]
         'chd'   : np.array([[0.0,2500], [5000,2500]]),      # start / end of river
         'chdh'  : 15,                                       # initial stage of riv
-        'ss'    : 1e-5,                                     # specific storage
-        'sy'    : 0.4,                                      # specific yield
+        'ss'    : 1e-4,                                     # specific storage
+        'sy'    : 0.15,                                     # specific yield
         'asim_d': asimdays,
         'mname' : "Reference",
         'sname' : "Reference",

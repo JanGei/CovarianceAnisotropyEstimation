@@ -36,6 +36,10 @@ class Ensemble:
             self.meanppk = []
             self.varppk = []
             self.pp_k_ini = pp_k
+        if pars['val1st']:
+            self.params     = pars['EnKF_p'][0]
+        else:
+            self.params     = pars['EnKF_p']
         
         
     def set_field(self, field, pkg_name: list):
@@ -44,6 +48,15 @@ class Ensemble:
             pkg_name) 
             for idx in range(self.n_mem)
             )
+    
+    def update_initial_conditions(self):
+        Parallel(n_jobs=self.nprocs,
+                 backend=self.pars['backnd'])(
+                     delayed(self.members[idx].update_initial_conditions)(
+                         ) 
+                     for idx in range(self.n_mem)
+                     )
+        
         
     def propagate(self):
         Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].simulation)(
@@ -57,14 +70,25 @@ class Ensemble:
             for idx in range(self.n_mem)
             )
         
-    def get_damp(self, X):
-        val = self.pars['damp']
+    def get_damp(self, X, switch = False):
+        if self.pars['val1st']:
+            if switch:
+                self.params = self.pars['EnKF_p'][1]
+                val = self.pars['damp'][1]
+                self.updateFilter()
+            else:
+                val = self.pars['damp'][0]
+
+        else:
+            val = self.pars['damp']
+            
+        X,_ = self.get_Kalman_X_Y()
         damp = np.zeros((X[:,0].size)) + val[0]
-        if 'cov_data' in self.pars['EnKF_p']:
+        if 'cov_data' in self.params:
             cl = len(np.unique(self.members[0].ellips_mat))
             damp[0], damp[2] = val[1][0], val[1][0]
             damp[1] = val[1][1]
-            if 'npf' in self.pars['EnKF_p']:
+            if 'npf' in self.params:
                 damp[cl:cl+len(self.pp_cid)] = val[2]
                 
                 if self.pars['f_meas']:
@@ -84,8 +108,15 @@ class Ensemble:
                      delayed(self.members[idx].write_sim)()
                      for idx in range(self.n_mem)
                      )
+                     
+    def updateFilter(self):
+        Parallel(n_jobs=self.nprocs,
+                 backend=self.pars['backnd'])(
+                     delayed(self.members[idx].updateFilter)() 
+            for idx in range(self.n_mem)
+            )
         
-    def apply_X(self, X, params):
+    def apply_X(self, X):
         
         result = Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].apply_x)(
             np.squeeze(X[:,idx]),
@@ -99,7 +130,7 @@ class Ensemble:
             )
         
         cl = 3
-        if 'cov_data' in params:
+        if 'cov_data' in self.params:
             # Only register ellipses that perfromed a successfull update
             self.ellipses = np.array([data[0] for data in result if data[2]])
             self.ellipses_par = [data[1] for data in result if data[2]]
@@ -107,7 +138,7 @@ class Ensemble:
             self.var_cov = np.var(self.ellipses, axis = 0)
             self.mean_cov_par = np.mean(np.array(self.ellipses_par), axis = 0)
             self.var_cov_par = np.var(np.array(self.ellipses_par), axis = 0)
-            if 'npf' in params:
+            if 'npf' in self.params:
                 self.meanlogppk = np.mean(X[cl:len(self.pp_cid)+cl,:], axis = 1)
                 self.varlogppk = np.var(X[cl:len(self.pp_cid)+cl,:], axis = 1)
                 self.meanppk = np.mean(np.exp(X[cl:len(self.pp_cid)+cl,:]), axis = 1)
@@ -204,7 +235,7 @@ class Ensemble:
         
         return np.mean(h_f, axis = 1), np.var(h_f, axis = 1)
     
-    def record_state(self, pars: dict, params: list, true_h, period: str):
+    def record_state(self, pars: dict, true_h, period: str):
         
         mean_h, var_h = self.get_mean_var(h = 'ic')
         k_fields = self.get_member_fields(['npf'])
@@ -249,7 +280,7 @@ class Ensemble:
         
         
         # also store covariance data for all models
-        if 'cov_data' in params:
+        if 'cov_data' in self.params:
             cov_data = self.get_member_fields(['cov_data'])
             
             mat = np.array([[self.mean_cov_par[0], self.mean_cov_par[1]],
@@ -257,9 +288,9 @@ class Ensemble:
             res = pars['mat2cv'](mat)
                 
             f = open(os.path.join(direc, 'covariance_data.dat'),'a')
-            f.write("{:.10f} ".format(res[0]))
-            f.write("{:.10f} ".format(res[1]))
-            f.write("{:.10f} ".format(res[2]))
+            f.write("{:.2f} ".format(res[0]))
+            f.write("{:.2f} ".format(res[1]))
+            f.write("{:.4f} ".format(res[2]))
             f.write('\n')
             f.close()
             
@@ -291,7 +322,7 @@ class Ensemble:
                 f.write('\n')
                 f.close()
 
-        if 'npf' in params:
+        if 'npf' in self.params:
             if self.pilotp_flag:
                 f = open(os.path.join(direc,  'meanlogppk.dat'),'a')
                 g = open(os.path.join(direc,  'varlogppk.dat'),'a')

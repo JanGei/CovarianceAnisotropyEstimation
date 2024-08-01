@@ -16,6 +16,7 @@ from dependencies.convert_transient import convert_to_transient
 from dependencies.plotting.plot_fields import plot_fields
 import sys
 import os
+from itertools import repeat
 
 def create_reference_model(pars):
     #%% Model Parameters
@@ -153,10 +154,15 @@ def create_reference_model(pars):
     rch_cells       = np.arange(vgrid.ncpl)
     rch_lay         = np.zeros(vgrid.ncpl, dtype = int)
     rch_cell2d      = list(zip(rch_lay,rch_cells))
-    rch_list        = list(zip(rch_cell2d, abs(r_ref.flatten())))
+    
+    if pars['rch_is']:
+        rch_list        = list(zip(rch_cell2d, repeat(r_ref)))
+    else:
+        rch_list        = list(zip(rch_cell2d, abs(r_ref.flatten())))
+        
     for i in range(vgrid.ncpl):
         rch_list[i] = list(rch_list[i])
-    
+        
     ### Wells
     result      = ixs.intersect(MultiPoint(welxy))
     well_list   = []
@@ -214,11 +220,6 @@ def create_reference_model(pars):
     chd = flopy.mf6.ModflowGwfchd(gwf,
                                   stress_period_data    = {0:chd_list})
     
-    if pars['inspec'] and pars['setup'] == 'office':
-        print(pars['mu'][0], np.mean(np.log(k_ref)))
-        print(pars['mu'][1]/(86400*1000), np.mean(r_ref))
-        plot_fields(gwf, pars, np.log(k_ref), r_ref)
-        sys.exit()
     
     #%% Set steady-state solution as initial condition
     sim.write_simulation()
@@ -226,6 +227,14 @@ def create_reference_model(pars):
     ic.strt.set_data(gwf.output.head().get_data())
     ic.write()
     
+    if pars['inspec'] and pars['setup'] == 'office':
+        print(pars['mu'][0], np.mean(np.log(k_ref)))
+        print(pars['sigma'][0], np.var((k_ref)))
+        print(pars['mu'][1]/(86400*1000), np.mean(r_ref))
+        print(pars['sigma'][1], np.var(r_ref*(86400*1000)))
+        plot_fields(gwf, pars, np.log(k_ref), r_ref)
+        gwf.ic.plot()
+        sys.exit()
     
     #%% Run transient simulation
     convert_to_transient(sim_ws, pars['trs_ws'], pars)

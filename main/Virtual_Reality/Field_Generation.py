@@ -46,20 +46,27 @@ def generate_fields(pars):
     # Grid in Physical Coordinates
     X, Y = np.meshgrid(x, y)
     
-    K = randomK(np.deg2rad(ang[0]), sigma[0], pars['cov'], 1, pars, ftype = 'K', random = False)
+    K = randomK(np.deg2rad(ang[0]), sigma[0], pars['cov'], pars, ftype = 'K', random = False)
     # K = randomK(np.deg2rad(ang[0]), sigma[0], pars['cov'], 1, pars, ftype = 'K')
     # import matplotlib.pyplot as plt
     # plt.imshow(np.flip(K, axis =1))
     # extract_vario(X.ravel(order = 'F'), Y.ravel(order = 'F'), K.ravel(order = 'F')) #not functional.. yet)
-    R = randomK(np.deg2rad(ang[1]), sigma[1], pars['cov'], 1, pars, ftype = 'R', random = False)
+    
+    # Choosing between isotropic and anisotropic recharge
+    if pars['rch_is']:
+        Rflat = np.array([pars['mu'][1]])
+    else:
+        R = randomK(np.deg2rad(ang[1]), sigma[1], pars['cov'], pars, ftype = 'R', random = False)
+        Rflat =  griddata((X.ravel(order = 'F'), Y.ravel(order = 'F')), R.ravel(order = 'F'),
+                         (cxy[:,0], cxy[:,1]), method='nearest')
+    
     # Anmerkung des Übersetzers: Beim generieren dieser Felder ist die Varianz per se dimensionslos
     # Wenn wir also die Felder von Erdal und Cirpka nachbilden wollen, müssen wir überhaupt nicht
     # die Varianz mitscalieren, wenn die Einheiten geändert werden, sonder nur der mean
     
     Kflat =  griddata((X.ravel(order = 'F'), Y.ravel(order = 'F')), K.ravel(order = 'F'),
                      (cxy[:,0], cxy[:,1]), method='nearest')
-    Rflat =  griddata((X.ravel(order = 'F'), Y.ravel(order = 'F')), R.ravel(order = 'F'),
-                     (cxy[:,0], cxy[:,1]), method='nearest')
+    
     #%% Saving the fields - Übergabe in (m/s)
     np.savetxt(os.path.join(pars['k_r_d']), Kflat, delimiter = ',')
     np.savetxt(os.path.join(pars['r_r_d']), Rflat/1000/86400, delimiter = ',')

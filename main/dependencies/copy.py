@@ -9,6 +9,7 @@ def create_Ensemble(pars: dict) -> list:
     ens_ws      = pars['ens_ws']
     vr_dir      = pars['trs_ws']
     bench_dir   = pars['bmodws']
+    ss_dir      = pars['sim_ws']
     
     # removing old Ensemble
     if os.path.exists(ens_ws) and os.path.isdir(ens_ws):
@@ -25,7 +26,7 @@ def create_Ensemble(pars: dict) -> list:
         mem_dir = mem_ws + f'{i}'
     
         # Copy the model folder to new folder
-        shutil.copytree(vr_dir, mem_dir)
+        shutil.copytree(ss_dir, mem_dir)
         ens_m_dir.append(mem_dir)
         
     return ens_m_dir, bench_dir

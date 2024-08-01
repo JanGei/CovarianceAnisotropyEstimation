@@ -17,14 +17,14 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
     if pars['estyp'] == "overestimate":
         factor = 1
     elif pars['estyp'] == "good":
-        factor = 0.5
+        factor = 0.66
     elif pars['estyp'] == "underestimate":
-        factor = 0.25
+        factor = 0.33
     
     if pars['covt'] == 'random':
         lx = np.array([np.random.randint(pars['dx'][0]*7.5, np.min(pars['nx'] * pars['dx'])*factor),
                        np.random.randint(pars['dx'][1]*7.5, np.min(pars['nx'] * pars['dx'])*factor/3)])
-        ang = np.random.uniform(-np.pi/2, np.pi/2)
+        ang = np.random.uniform(0, np.pi)
         if pars['Erdalx'] == True:
             lx = clx[0]
         if lx[0] < lx[1]:

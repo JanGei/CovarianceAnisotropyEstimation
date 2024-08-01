@@ -165,6 +165,9 @@ if __name__ == '__main__':
     
     if pars['printf']: print(f'Ensemble is initiated and respective k-fields are set in {(time.time() - start_time):.2f} seconds')
     
+    start_time = time.time()
+    MF_Ensemble.update_initial_conditions()
+    if pars['printf']: print(f'Ensemble now with steady state initial conditions in {(time.time() - start_time):.2f} seconds')
     #%%
     X, Ysim = MF_Ensemble.get_Kalman_X_Y()
     damp = MF_Ensemble.get_damp(X)
@@ -179,6 +182,9 @@ if __name__ == '__main__':
         if t_step/4 == pars['asim_d'][1]:
             MF_Ensemble.reset_errors()
             Bench_Mod.reset_errors()
+        elif pars['val1st'] and t_step/4 == pars['asim_d'][0]+pars['valday']:
+            damp = MF_Ensemble.get_damp(X, switch = True)
+            EnKF.update_damp(damp)
             
         print('--------')
         print(f'time step {t_step}')
@@ -207,6 +213,7 @@ if __name__ == '__main__':
             X, Ysim = MF_Ensemble.get_Kalman_X_Y()
             EnKF.update_X_Y(X, Ysim)
             EnKF.analysis()
+            print(len(damp))
             true_obs[t_step,:] = np.squeeze(VR_Model.get_observations())
             shout_dif(true_obs[t_step,:], np.mean(Ysim, axis = 1))
             EnKF.Kalman_update(true_obs[t_step,:].T)
@@ -214,7 +221,7 @@ if __name__ == '__main__':
             if pars['printf']: print(f'Ensemble Kalman Filter performed in  {(time.time() - start_time):.2f} seconds')
 
             start_time = time.time()
-            MF_Ensemble.apply_X(EnKF.X, pars['EnKF_p'])
+            MF_Ensemble.apply_X(EnKF.X)
             
             
             interim = [int(i+pars['n_PP']+3-100) for i in obs_cid]
@@ -233,12 +240,12 @@ if __name__ == '__main__':
             if t_step%4 == 0:
 
                 mean_h, var_h = MF_Ensemble.model_error(true_h, period)
-                MF_Ensemble.record_state(pars, pars['EnKF_p'], np.squeeze(true_h), period)
+                MF_Ensemble.record_state(pars, np.squeeze(true_h), period)
                 Bench_Mod.model_error(true_h, period)
             
                 # visualize covariance structures
                 if pars['setup'] == 'office' and Assimilate and t_step%20 == 0:
-                    if 'cov_data' in pars['EnKF_p']:
+                    if 'cov_data' in MF_Ensemble.params:
                         m = MF_Ensemble.mean_cov_par
                         mat = np.array([[m[0], m[1]],[m[1], m[2]]])
                         ellipses(

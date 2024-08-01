@@ -1,6 +1,6 @@
 import numpy as np
 
-def randomK(ang, sigma, Ctype, Kg, pars, grid = [], random = True, ftype = [], randn = []):
+def randomK(ang, sigma, Ctype, pars, grid = [], random = True, ftype = [], randn = []):
     '''
     Generate auto-correlated 2-D random hydraulic-conductivity fields using
     spectral methods.
@@ -33,9 +33,9 @@ def randomK(ang, sigma, Ctype, Kg, pars, grid = [], random = True, ftype = [], r
                 np.random.seed(randn)
             else:
                 if pars['l_red'] == 1:
-                    np.random.seed(11)  
+                    np.random.seed(32)  
                 elif pars['l_red'] == 2:
-                    np.random.seed(10)
+                    np.random.seed(16)
                     
         if ftype == 'K':
             Kg = np.exp(pars['mu'][0])
@@ -43,7 +43,7 @@ def randomK(ang, sigma, Ctype, Kg, pars, grid = [], random = True, ftype = [], r
         elif ftype == 'R':
             Kg = pars['mu'][1]
             lx = pars['lx'][1]
-            np.random.seed(24) 
+            np.random.seed(15) 
         
 
     else:
