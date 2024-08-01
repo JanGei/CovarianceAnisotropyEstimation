@@ -204,8 +204,8 @@ PROCESSING MODEL CONNECTIONS
                                 OUTER      INNER  BACKTRACK  BACKTRACK        INCOMING        OUTGOING                    STEP   MAXIMUM CHANGE MODEL-(CELLID) OR
  OUTER ITERATION STEP       ITERATION  ITERATION       FLAG ITERATIONS        RESIDUAL        RESIDUAL  MAXIMUM CHANGE SUCCESS             MODEL-PACKAGE-(NUMBER)
  ----------------------------------------------------------------------------------------------------------------------------------------------------------------
- Backtracking                       1                     0          0  1.10636510E-03  1.10636510E-03                       *                                   
- Model                              1          1                                                        1.58425070E-03       *                     1_GWF-(1,4982)
+ Backtracking                       1                     0          0  4.74535318E-04  4.74535318E-04                       *                                   
+ Model                              1          1                                                        1.13868818E-03       *                     1_GWF-(1,4983)
  ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -227,6 +227,6 @@ PROCESSING MODEL CONNECTIONS
 
 
  
- Run end date and time (yyyy/mm/dd hh:mm:ss): 2024/08/01 17:47:37
- Elapsed run time:  0.115 Seconds
+ Run end date and time (yyyy/mm/dd hh:mm:ss): 2024/08/01 18:23:41
+ Elapsed run time:  0.132 Seconds
  Normal termination of simulation.

@@ -256,7 +256,7 @@ class MFModel:
     
     def variogram_to_matrix(self, l1, l2, angle):
         D = self.pars['rotmat'](angle)
-        M = D @ np.array([[1/l1**2, 0],[0, 1/l2**2]]) @ D.T
+        M = np.matmul(np.matmul(D, np.array([[1/l1**2, 0],[0, 1/l2**2]])), D.T)
         self.update_ellips_mat(M)
         
         
