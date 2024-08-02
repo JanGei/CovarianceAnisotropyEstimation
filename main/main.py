@@ -213,7 +213,6 @@ if __name__ == '__main__':
             X, Ysim = MF_Ensemble.get_Kalman_X_Y()
             EnKF.update_X_Y(X, Ysim)
             EnKF.analysis()
-            print(len(damp))
             true_obs[t_step,:] = np.squeeze(VR_Model.get_observations())
             shout_dif(true_obs[t_step,:], np.mean(Ysim, axis = 1))
             EnKF.Kalman_update(true_obs[t_step,:].T)
@@ -224,7 +223,7 @@ if __name__ == '__main__':
             MF_Ensemble.apply_X(EnKF.X)
             
             
-            interim = [int(i+pars['n_PP']+3-100) for i in obs_cid]
+            interim = [int(i+len(damp) -5000) for i in obs_cid]
             shout_dif(true_obs[t_step,:], np.mean(EnKF.X, axis = 1)[interim])
 
             if pars['printf']: print(f'Application of results plus kriging took {(time.time() - start_time):.2f} seconds')

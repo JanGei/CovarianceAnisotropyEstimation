@@ -5,9 +5,6 @@ import os
 import shutil
 from dependencies.conditional_k import conditional_k
 from dependencies.Kriging import Kriging
-from dependencies.convert_transient import convert_to_transient
-
-
 sys.path.append('..')
 
 class MFModel:
@@ -225,11 +222,11 @@ class MFModel:
     def check_vario(self, l1, l2, angle):
         correction = False
         
-        if l2 > l1:
-            correction = True
-            l1, l2 = l2, l1
-            angle = angle + np.pi/2
-            print("It happened")
+        # if l2 > l1:
+        #     correction = True
+        #     l1, l2 = l2, l1
+        #     angle = angle + np.pi/2
+        #     print("It happened")
             
         if l1 > self.threshhold:
             l1 = self.reduce_corL(l1)
@@ -239,12 +236,12 @@ class MFModel:
             l2 = self.reduce_corL(l2)
             correction = True
             
-        while angle > np.pi:
-            angle -= np.pi
-            correction = True
-        while angle < 0:
-            angle += np.pi
-            correction = True
+        # while angle > np.pi:
+        #     angle -= np.pi
+        #     correction = True
+        # while angle < 0:
+        #     angle += np.pi
+        #     correction = True
             
         if correction:
             self.variogram_to_matrix(l1, l2, angle)
