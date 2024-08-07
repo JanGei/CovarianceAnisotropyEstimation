@@ -126,7 +126,7 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 125
+        n_mem  = 250
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         printf = True
@@ -156,10 +156,10 @@ def get():
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     
-    nPP = 45
+    nPP = 40
     
     conditional_flag = True
-    pilot_point_even = True
+    pilot_point_even = False
     scramble_pp = True
     field_meas_flag = False
     val_first = True
