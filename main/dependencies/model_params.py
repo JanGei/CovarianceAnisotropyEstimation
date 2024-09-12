@@ -152,10 +152,11 @@ def get():
         elif years == 2:
             asimdays = [50, 665]
     
-    choice = [0, 0]
+    choice = [0, 0, 1]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
-    
+    valt_variants =["good", "random", "random_low", "random_high"]
+    valtype = valt_variants[choice[2]]
     nPP = 40
     
     conditional_flag = True
@@ -182,7 +183,6 @@ def get():
     
     if choice[0] == 0:
         covtype = "random"
-        valtype = "random"
         pp_flag = True   
     elif choice[0] == 1:
         covtype = "random"

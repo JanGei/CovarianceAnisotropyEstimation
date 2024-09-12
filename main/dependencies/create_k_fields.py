@@ -44,13 +44,18 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
         ang = test_cov[1]
         
     if pars['valt'] == 'good':
-        # pp_k = np.log(k_ref[pp_cid.astype(int)]) 
         pp_k = np.log(k_ref[pp_cid]) 
         pp_k = pp_k + sig_meas * np.random.randn(*pp_k.shape)
     elif pars['valt'] == 'random':
         mu = np.mean(np.log(k_ref)) #pars['mu'][0]
         std = np.sqrt(pars['sigma'][0])
-        pp_k = np.random.normal(mu, std, len(pp_cid)) 
+        pp_k = np.random.normal(mu, std, len(pp_cid))
+    elif pars['valt'] == 'random_low':
+        std = np.sqrt(pars['sigma'][0])
+        pp_k = np.random.normal(-10, std, len(pp_cid))
+    elif pars['valt'] == 'random_high':
+        std = np.sqrt(pars['sigma'][0])
+        pp_k = np.random.normal(-7, std, len(pp_cid))
     
     if pars['f_meas']:
         true_ppk = np.log(np.squeeze(k_ref)[pp_cid.astype(int)]) 
