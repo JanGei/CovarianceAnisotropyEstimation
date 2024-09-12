@@ -26,16 +26,16 @@ error_cases = []
 for i in range(n_target):
     lx = np.array([np.random.randint(pars['dx'][0], clx[0][0]*2),
                    np.random.randint(pars['dx'][1], clx[0][1]*2)])
-    ang = np.random.uniform(-np.pi/2, np.pi/2)
+    ang = np.random.uniform(0, np.pi)
     # ang = np.random.uniform(0, np.pi)
     sigma = np.random.uniform(0.5, 3)
     
-    if lx[0] < lx[1]:
-        lx = np.flip(lx)
-        if ang > 0:
-            ang -= np.pi/2
-        else:
-            ang += np.pi/2
+    # if lx[0] < lx[1]:
+    #     lx = np.flip(lx)
+    #     if ang > 0:
+    #         ang -= np.pi/2
+    #     else:
+    #         ang += np.pi/2
     
     if lx[0] == lx[1]:
         lx[0] += 1

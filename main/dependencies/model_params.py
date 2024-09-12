@@ -152,21 +152,21 @@ def get():
         elif years == 2:
             asimdays = [50, 665]
     
-    choice = [0, 1]
+    choice = [0, 0]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     
-    nPP = 45
+    nPP = 40
     
     conditional_flag = True
-    pilot_point_even = True
+    pilot_point_even = False
     scramble_pp = True
     field_meas_flag = False
-    val_first = False
+    val_first = True
     
     l_red = 1
-    h_damp = 0.3
-    cov_damp = [0.05, 0.05]
+    h_damp = 0.2
+    cov_damp = [0.15, 0.15]
     npf_damp = 0.05
     
     if val_first:
@@ -214,7 +214,7 @@ def get():
         'EnKF_p': cov_choice, 
         'damp'  : damp_choice,
         'val1st': val_first,
-        'valday': 10,
+        'valday': 15,
         'estyp' : est_variants[choice[1]],
         'n_PP'  : nPP,
         'eps'   : 0.01,

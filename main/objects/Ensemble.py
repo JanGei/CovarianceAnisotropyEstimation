@@ -295,9 +295,9 @@ class Ensemble:
             f.close()
             
             f = open(os.path.join(direc, 'cov_variance.dat'),'a')
-            f.write("{:.10f} ".format(self.var_cov[0]))
-            f.write("{:.10f} ".format(self.var_cov[1]))
-            f.write("{:.10f} ".format(self.var_cov[2]))
+            f.write("{:.2f} ".format(self.var_cov[0]))
+            f.write("{:.2f} ".format(self.var_cov[1]))
+            f.write("{:.4f} ".format(self.var_cov[2]))
             f.write('\n')
             f.close()
             
@@ -309,9 +309,9 @@ class Ensemble:
             f.close()
             
             f = open(os.path.join(direc, 'cov_variance_par.dat'),'a')
-            f.write("{:.10f} ".format(self.var_cov_par[0]))
-            f.write("{:.10f} ".format(self.var_cov_par[1]))
-            f.write("{:.10f} ".format(self.var_cov_par[2]))
+            f.write("{:.2f} ".format(np.log(self.var_cov_par[0])))
+            f.write("{:.2} ".format(np.log(self.var_cov_par[1])))
+            f.write("{:.2f} ".format(np.log(self.var_cov_par[2])))
             f.write('\n')
             f.close()
             

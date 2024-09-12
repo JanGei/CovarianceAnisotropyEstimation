@@ -17,7 +17,7 @@ clx         = pars['lx']
 # original ellips
 lx1 = 500
 lx2 = 300
-ang = 0
+ang = np.deg2rad(45)
 D = np.array([[1/lx1**2, 0], [0, 1/lx2**2]])
 R = pars['rotmat'](ang)
 A = R @ D @ R.T

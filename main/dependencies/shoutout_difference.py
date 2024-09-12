@@ -1,6 +1,7 @@
 import numpy as np
 def shout_dif(array1, array2):
     
+    
     meandiff = np.mean(np.abs(array1-array2))
     maxdiff = np.max(np.abs(array1-array2))
     mindiff = np.min(np.abs(array1-array2))
