@@ -243,7 +243,7 @@ if __name__ == '__main__':
                 Bench_Mod.model_error(true_h, period)
             
                 # visualize covariance structures
-                if pars['setup'] == 'office' and Assimilate and t_step%20 == 0:
+                if pars['setup'] == 'office' and Assimilate and t_step%12 == 0:
                     if 'cov_data' in MF_Ensemble.params:
                         m = MF_Ensemble.mean_cov_par
                         mat = np.array([[m[0], m[1]],[m[1], m[2]]])

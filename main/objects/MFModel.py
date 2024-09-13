@@ -37,7 +37,7 @@ class MFModel:
             self.ellips_mat = np.array([[ellips[0], ellips[1]], [ellips[1], ellips[2]]])
             self.lx         = [l_angs[0], l_angs[1]]
             self.ang        = l_angs[2]
-            self.a          = 0.33
+            self.a          = 0.5
             self.corrL_max  = np.min(pars['nx'] * pars['dx'])
             self.threshhold = self.corrL_max * self.a
         if pars['val1st']:

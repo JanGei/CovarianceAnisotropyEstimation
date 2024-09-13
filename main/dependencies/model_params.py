@@ -126,12 +126,12 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 250
+        n_mem  = 360
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         printf = True
         if years == 1:
-            asimdays = [50, 300]
+            asimdays = [0, 300]
         elif years == 2:
             asimdays = [25, 665]
         up_temp = True
@@ -152,22 +152,25 @@ def get():
         elif years == 2:
             asimdays = [50, 665]
     
-    choice = [0, 0, 1]
+    choice = [0, 1, 1, 1]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
-    valt_variants =["good", "random", "random_low", "random_high"]
+    valt_variants = ["good", "random", "random_low", "random_high"]
+    covt_variants = ["good", "random"]
     valtype = valt_variants[choice[2]]
-    nPP = 40
+    covtype = covt_variants[choice[3]]
+    nPP = 36
     
+    pp_flag = True 
     conditional_flag = True
-    pilot_point_even = False
+    pilot_point_even = True
     scramble_pp = True
     field_meas_flag = False
-    val_first = True
+    val_first = False
     
     l_red = 1
-    h_damp = 0.2
-    cov_damp = [0.15, 0.15]
+    h_damp = 0.3
+    cov_damp = [0.05, 0.05]
     npf_damp = 0.05
     
     if val_first:
@@ -179,12 +182,8 @@ def get():
         damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
         cov_choice = cov_variants[choice[0]]
         damp_choice = damp[choice[0]]
-    
-    
-    if choice[0] == 0:
-        covtype = "random"
-        pp_flag = True   
-    elif choice[0] == 1:
+          
+    if choice[0] == 1:
         covtype = "random"
         valtype = "good"
         pp_flag = True

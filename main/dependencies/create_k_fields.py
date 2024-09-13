@@ -15,15 +15,15 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
     sig_meas = pars['sig_me']
     
     if pars['estyp'] == "overestimate":
-        factor = 1
+        factor = 0.75
     elif pars['estyp'] == "good":
-        factor = 0.66
+        factor = 0.5
     elif pars['estyp'] == "underestimate":
-        factor = 0.33
+        factor = 0.25
     
     if pars['covt'] == 'random':
-        lx = np.array([np.random.randint(pars['dx'][0]*3, np.min(pars['nx'] * pars['dx'])*factor),
-                       np.random.randint(pars['dx'][1]*3, np.min(pars['nx'] * pars['dx'])*factor/2)])
+        lx = np.array([np.random.randint(pars['dx'][0]*4, np.min(pars['nx'] * pars['dx'])*factor),
+                       np.random.randint(pars['dx'][1]*4, np.min(pars['nx'] * pars['dx'])*factor)])
         ang = np.random.uniform(0, np.pi)
         if pars['Erdalx'] == True:
             lx = clx[0]
