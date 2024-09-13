@@ -126,7 +126,7 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 360
+        n_mem  = 8
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         printf = True
@@ -142,7 +142,7 @@ def get():
             asimdays = [1, 300]
         
     elif setup == 'binnac':
-        n_mem  = 125
+        n_mem  = 360
         nprocs = psutil.cpu_count()
         up_temp = True
         printf = False
@@ -159,7 +159,7 @@ def get():
     covt_variants = ["good", "random"]
     valtype = valt_variants[choice[2]]
     covtype = covt_variants[choice[3]]
-    nPP = 36
+    nPP = 28
     
     pp_flag = True 
     conditional_flag = True

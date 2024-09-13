@@ -24,6 +24,7 @@ def randomK(ang, sigma, Ctype, pars, grid = [], random = True, ftype = [], randn
     K          : Field of hydraulic Conductivity
 
     '''
+    rng_state = np.random.get_state()
     if not random:
         if pars['cov'] == 'Exponential':
             # Good choice for Exponential
@@ -104,5 +105,5 @@ def randomK(ang, sigma, Ctype, pars, grid = [], random = True, ftype = [], randn
     K = Kg * np.exp(np.real(np.fft.ifftn(ran*ntot)))
     K = K[0:nx[1], 0:nx[0]]
     
-
+    np.random.set_state(rng_state)
     return K
