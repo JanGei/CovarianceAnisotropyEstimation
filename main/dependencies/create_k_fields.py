@@ -34,7 +34,7 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
             
     elif pars['covt'] == 'good':
         lx = clx[0]
-        ang = np.deg2rad(angles[0])
+        ang = np.random.uniform(0, np.pi)
     if not random:
         lx = clx[0]
         ang = np.deg2rad(angles[0])

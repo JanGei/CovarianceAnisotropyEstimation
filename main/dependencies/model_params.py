@@ -124,7 +124,7 @@ def get():
     
     cov_mods    = ['Exponential', 'Matern', 'Gaussian']
     computer = ['office', 'binnac']
-    setup = computer[0]
+    setup = computer[1]
     if setup == 'office':
         n_mem  = 8
         nprocs = np.min([n_mem, psutil.cpu_count()])
@@ -153,19 +153,22 @@ def get():
             asimdays = [30, 665]
     
     choice_static = [0, 1]
-    choice_dynamic = [1, 1]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
+    
+    
     valt_variants = ["good", "random", "random_low", "random_high"]
     covt_variants = ["good", "random"]
-    valtype = valt_variants[choice_dynamic[0]]
-    covtype = covt_variants[choice_dynamic[1]]
+    choice_valt = 1
+    choice_covt = 0
+    valtype = valt_variants[choice_valt]
+    covtype = covt_variants[choice_covt]
     
     nPP = 28
     pp_flag = True 
     
     pilot_point_even = True
-    scramble_pp = True
+    scramble_pp = False
     
     conditional_flag = True
     
@@ -292,7 +295,7 @@ def get():
         'backnd': "threading",
         }
     
-    if choice == 0 or choice == 1:
+    if choice_static == 0 or choice_static == 1:
         if not pp_flag:
             print("You cant have a variogram with no pilotpoints - yet")
             print("Exiting...")
