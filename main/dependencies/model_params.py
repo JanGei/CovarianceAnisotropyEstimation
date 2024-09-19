@@ -133,7 +133,7 @@ def get():
         if years == 1:
             asimdays = [0, 300]
         elif years == 2:
-            asimdays = [25, 665]
+            asimdays = [0, 665]
         up_temp = True
         
         if n_mem == 2:
@@ -142,53 +142,57 @@ def get():
             asimdays = [1, 300]
         
     elif setup == 'binnac':
-        n_mem  = 360
+        n_mem  = 250
         nprocs = psutil.cpu_count()
         up_temp = True
         printf = False
         inspection = False
         if years == 1:
-            asimdays = [50, 300]
+            asimdays = [30, 300]
         elif years == 2:
-            asimdays = [50, 665]
+            asimdays = [30, 665]
     
-    choice = [0, 1, 1, 1]
+    choice_static = [0, 1]
+    choice_dynamic = [1, 1]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
     valt_variants = ["good", "random", "random_low", "random_high"]
     covt_variants = ["good", "random"]
-    valtype = valt_variants[choice[2]]
-    covtype = covt_variants[choice[3]]
-    nPP = 28
+    valtype = valt_variants[choice_dynamic[0]]
+    covtype = covt_variants[choice_dynamic[1]]
     
+    nPP = 28
     pp_flag = True 
-    conditional_flag = True
+    
     pilot_point_even = True
     scramble_pp = True
+    
+    conditional_flag = True
+    
     field_meas_flag = False
     val_first = False
     
     l_red = 1
-    h_damp = 0.3
+    h_damp = 0.4
     cov_damp = [0.05, 0.05]
     npf_damp = 0.05
     
     if val_first:
         damp_choice = [[h_damp, npf_damp], [h_damp, cov_damp, npf_damp]]
-        est_dat = cov_variants[choice[0]].copy()
+        est_dat = cov_variants[choice_static[0]].copy()
         est_dat.remove('cov_data')
-        cov_choice = [est_dat, cov_variants[choice[0]]]
+        cov_choice = [est_dat, cov_variants[choice_static[0]]]
     else:
         damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
-        cov_choice = cov_variants[choice[0]]
-        damp_choice = damp[choice[0]]
+        cov_choice = cov_variants[choice_static[0]]
+        damp_choice = damp[choice_static[0]]
           
-    if choice[0] == 1:
+    if choice_static[0] == 1:
         covtype = "random"
         valtype = "good"
         pp_flag = True
    
-    elif choice[0] == 2:
+    elif choice_static[0] == 2:
         covtype = "random"
         pp_flag = True
         if pp_flag:
@@ -214,7 +218,7 @@ def get():
         'damp'  : damp_choice,
         'val1st': val_first,
         'valday': 15,
-        'estyp' : est_variants[choice[1]],
+        'estyp' : est_variants[choice_static[1]],
         'n_PP'  : nPP,
         'eps'   : 0.01,
         'omitc' : 3,
