@@ -83,14 +83,9 @@ def extract_truth(M):
 def period(t_step, pars):
     
     day = np.floor(t_step / 4) + 1 
-    
-    if pars['spinup']:
-        add = 365
-    else:
-        add = 0
         
-    if day > pars['asim_d'][0]+add:
-        if day > pars['asim_d'][1]+add:
+    if day > pars['asim_d'][0]:
+        if day > pars['asim_d'][1]:
             period = "prediction"
             Assimilate = False
         else:

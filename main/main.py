@@ -176,6 +176,28 @@ if __name__ == '__main__':
     EnKF = EnsembleKalmanFilter(X, Ysim, damp = damp, eps = pars['eps'], localisation=local_matrix)
     true_obs = np.zeros((pars['nsteps'],len(obs_cid)))
     MF_Ensemble.remove_current_files(pars)
+    
+    if pars['spinup']:
+        for t_step in range(pars['nsteps']):
+            if t_step%4 == 0:
+                data, packages = get_transient_data(pars, t_step)
+                
+                VR_Model.update_transient_data(data, packages)
+                MF_Ensemble.update_transient_data(packages)
+                Bench_Mod.copy_transient(packages)
+            
+            VR_Model.simulation()
+            Bench_Mod.simulation()
+            MF_Ensemble.propagate()  
+            MF_Ensemble.update_initial_heads()
+            true_h = VR_Model.update_ic()
+            
+            if pars['printf']: 
+                print('--------')
+                print(f'time step {t_step}')
+                true_obs[t_step,:] = np.squeeze(VR_Model.get_observations())
+                X, Ysim = MF_Ensemble.get_Kalman_X_Y()
+                shout_dif(true_obs[t_step,:], np.mean(Ysim, axis = 1))
 
     for t_step in range(pars['nsteps']):
         
@@ -230,10 +252,6 @@ if __name__ == '__main__':
         else:
             # Very important: update initial conditions if youre not assimilating
             MF_Ensemble.update_initial_heads()
-            if pars['printf']: 
-                true_obs[t_step,:] = np.squeeze(VR_Model.get_observations())
-                X, Ysim = MF_Ensemble.get_Kalman_X_Y()
-                shout_dif(true_obs[t_step,:], np.mean(Ysim, axis = 1))
         
         # Update the intial conditiopns of the "true model"
         true_h = VR_Model.update_ic()
