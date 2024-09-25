@@ -14,6 +14,7 @@ from Virtual_Reality.Field_Generation import generate_fields
 from dependencies.convert_transient import convert_to_transient
 # from Virtual_Reality.transient_run import transient_run
 from dependencies.plotting.plot_fields import plot_fields
+from dependencies.plotting.compare_mean_h import compare_mean_true_head
 import sys
 import os
 from itertools import repeat
@@ -216,6 +217,7 @@ def create_reference_model(pars):
     # riv package
     riv = flopy.mf6.ModflowGwfriv(gwf,
                                   stress_period_data    = {0:riv_list})
+    
     # chd package
     chd = flopy.mf6.ModflowGwfchd(gwf,
                                   stress_period_data    = {0:chd_list})
@@ -238,7 +240,8 @@ def create_reference_model(pars):
     
     #%% Run transient simulation
     convert_to_transient(sim_ws, pars['trs_ws'], pars)
-    
+    # compare_mean_true_head(gwf, [gwf.output.head().get_data(),gwf.output.head().get_data(),
+    #                              gwf.output.head().get_data(),gwf.output.head().get_data()], [0,0])
     # transient_run(pars)
     
     # plot(gwf, ['logK', 'rch'])

@@ -10,6 +10,7 @@ def create_Ensemble(pars: dict) -> list:
     vr_dir      = pars['trs_ws']
     bench_dir   = pars['bmodws']
     ss_dir      = pars['sim_ws']
+    tmp_dir     = pars['tm_ws']
     
     # removing old Ensemble
     if os.path.exists(ens_ws) and os.path.isdir(ens_ws):

@@ -39,7 +39,7 @@ class MFModel:
             self.ang        = l_angs[2]
             self.a          = 0.5
             self.corrL_max  = np.min(pars['nx'] * pars['dx'])
-            self.threshhold = self.corrL_max * self.a
+            self.threshold  = self.corrL_max * self.a
         if pars['val1st']:
             self.params     = pars['EnKF_p'][0]
         else:
@@ -228,11 +228,11 @@ class MFModel:
         #     angle = angle + np.pi/2
         #     print("It happened")
             
-        if l1 > self.threshhold:
+        if l1 > self.threshold:
             l1 = self.reduce_corL(l1)
             correction = True
             
-        if l2 > self.threshhold:
+        if l2 > self.threshold:
             l2 = self.reduce_corL(l2)
             correction = True
             

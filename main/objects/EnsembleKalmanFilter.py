@@ -24,7 +24,7 @@ class EnsembleKalmanFilter:
     eps is the random noise component to pertrub the simulated measurements
     '''
     
-    def __init__(self, X, Ysim, damp, eps):
+    def __init__(self, X, Ysim, damp, eps, localisation):
         self.X          = X
         self.n_mem      = X.shape[1]
         self.Ysim       = Ysim
@@ -34,7 +34,8 @@ class EnsembleKalmanFilter:
         self.Y_prime    = np.zeros(np.shape(Ysim))
         self.n_obs      = np.shape(Ysim)[0]
         self.Cyy        = np.zeros((self.n_obs, self.n_obs))
-    
+        self.local      = localisation.T
+        
     def update_X_Y(self, X, Y):
         self.X      = X
         self.Ysim   = Y
@@ -55,25 +56,30 @@ class EnsembleKalmanFilter:
         R       = np.identity(self.n_obs) * self.eps**2
         
         # Covariance matrix
-        Cyy     = 1/(self.n_mem-1)*np.matmul((Y_prime),(Y_prime).T) + R 
+        Cyy     = 1/(self.n_mem-1)*np.matmul((Y_prime),(Y_prime).T) + R
+        Cxy     = 1/(self.n_mem-1)*np.matmul((X_prime),(Y_prime).T)
         
         self.X_prime = X_prime
         self.Y_prime = Y_prime
+        self.Cxy = Cxy
         self.Cyy = Cyy                       
     
     
     def Kalman_update(self,  Y_obs):
         Y_obs = np.tile(Y_obs, (self.n_mem,1)).T
         # perturb measurements
-        # HERE COULD BE A SOURCE FOR LARGER ERRORS
+
         Y_obs -= np.random.normal(loc=0, scale=self.eps, size=Y_obs.shape)
-        self.X += 1/(self.n_mem-1) * (self.damp *
-                    np.matmul(
-                        self.X_prime, np.matmul(
-                            self.Y_prime.T, np.matmul(
-                                np.linalg.inv(self.Cyy), (Y_obs - self.Ysim)
-                                )
-                            )
-                        ).T
-                    ).T
+        self.X += self.damp[:, np.newaxis] * np.matmul(self.Cxy * self.local,
+                            np.matmul(np.linalg.inv(self.Cyy), (Y_obs - self.Ysim)))
+        
+        # self.X += 1/(self.n_mem-1) * (self.damp *
+        #             np.matmul(
+        #                 self.X_prime, np.matmul(
+        #                     self.Y_prime.T, np.matmul(
+        #                         np.linalg.inv(self.Cyy), (Y_obs - self.Ysim)
+        #                         )
+        #                     )
+        #                 ).T
+        #             ).T
         

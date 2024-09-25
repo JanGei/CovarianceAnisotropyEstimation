@@ -235,7 +235,7 @@ class Ensemble:
         
         return np.mean(h_f, axis = 1), np.var(h_f, axis = 1)
     
-    def record_state(self, pars: dict, true_h, period: str):
+    def record_state(self, pars: dict, true_h, period: str, t_step):
         
         mean_h, var_h = self.get_mean_var(h = 'ic')
         k_fields = self.get_member_fields(['npf'])
@@ -246,38 +246,38 @@ class Ensemble:
         
         direc = pars['resdir']
         
-        f = open(os.path.join(direc,  'h_mean.dat'),'a')
-        g = open(os.path.join(direc,  'h_var.dat'),'a')
-        h = open(os.path.join(direc,  'true_h.dat'),'a')
-        for i in range(len(mean_h)):
-            f.write("{:.5f} ".format(mean_h[i]))
-            g.write("{:.5f} ".format(var_h[i]))
-            h.write("{:.5f} ".format(true_h[i]))
-        f.write('\n')
-        g.write('\n')
-        h.write('\n')
-        f.close()
-        g.close()
-        h.close()
-        
         f = open(os.path.join(direc,  'errors_'+period+'.dat'),'a')
         f.write("{:.3f} ".format(self.ole[period][-1]))
         f.write("{:.3f} ".format(self.te1[period][-1]))
-        f.write("{:.6f} ".format(self.te2[period][-1]))
+        f.write("{:.5f} ".format(self.te2[period][-1]))
         f.write('\n')
         f.close()
         
         f = open(os.path.join(direc,  'obs_true.dat'),'a')
         g = open(os.path.join(direc,  'obs_mean.dat'),'a')
         for i in range(len(self.obs[0])):
-            f.write("{:.5f} ".format(self.obs[0][i]))
-            g.write("{:.5f} ".format(self.obs[1][i]))
+            f.write("{:.2f} ".format(self.obs[0][i]))
+            g.write("{:.2f} ".format(self.obs[1][i]))
         f.write('\n')
         g.write('\n')
         f.close()
         g.close()
         
-        
+        if t_step%20 == 0:
+            f = open(os.path.join(direc,  'h_mean.dat'),'a')
+            g = open(os.path.join(direc,  'h_var.dat'),'a')
+            h = open(os.path.join(direc,  'true_h.dat'),'a')
+            for i in range(len(mean_h)):
+                f.write("{:.2f} ".format(mean_h[i]))
+                g.write("{:.2f} ".format(var_h[i]))
+                h.write("{:.2f} ".format(true_h[i]))
+            f.write('\n')
+            g.write('\n')
+            h.write('\n')
+            f.close()
+            g.close()
+            h.close()
+
         
         # also store covariance data for all models
         if 'cov_data' in self.params:
@@ -290,7 +290,7 @@ class Ensemble:
             f = open(os.path.join(direc, 'covariance_data.dat'),'a')
             f.write("{:.2f} ".format(res[0]))
             f.write("{:.2f} ".format(res[1]))
-            f.write("{:.4f} ".format(res[2]))
+            f.write("{:.2f} ".format(res[2]))
             f.write('\n')
             f.close()
             
@@ -327,8 +327,8 @@ class Ensemble:
                 f = open(os.path.join(direc,  'meanlogppk.dat'),'a')
                 g = open(os.path.join(direc,  'varlogppk.dat'),'a')
                 for i in range(len(self.meanlogppk)):
-                    f.write("{:.8f} ".format(self.meanlogppk[i]))
-                    g.write("{:.8f} ".format(self.varlogppk[i]))
+                    f.write("{:.2f} ".format(self.meanlogppk[i]))
+                    g.write("{:.2f} ".format(self.varlogppk[i]))
                 f.write('\n')
                 g.write('\n')
                 f.close()
@@ -337,28 +337,29 @@ class Ensemble:
                 f = open(os.path.join(direc,  'meanppk.dat'),'a')
                 g = open(os.path.join(direc,  'varppk.dat'),'a')
                 for i in range(len(self.meanppk)):
-                    f.write("{:.8f} ".format(self.meanppk[i]))
-                    g.write("{:.8f} ".format(self.varppk[i]))
+                    f.write("{:.5f} ".format(self.meanppk[i]))
+                    g.write("{:.5f} ".format(self.varppk[i]))
                 f.write('\n')
                 g.write('\n')
                 f.close()
                 g.close()
             
-            f = open(os.path.join(direc,  'meanlogk.dat'),'a')
-            g = open(os.path.join(direc,  'varlogk.dat'),'a')
-            for i in range(len(self.meanlogk)):
-                f.write("{:.8f} ".format(self.meanlogk[i]))
-                g.write("{:.8f} ".format(self.varlogk[i]))
-            f.write('\n')
-            g.write('\n')
-            f.close()
-            g.close()
+            if t_step%20 == 0:
+                f = open(os.path.join(direc,  'meanlogk.dat'),'a')
+                g = open(os.path.join(direc,  'varlogk.dat'),'a')
+                for i in range(len(self.meanlogk)):
+                    f.write("{:.2f} ".format(self.meanlogk[i]))
+                    g.write("{:.2f} ".format(self.varlogk[i]))
+                f.write('\n')
+                g.write('\n')
+                f.close()
+                g.close()
             
-            f = open(os.path.join(direc,  'meank.dat'),'a')
-            for i in range(len(self.meank)):
-                f.write("{:.8f} ".format(self.meank[i]))
-            f.write('\n')
-            f.close()
+                f = open(os.path.join(direc,  'meank.dat'),'a')
+                for i in range(len(self.meank)):
+                    f.write("{:.5f} ".format(self.meank[i]))
+                f.write('\n')
+                f.close()
         
     def remove_current_files(self, pars):
         

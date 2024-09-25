@@ -34,7 +34,8 @@ def randomK(ang, sigma, Ctype, pars, grid = [], random = True, ftype = [], randn
                 np.random.seed(randn)
             else:
                 if pars['l_red'] == 1:
-                    np.random.seed(32)  
+                    # old 32
+                    np.random.seed(8)  
                 elif pars['l_red'] == 2:
                     np.random.seed(16)
                     

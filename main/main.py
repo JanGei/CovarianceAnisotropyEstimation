@@ -9,6 +9,7 @@ from dependencies.get_transient_data import get_transient_data
 from dependencies.intersect_with_grid import intersect_with_grid
 from dependencies.generate_mask import chd_mask
 from dependencies.plotting.ellipses import ellipses
+from dependencies.implicit_localisation import implicit_localisation
 from dependencies.plotting.compare_mean import compare_mean_true 
 from dependencies.plotting.compare_mean_h import compare_mean_true_head
 from dependencies.plotting.check_observations import check_observations
@@ -24,7 +25,6 @@ from Virtual_Reality.ReferenceModel import create_reference_model
 from Virtual_Reality.functions.generator import gsgenerator
 import time
 import numpy as np
-import os
 from joblib import Parallel, delayed
 
 import warnings
@@ -61,6 +61,7 @@ if __name__ == '__main__':
     mask_chd = chd_mask(gwf)
     
     obs_cid = intersect_with_grid(gwf, pars['obsxy'])
+    
     VR_Model = Virtual_Reality(pars, obs_cid)
     
     k_fields = []
@@ -171,7 +172,8 @@ if __name__ == '__main__':
     #%%
     X, Ysim = MF_Ensemble.get_Kalman_X_Y()
     damp = MF_Ensemble.get_damp(X)
-    EnKF = EnsembleKalmanFilter(X, Ysim, damp = damp, eps = pars['eps'])
+    local_matrix = implicit_localisation(pars['obsxy'], gwf.modelgrid, mask_chd, pars['EnKF_p'], pp_xy = pp_xy)
+    EnKF = EnsembleKalmanFilter(X, Ysim, damp = damp, eps = pars['eps'], localisation=local_matrix)
     true_obs = np.zeros((pars['nsteps'],len(obs_cid)))
     MF_Ensemble.remove_current_files(pars)
 
@@ -205,7 +207,7 @@ if __name__ == '__main__':
         MF_Ensemble.propagate()
         
         if pars['printf']: print(f'Ensemble propagated in {(time.time() - start_time):.2f} seconds')
- 
+        if pars['printf']: shout_dif(true_obs[t_step,:], np.mean(Ysim, axis = 1))
         if Assimilate:
             # print('---')
             
@@ -214,7 +216,6 @@ if __name__ == '__main__':
             EnKF.update_X_Y(X, Ysim)
             EnKF.analysis()
             true_obs[t_step,:] = np.squeeze(VR_Model.get_observations())
-            shout_dif(true_obs[t_step,:], np.mean(Ysim, axis = 1))
             EnKF.Kalman_update(true_obs[t_step,:].T)
 
             if pars['printf']: print(f'Ensemble Kalman Filter performed in  {(time.time() - start_time):.2f} seconds')
@@ -239,11 +240,11 @@ if __name__ == '__main__':
             if t_step%4 == 0:
 
                 mean_h, var_h = MF_Ensemble.model_error(true_h, period)
-                MF_Ensemble.record_state(pars, np.squeeze(true_h), period)
+                MF_Ensemble.record_state(pars, np.squeeze(true_h), period, t_step)
                 Bench_Mod.model_error(true_h, period)
             
                 # visualize covariance structures
-                if pars['setup'] == 'office' and Assimilate and t_step%12 == 0:
+                if pars['setup'] == 'office' and Assimilate and t_step%4 == 0:
                     if 'cov_data' in MF_Ensemble.params:
                         m = MF_Ensemble.mean_cov_par
                         mat = np.array([[m[0], m[1]],[m[1], m[2]]])

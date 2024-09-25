@@ -6,8 +6,13 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 def plot_fields(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pars,  logk_proposal, rech_proposal: np.ndarray):
     
-    kmin    = np.min(np.log(np.loadtxt(pars['k_r_d'], delimiter = ',')))
-    kmax    = np.max(np.log(np.loadtxt(pars['k_r_d'], delimiter = ',')))
+    # kmin    = np.min(np.log(np.loadtxt(pars['k_r_d'], delimiter = ',')))
+    # kmax    = np.max(np.log(np.loadtxt(pars['k_r_d'], delimiter = ',')))
+    # rmin    = np.min(np.loadtxt(pars['r_r_d'], delimiter = ','))
+    # rmax    = np.max(np.loadtxt(pars['r_r_d'], delimiter = ','))
+    
+    kmin    = np.min(np.min(logk_proposal))
+    kmax    = np.max(np.max(logk_proposal))
     rmin    = np.min(np.loadtxt(pars['r_r_d'], delimiter = ','))
     rmax    = np.max(np.loadtxt(pars['r_r_d'], delimiter = ','))
     

@@ -7,8 +7,8 @@ def create_wells(row_well, col_well, dx):
     well_loc = np.zeros((col_well*row_well,2))
     for i in range(row_well):
         for j in range(col_well):
-            well_loc[i*col_well + j, 0] = (19.5 + 10*j) *dx[0] 
-            well_loc[i*col_well + j, 1] = (48.5 - 10*i) *dx[1] 
+            well_loc[i*col_well + j, 0] = (10 + 10*j) *dx[0] 
+            well_loc[i*col_well + j, 1] = (45 - 10*i) *dx[1] 
 
 
     # pumping wells should be at (27, 9, 31, 5, 15)
@@ -124,16 +124,16 @@ def get():
     
     cov_mods    = ['Exponential', 'Matern', 'Gaussian']
     computer = ['office', 'binnac']
-    setup = computer[1]
+    setup = computer[0]
     if setup == 'office':
-        n_mem  = 8
+        n_mem  = 250
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         printf = True
         if years == 1:
-            asimdays = [0, 300]
+            asimdays = [5, 300]
         elif years == 2:
-            asimdays = [0, 665]
+            asimdays = [5, 665]
         up_temp = True
         
         if n_mem == 2:
@@ -152,19 +152,18 @@ def get():
         elif years == 2:
             asimdays = [30, 665]
     
-    choice_static = [0, 1]
+    choice_static = [0, 0]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     est_variants = ["underestimate", "good", "overestimate"]
-    
-    
+
     valt_variants = ["good", "random", "random_low", "random_high"]
     covt_variants = ["good", "random"]
     choice_valt = 1
-    choice_covt = 0
+    choice_covt = 1
     valtype = valt_variants[choice_valt]
     covtype = covt_variants[choice_covt]
     
-    nPP = 28
+    nPP = 45
     pp_flag = True 
     
     pilot_point_even = True
@@ -176,9 +175,9 @@ def get():
     val_first = False
     
     l_red = 1
-    h_damp = 0.4
-    cov_damp = [0.05, 0.05]
-    npf_damp = 0.05
+    h_damp = 0.5
+    cov_damp = [0.2, 0.2]
+    npf_damp = 0.1
     
     if val_first:
         damp_choice = [[h_damp, npf_damp], [h_damp, cov_damp, npf_damp]]
@@ -189,19 +188,6 @@ def get():
         damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
         cov_choice = cov_variants[choice_static[0]]
         damp_choice = damp[choice_static[0]]
-          
-    if choice_static[0] == 1:
-        covtype = "random"
-        valtype = "good"
-        pp_flag = True
-   
-    elif choice_static[0] == 2:
-        covtype = "random"
-        pp_flag = True
-        if pp_flag:
-            valtype = "random"
-        else:
-            valtype = "random"
 
     if field_meas_flag:
         np.random.seed(85)
@@ -253,7 +239,7 @@ def get():
         'welnd' : np.array([150, 365, 365, 200, 300])*years,# end day of pump
         'welay' : np.array(np.zeros(5)),                    # layer of wells
         'river' : np.array([[0.0,0], [5000,0]]),            # start / end of river
-        'rivC'  : 1e-4,                                     # river conductance [ms-1]
+        'rivC'  : 5e-4,                                     # river conductance [ms-1]
         'rivd'  : 2,                                        # depth of river [m]
         'chd'   : np.array([[0.0,2500], [5000,2500]]),      # start / end of river
         'chdh'  : 15,                                       # initial stage of riv
