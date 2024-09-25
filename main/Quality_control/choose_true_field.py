@@ -33,7 +33,7 @@ X, Y = np.meshgrid(x, y)
 ang1 = np.deg2rad(pars['ang'][0])
 ang2 = np.deg2rad(pars['ang'][1])
 
-for i in range(n):
+for i in range(1000,1000+n):
 
     
 

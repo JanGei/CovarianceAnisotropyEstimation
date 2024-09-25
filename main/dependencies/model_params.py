@@ -84,8 +84,13 @@ def period(t_step, pars):
     
     day = np.floor(t_step / 4) + 1 
     
-    if day > pars['asim_d'][0]:
-        if day > pars['asim_d'][1]:
+    if pars['spinup']:
+        add = 365
+    else:
+        add = 0
+        
+    if day > pars['asim_d'][0]+add:
+        if day > pars['asim_d'][1]+add:
             period = "prediction"
             Assimilate = False
         else:
@@ -95,8 +100,9 @@ def period(t_step, pars):
             else:
                 Assimilate = False
     else:
-        period = "pre_run"
+        period = "spinup"
         Assimilate = False
+        
     return period, Assimilate
 
 
@@ -126,31 +132,24 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 250
+        n_mem  = 2
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
-        printf = True
-        if years == 1:
-            asimdays = [5, 300]
-        elif years == 2:
-            asimdays = [5, 665]
         up_temp = True
-        
+        printf = True
+        spinup = True
+
         if n_mem == 2:
             nprocs = 1
             up_temp = True 
-            asimdays = [1, 300]
         
     elif setup == 'binnac':
-        n_mem  = 250
+        n_mem  = 360
         nprocs = psutil.cpu_count()
         up_temp = True
         printf = False
         inspection = False
-        if years == 1:
-            asimdays = [30, 300]
-        elif years == 2:
-            asimdays = [30, 665]
+        spinup = True
     
     choice_static = [0, 0]
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
@@ -175,9 +174,10 @@ def get():
     val_first = False
     
     l_red = 1
-    h_damp = 0.5
-    cov_damp = [0.2, 0.2]
+    h_damp = 0.4
+    cov_damp = [0.15, 0.15]
     npf_damp = 0.1
+    asimdays = [0, 300]
     
     if val_first:
         damp_choice = [[h_damp, npf_damp], [h_damp, cov_damp, npf_damp]]
@@ -224,7 +224,7 @@ def get():
         'wel_k' : False,
         'rch_is': False,                                    # Flag rch isotropy
         'l_red' : l_red,
-        'lx'    : np.array([[1100,500], [2500,600]])/l_red, # corellation lengths
+        'lx'    : np.array([[1100,600], [2500,600]])/l_red, # corellation lengths
         'ang'   : np.array([111, 17]),                      # angle in ° (logK, recharge)
         'sigma' : np.array([1.7, 0.1]),                     # variance (logK, recharge)
         'mu'    : np.array([-8.5, -0.7]),                   # mean (log(ms-1), (mm/d))
@@ -236,16 +236,17 @@ def get():
         'obsxy' : np.array(well_loc),                       # location of obs
         'welq'  : np.array([9, 18, 90, 0.09, 0.9])/3600,    # Q of wells [m3s-1]
         'welst' : np.array([20, asimdays[1], 200, 0, 0]),   # start day of pump
-        'welnd' : np.array([150, 365, 365, 200, 300])*years,# end day of pump
+        'welnd' : np.array([150, 365, 365, 200, 300]),      # end day of pump
         'welay' : np.array(np.zeros(5)),                    # layer of wells
         'river' : np.array([[0.0,0], [5000,0]]),            # start / end of river
-        'rivC'  : 5e-4,                                     # river conductance [ms-1]
+        'rivC'  : 1e-4,                                     # river conductance [ms-1]
         'rivd'  : 2,                                        # depth of river [m]
         'chd'   : np.array([[0.0,2500], [5000,2500]]),      # start / end of river
         'chdh'  : 15,                                       # initial stage of riv
-        'ss'    : 1e-4,                                     # specific storage
-        'sy'    : 0.15,                                     # specific yield
+        'ss'    : 1e-3,                                     # specific storage
+        'sy'    : 0.20,                                     # specific yield
         'asim_d': asimdays,
+        'spinup': spinup,
         'mname' : "Reference",
         'sname' : "Reference",
         'f_meas': field_meas_flag,

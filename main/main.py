@@ -177,7 +177,6 @@ if __name__ == '__main__':
     true_obs = np.zeros((pars['nsteps'],len(obs_cid)))
     MF_Ensemble.remove_current_files(pars)
 
-    # for t_step in range(pars['nsteps']):
     for t_step in range(pars['nsteps']):
         
         period, Assimilate = pars['period'](t_step, pars)  
@@ -205,9 +204,9 @@ if __name__ == '__main__':
         VR_Model.simulation()
         Bench_Mod.simulation()
         MF_Ensemble.propagate()
-        
+            
         if pars['printf']: print(f'Ensemble propagated in {(time.time() - start_time):.2f} seconds')
-        if pars['printf']: shout_dif(true_obs[t_step,:], np.mean(Ysim, axis = 1))
+
         if Assimilate:
             # print('---')
             
@@ -216,13 +215,13 @@ if __name__ == '__main__':
             EnKF.update_X_Y(X, Ysim)
             EnKF.analysis()
             true_obs[t_step,:] = np.squeeze(VR_Model.get_observations())
+            if pars['printf']: shout_dif(true_obs[t_step,:], np.mean(Ysim, axis = 1))
             EnKF.Kalman_update(true_obs[t_step,:].T)
 
             if pars['printf']: print(f'Ensemble Kalman Filter performed in  {(time.time() - start_time):.2f} seconds')
 
             start_time = time.time()
             MF_Ensemble.apply_X(EnKF.X)
-            
             
             interim = [int(i+len(damp) -5000) for i in obs_cid]
             shout_dif(true_obs[t_step,:], np.mean(EnKF.X, axis = 1)[interim])
@@ -231,6 +230,10 @@ if __name__ == '__main__':
         else:
             # Very important: update initial conditions if youre not assimilating
             MF_Ensemble.update_initial_heads()
+            if pars['printf']: 
+                true_obs[t_step,:] = np.squeeze(VR_Model.get_observations())
+                X, Ysim = MF_Ensemble.get_Kalman_X_Y()
+                shout_dif(true_obs[t_step,:], np.mean(Ysim, axis = 1))
         
         # Update the intial conditiopns of the "true model"
         true_h = VR_Model.update_ic()
@@ -238,10 +241,12 @@ if __name__ == '__main__':
         start_time = time.time()
         if period == "assimilation" or period == "prediction":
             if t_step%4 == 0:
-
+                
+                
                 mean_h, var_h = MF_Ensemble.model_error(true_h, period)
+                if t_step/4 >= pars['asim_d'][0]+10:
+                    Bench_Mod.model_error(true_h, period)
                 MF_Ensemble.record_state(pars, np.squeeze(true_h), period, t_step)
-                Bench_Mod.model_error(true_h, period)
             
                 # visualize covariance structures
                 if pars['setup'] == 'office' and Assimilate and t_step%4 == 0:

@@ -246,12 +246,13 @@ class Ensemble:
         
         direc = pars['resdir']
         
-        f = open(os.path.join(direc,  'errors_'+period+'.dat'),'a')
-        f.write("{:.3f} ".format(self.ole[period][-1]))
-        f.write("{:.3f} ".format(self.te1[period][-1]))
-        f.write("{:.5f} ".format(self.te2[period][-1]))
-        f.write('\n')
-        f.close()
+        if t_step/4 >= pars['asim_d'][0]+10:
+            f = open(os.path.join(direc,  'errors_'+period+'.dat'),'a')
+            f.write("{:.3f} ".format(self.ole[period][-1]))
+            f.write("{:.3f} ".format(self.te1[period][-1]))
+            f.write("{:.5f} ".format(self.te2[period][-1]))
+            f.write('\n')
+            f.close()
         
         f = open(os.path.join(direc,  'obs_true.dat'),'a')
         g = open(os.path.join(direc,  'obs_mean.dat'),'a')
