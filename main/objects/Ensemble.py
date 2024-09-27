@@ -246,13 +246,19 @@ class Ensemble:
         
         direc = pars['resdir']
         
-        if t_step/4 >= pars['asim_d'][0]+10:
-            f = open(os.path.join(direc,  'errors_'+period+'.dat'),'a')
-            f.write("{:.3f} ".format(self.ole[period][-1]))
-            f.write("{:.3f} ".format(self.te1[period][-1]))
-            f.write("{:.5f} ".format(self.te2[period][-1]))
-            f.write('\n')
-            f.close()
+
+        f = open(os.path.join(direc,  'errors_'+period+'.dat'),'a')
+        g = open(os.path.join(direc,  'errors_'+period+'_ts.dat'),'a')
+        f.write("{:.3f} ".format(self.ole[period][-1]))
+        f.write("{:.3f} ".format(self.te1[period][-1]))
+        f.write("{:.5f} ".format(self.te2[period][-1]))
+        g.write("{:.3f} ".format(self.ole_nsq[period][-1]))
+        g.write("{:.3f} ".format(self.te1_nsq[period][-1]))
+        g.write("{:.5f} ".format(self.te2_nsq[period][-1]))
+        f.write('\n')
+        g.write('\n')
+        f.close()
+        g.close()
         
         f = open(os.path.join(direc,  'obs_true.dat'),'a')
         g = open(os.path.join(direc,  'obs_mean.dat'),'a')
@@ -365,7 +371,9 @@ class Ensemble:
     def remove_current_files(self, pars):
         
         file_paths = [os.path.join(pars['resdir'], 'errors_assimilation.dat'),
+                      os.path.join(pars['resdir'], 'errors_assimilation_ts.dat'),
                       os.path.join(pars['resdir'], 'errors_prediction.dat'),
+                      os.path.join(pars['resdir'], 'errors_prediction_ts.dat'),
                       os.path.join(pars['resdir'], 'errors_assimilation_benchmark.dat'),
                       os.path.join(pars['resdir'], 'errors_prediction_benchmark.dat'),
                       os.path.join(pars['resdir'], 'covariance_data.dat'),

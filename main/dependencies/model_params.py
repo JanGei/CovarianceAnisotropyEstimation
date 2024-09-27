@@ -127,12 +127,12 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 2
+        n_mem  = 250
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         up_temp = True
         printf = True
-        spinup = True
+        spinup = False
 
         if n_mem == 2:
             nprocs = 1
