@@ -127,7 +127,7 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 250
+        n_mem  = 2
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         up_temp = True
@@ -146,28 +146,24 @@ def get():
         inspection = False
         spinup = True
     
-    choice_static = [0, 0]
+    choice_static = 0
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
-    est_variants = ["underestimate", "good", "overestimate"]
+    # est_variants = ["underestimate", "good", "overestimate"]
 
     valt_variants = ["good", "random", "random_low", "random_high"]
-    covt_variants = ["good", "random"]
-    choice_valt = 1
-    choice_covt = 1
-    valtype = valt_variants[choice_valt]
-    covtype = covt_variants[choice_covt]
+    choice_valt = 3 # 1 = random
+    covt_variants = ["good", "random", "random_low", "random_high"]
+    choice_covt = 3 # 1 = random
     
-    nPP = 45
+    
     pp_flag = True 
-    
     pilot_point_even = True
     scramble_pp = False
-    
     conditional_flag = True
-    
     field_meas_flag = False
     val_first = False
     
+    nPP = 45
     l_red = 1
     h_damp = 0.4
     cov_damp = [0.15, 0.15]
@@ -176,13 +172,13 @@ def get():
     
     if val_first:
         damp_choice = [[h_damp, npf_damp], [h_damp, cov_damp, npf_damp]]
-        est_dat = cov_variants[choice_static[0]].copy()
+        est_dat = cov_variants[choice_static].copy()
         est_dat.remove('cov_data')
-        cov_choice = [est_dat, cov_variants[choice_static[0]]]
+        cov_choice = [est_dat, cov_variants[choice_static]]
     else:
         damp = [[h_damp, cov_damp, npf_damp], [h_damp, cov_damp], [h_damp, npf_damp]]
-        cov_choice = cov_variants[choice_static[0]]
-        damp_choice = damp[choice_static[0]]
+        cov_choice = cov_variants[choice_static]
+        damp_choice = damp[choice_static]
 
     if field_meas_flag:
         np.random.seed(85)
@@ -202,7 +198,6 @@ def get():
         'damp'  : damp_choice,
         'val1st': val_first,
         'valday': 15,
-        'estyp' : est_variants[choice_static[1]],
         'n_PP'  : nPP,
         'eps'   : 0.01,
         'omitc' : 3,
@@ -211,8 +206,8 @@ def get():
         'geomea': 1,
         'years' : years,
         'condfl': conditional_flag,
-        'covt'  : covtype,
-        'valt'  : valtype,
+        'covtyp': covt_variants[choice_covt],
+        'valtyp': valt_variants[choice_valt],
         'up_tem': up_temp,
         'nx'    : np.array([100, 50]),                      # number of cells
         'dx'    : dx,                                       # cell size

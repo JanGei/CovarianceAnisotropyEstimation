@@ -13,49 +13,47 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
     xyz = mg.xyzcellcenters
     cxy = np.vstack((xyz[0], xyz[1])).T
     sig_meas = pars['sig_me']
-    
-    if pars['estyp'] == "overestimate":
-        factor = 0.66
-    elif pars['estyp'] == "good":
-        factor = 0.5
-    elif pars['estyp'] == "underestimate":
-        factor = 0.33
-    
-    if pars['covt'] == 'random':
+
+    if pars['covtyp'] == "good":
+        lx = clx[0]
+        ang = np.random.uniform(0, np.pi)
+        if not random:
+            lx = clx[0]
+            ang = np.deg2rad(angles[0])
+    else:
+        if pars['covtyp'] == 'random':
+            factor = 0.5
+        elif pars['covtyp'] == 'random_low':
+            factor = 0.33
+        elif pars['covtyp'] == 'random_high':
+            factor = 0.66
+            
         lx = np.array([np.random.randint(pars['dx'][0]*5, np.min(pars['nx'] * pars['dx'])*factor),
                        np.random.randint(pars['dx'][1]*5, np.min(pars['nx'] * pars['dx'])*factor)])
         ang = np.random.uniform(0, np.pi)
-        if pars['Erdalx'] == True:
-            lx = clx[0]
-        # if lx[0] < lx[1]:
-        #     lx = np.flip(lx)
-        if lx[0] == lx[1]:
-           lx[0] += 1
-            
-    elif pars['covt'] == 'good':
-        lx = clx[0]
-        ang = np.random.uniform(0, np.pi)
-    if not random:
-        lx = clx[0]
-        ang = np.deg2rad(angles[0])
-        
+    
+
+    if lx[0] == lx[1]:
+        lx[0] += 1
+               
     if test_cov:
         lx = test_cov[0]
         ang = test_cov[1]
         
-    if pars['valt'] == 'good':
-        pp_k = np.log(k_ref[pp_cid]) 
+    if pars['valtyp'] == 'good':
+        pp_k = np.log(np.squeeze(k_ref)[pp_cid]) 
         pp_k = pp_k + sig_meas * np.random.randn(*pp_k.shape)
-    elif pars['valt'] == 'random':
-        mu = np.mean(np.log(k_ref)) #pars['mu'][0]
+    else:
+        if pars['valtyp'] == 'random':
+            mu = np.mean(np.log(k_ref)) 
+        elif pars['valtyp'] == 'random_low':
+            mu = np.mean(np.log(k_ref)) / 0.7
+        elif pars['valtyp'] == 'random_high':
+            mu = np.mean(np.log(k_ref)) * 0.7
+            
         std = np.sqrt(pars['sigma'][0])
         pp_k = np.random.normal(mu, std, len(pp_cid))
-    elif pars['valt'] == 'random_low':
-        std = np.sqrt(pars['sigma'][0])
-        pp_k = np.random.normal(-10, std, len(pp_cid))
-    elif pars['valt'] == 'random_high':
-        std = np.sqrt(pars['sigma'][0])
-        pp_k = np.random.normal(-7, std, len(pp_cid))
+    
     
     if pars['f_meas']:
         true_ppk = np.log(np.squeeze(k_ref)[pp_cid.astype(int)]) 
