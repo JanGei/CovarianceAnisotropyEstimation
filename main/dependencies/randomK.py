@@ -1,6 +1,6 @@
 import numpy as np
 
-def randomK(ang, sigma, Ctype, pars, grid = [], random = True, ftype = [], randn = []):
+def randomK(ang, sigma, Ctype, pars, grid = [], random = True, initialize = False, ini_dat = [], ftype = [], randn = []):
     '''
     Generate auto-correlated 2-D random hydraulic-conductivity fields using
     spectral methods.
@@ -24,8 +24,8 @@ def randomK(ang, sigma, Ctype, pars, grid = [], random = True, ftype = [], randn
     K          : Field of hydraulic Conductivity
 
     '''
-    rng_state = np.random.get_state()
     if not random:
+        rng_state = np.random.get_state()
         if pars['cov'] == 'Exponential':
             # Good choice for Exponential
             np.random.seed(6)
@@ -47,7 +47,9 @@ def randomK(ang, sigma, Ctype, pars, grid = [], random = True, ftype = [], randn
             lx = pars['lx'][1]
             np.random.seed(66) 
         
-
+    elif initialize:
+        Kg = np.exp(ini_dat[0])
+        lx = ini_dat[1]
     else:
         Kg = pars['geomea']
         
@@ -106,5 +108,7 @@ def randomK(ang, sigma, Ctype, pars, grid = [], random = True, ftype = [], randn
     K = Kg * np.exp(np.real(np.fft.ifftn(ran*ntot)))
     K = K[0:nx[1], 0:nx[0]]
     
-    np.random.set_state(rng_state)
+    if not random:
+        np.random.set_state(rng_state)
+        
     return K

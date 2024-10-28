@@ -123,7 +123,7 @@ def get():
     mask[q_idx] = False
     years = 1
     
-    cov_mods    = ['Exponential', 'Matern', 'Gaussian']
+    cov_mods = ['Exponential', 'Matern', 'Gaussian']
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
@@ -150,10 +150,10 @@ def get():
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
     # est_variants = ["underestimate", "good", "overestimate"]
 
-    valt_variants = ["good", "random", "random_low", "random_high"]
-    choice_valt = 3 # 1 = random
-    covt_variants = ["good", "random", "random_low", "random_high"]
-    choice_covt = 3 # 1 = random
+    valt_variants = ["random_good", "random_low", "random_high"]
+    choice_valt = 0 # 0 = random
+    covt_variants = ["good", "random_low", "random_high"]
+    choice_covt = 2 # 1 = random
     
     
     pp_flag = True 
