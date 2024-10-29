@@ -4,7 +4,7 @@ import os
     
 class Ensemble:
     
-    def __init__(self, members: list, pars, obs_cid, nprocs: int, mask, ellipses = [], ellipses_par = [], pp_cid = [], pp_xy = [], pp_k = []):
+    def __init__(self, members: list, pars, obs_cid, nprocs: int, mask, k_ref, ellipses = [], ellipses_par = [], pp_cid = [], pp_xy = [], pp_k = [], shadow = False):
         self.members    = members
         self.pars       = pars
         self.nprocs     = nprocs
@@ -16,11 +16,18 @@ class Ensemble:
         self.te1_nsq    = {'assimilation': [], 'prediction': []}
         self.te2        = {'assimilation': [], 'prediction': []}
         self.te2_nsq    = {'assimilation': [], 'prediction': []}
+        self.nrmse      = {'assimilation': [], 'prediction': []}
+        self.nrmse_nsq  = {'assimilation': [], 'prediction': []}
+        self.te1_k      = {'normal': [], 'nsq': []}
+        self.te2_k      = {'normal': [], 'nsq': []}
+        self.nrmse_k    = {'normal': [], 'nsq': []}
+        self.k_ref      = k_ref
         self.obs        = []
         self.pilotp_flag= pars['pilotp']
         self.obs_cid    = [int(i) for i in obs_cid]
         self.meanlogk   = []
         self.meank   = []
+        self.shadow = shadow
         self.vark   = []
         if pars['pilotp']:
             self.ellipses   = ellipses
@@ -192,29 +199,52 @@ class Ensemble:
         true_h_m = true_h[~self.h_mask]
         mean_h_m = mean_h[~self.h_mask]
         var_h_m = var_h[~self.h_mask]
-        var_te2 = (true_h_m + mean_h_m)/2
-        
-        
+        var_ole = 0.01**2
+        # Erdal Formulation
+        # var_te2 = ((true_h_m + mean_h_m)/2)**2
+        # New Formulation
+        var_te2 = true_h_m**2
+
         # Computing normalized squared error only considering nodes
-        node_ole = np.mean((true_obs - mean_obs)**2/(0.01**2))
+        node_ole = np.mean((true_obs - mean_obs)**2/var_ole)
         node_te1 = np.mean((true_h_m - mean_h_m)**2/var_h_m)
-        node_te2 = np.mean((true_h_m - mean_h_m)**2/(var_te2**2))
+        node_te2 = np.mean((true_h_m - mean_h_m)**2/var_te2)
+        node_nrmse = np.mean((true_h_m - mean_h_m)**2/var_ole)
         
         # Append node error to list
         self.ole_nsq[period].append(node_ole)
         self.te1_nsq[period].append(node_te1)
         self.te2_nsq[period].append(node_te2)
+        self.nrmse_nsq[period].append(node_nrmse)
 
         # Calculate NRMSE over all node calculations
         time_ole = np.sqrt(np.mean(self.ole_nsq[period]))
         time_te1 = np.sqrt(np.mean(self.te1_nsq[period]))
         time_te2 = np.sqrt(np.mean(self.te2_nsq[period]))
+        time_nrmse = np.sqrt(np.mean(self.nrmse_nsq[period]))
 
         # Append error to resulting list
         self.ole[period].append(time_ole)
         self.te1[period].append(time_te1)
         self.te2[period].append(time_te2)
+        self.nrmse[period].append(time_nrmse)
         
+        if period == 'assimilation':
+            mean_k, var_k = self.get_mean_var(h = 'npf')
+            
+            var_te2_k = self.k_ref**2
+            node_te1_k = np.mean((self.k_ref - mean_k)**2/var_k)
+            node_te2_k = np.mean((self.k_ref - mean_k)**2/var_te2_k)
+            node_nrmse_k = np.mean((self.k_ref - mean_k)**2/0.01**2)
+            
+            self.te1_k['nsq'].append(node_te1_k)
+            self.te2_k['nsq'].append(node_te2_k)
+            self.nrmse_k['nsq'].append(node_nrmse_k)
+            
+            self.te1_k['normal'].append(np.sqrt(np.mean(self.te1_k['nsq'])))
+            self.te2_k['normal'].append(np.sqrt(np.mean(self.te2_k['nsq'])))
+            self.nrmse_k['normal'].append(np.sqrt(np.mean(self.nrmse_k['nsq'])))
+
         return mean_h, var_h
     
     def get_member_fields(self, params):
@@ -245,16 +275,30 @@ class Ensemble:
         self.meank = np.mean(k_fields, axis = 0)
         
         direc = pars['resdir']
-        
 
         f = open(os.path.join(direc,  'errors_'+period+'.dat'),'a')
         g = open(os.path.join(direc,  'errors_'+period+'_ts.dat'),'a')
         f.write("{:.3f} ".format(self.ole[period][-1]))
         f.write("{:.3f} ".format(self.te1[period][-1]))
-        f.write("{:.5f} ".format(self.te2[period][-1]))
+        f.write("{:.7f} ".format(self.te2[period][-1]))
+        f.write("{:.5f} ".format(self.nrmse[period][-1]))
         g.write("{:.3f} ".format(self.ole_nsq[period][-1]))
         g.write("{:.3f} ".format(self.te1_nsq[period][-1]))
-        g.write("{:.5f} ".format(self.te2_nsq[period][-1]))
+        g.write("{:.7f} ".format(self.te2_nsq[period][-1]))
+        g.write("{:.5f} ".format(self.nrmse_nsq[period][-1]))
+        f.write('\n')
+        g.write('\n')
+        f.close()
+        g.close()
+        
+        f = open(os.path.join(direc,  'errors_k.dat'),'a')
+        g = open(os.path.join(direc,  'errors_k_ts.dat'),'a')
+        f.write("{:.3f} ".format(self.te1_k['normal'][-1]))
+        f.write("{:.7f} ".format(self.te2_k['normal'][-1]))
+        f.write("{:.5f} ".format(self.nrmse_k['normal'][-1]))
+        g.write("{:.3f} ".format(self.te1_k['nsq'][-1]))
+        g.write("{:.7f} ".format(self.te2_k['nsq'][-1]))
+        g.write("{:.5f} ".format(self.nrmse_k['nsq'][-1]))
         f.write('\n')
         g.write('\n')
         f.close()
@@ -367,43 +411,110 @@ class Ensemble:
                     f.write("{:.5f} ".format(self.meank[i]))
                 f.write('\n')
                 f.close()
+                
+    def record_shadow_state(self, pars: dict, true_h, period: str, t_step):
+        
+        mean_h, var_h = self.get_mean_var(h = 'ic')
+        k_fields = self.get_member_fields(['npf'])
+        k_fields = np.array([field['npf'] for field in k_fields]).squeeze()
+        self.meanlogk = np.mean(np.log(k_fields), axis = 0)
+        self.varlogk = np.var(np.log(k_fields), axis = 0)
+        self.meank = np.mean(k_fields, axis = 0)
+        
+        direc = pars['resdir']
+
+        f = open(os.path.join(direc,  'errors_'+period+'shadow.dat'),'a')
+        g = open(os.path.join(direc,  'errors_'+period+'shadow_ts.dat'),'a')
+        f.write("{:.3f} ".format(self.ole[period][-1]))
+        f.write("{:.3f} ".format(self.te1[period][-1]))
+        f.write("{:.7f} ".format(self.te2[period][-1]))
+        f.write("{:.5f} ".format(self.nrmse[period][-1]))
+        g.write("{:.3f} ".format(self.ole_nsq[period][-1]))
+        g.write("{:.3f} ".format(self.te1_nsq[period][-1]))
+        g.write("{:.7f} ".format(self.te2_nsq[period][-1]))
+        g.write("{:.5f} ".format(self.nrmse_nsq[period][-1]))
+        f.write('\n')
+        g.write('\n')
+        f.close()
+        g.close()
+        
+        f = open(os.path.join(direc,  'errors_k_shadow.dat'),'a')
+        g = open(os.path.join(direc,  'errors_k_ts_shadow.dat'),'a')
+        f.write("{:.3f} ".format(self.te1_k['normal'][-1]))
+        f.write("{:.7f} ".format(self.te2_k['normal'][-1]))
+        f.write("{:.5f} ".format(self.nrmse_k['normal'][-1]))
+        g.write("{:.3f} ".format(self.te1_k['nsq'][-1]))
+        g.write("{:.7f} ".format(self.te2_k['nsq'][-1]))
+        g.write("{:.5f} ".format(self.nrmse_k['nsq'][-1]))
+        f.write('\n')
+        g.write('\n')
+        f.close()
+        g.close()
+        
+        g = open(os.path.join(direc,  'obs_mean_shadow.dat'),'a')
+        for i in range(len(self.obs[0])):
+
+            g.write("{:.2f} ".format(self.obs[1][i]))
+        g.write('\n')
+        g.close()
+        
+        if t_step%20 == 0:
+            f = open(os.path.join(direc,  'h_mean_shadow.dat'),'a')
+            g = open(os.path.join(direc,  'h_var_shadow.dat'),'a')
+            for i in range(len(mean_h)):
+                f.write("{:.2f} ".format(mean_h[i]))
+                g.write("{:.2f} ".format(var_h[i]))
+            f.write('\n')
+            g.write('\n')
+            f.close()
+            g.close()
+
+        # if 'npf' in self.params:
+        #     if self.pilotp_flag:
+        #         f = open(os.path.join(direc,  'meanlogppk.dat'),'a')
+        #         g = open(os.path.join(direc,  'varlogppk.dat'),'a')
+        #         for i in range(len(self.meanlogppk)):
+        #             f.write("{:.2f} ".format(self.meanlogppk[i]))
+        #             g.write("{:.2f} ".format(self.varlogppk[i]))
+        #         f.write('\n')
+        #         g.write('\n')
+        #         f.close()
+        #         g.close()
+                
+        #         f = open(os.path.join(direc,  'meanppk.dat'),'a')
+        #         g = open(os.path.join(direc,  'varppk.dat'),'a')
+        #         for i in range(len(self.meanppk)):
+        #             f.write("{:.5f} ".format(self.meanppk[i]))
+        #             g.write("{:.5f} ".format(self.varppk[i]))
+        #         f.write('\n')
+        #         g.write('\n')
+        #         f.close()
+        #         g.close()
+            
+        #     if t_step%20 == 0:
+        #         f = open(os.path.join(direc,  'meanlogk.dat'),'a')
+        #         g = open(os.path.join(direc,  'varlogk.dat'),'a')
+        #         for i in range(len(self.meanlogk)):
+        #             f.write("{:.2f} ".format(self.meanlogk[i]))
+        #             g.write("{:.2f} ".format(self.varlogk[i]))
+        #         f.write('\n')
+        #         g.write('\n')
+        #         f.close()
+        #         g.close()
+            
+        #         f = open(os.path.join(direc,  'meank.dat'),'a')
+        #         for i in range(len(self.meank)):
+        #             f.write("{:.5f} ".format(self.meank[i]))
+        #         f.write('\n')
+        #         f.close()    
         
     def remove_current_files(self, pars):
         
-        file_paths = [os.path.join(pars['resdir'], 'errors_assimilation.dat'),
-                      os.path.join(pars['resdir'], 'errors_assimilation_ts.dat'),
-                      os.path.join(pars['resdir'], 'errors_prediction.dat'),
-                      os.path.join(pars['resdir'], 'errors_prediction_ts.dat'),
-                      os.path.join(pars['resdir'], 'errors_assimilation_benchmark.dat'),
-                      os.path.join(pars['resdir'], 'errors_prediction_benchmark.dat'),
-                      os.path.join(pars['resdir'], 'covariance_data.dat'),
-                      os.path.join(pars['resdir'], 'cov_variance.dat'),
-                      os.path.join(pars['resdir'], 'covariance_data_par.dat'),
-                      os.path.join(pars['resdir'], 'cov_variance_par.dat'),
-                      os.path.join(pars['resdir'], 'meanppk.dat'),
-                      os.path.join(pars['resdir'], 'varppk.dat'),
-                      os.path.join(pars['resdir'], 'meanlogppk.dat'),
-                      os.path.join(pars['resdir'], 'varlogppk.dat'),
-                      os.path.join(pars['resdir'], 'obs_true.dat'),
-                      os.path.join(pars['resdir'], 'meank.dat'),
-                      os.path.join(pars['resdir'], 'meanlogk.dat'),
-                      os.path.join(pars['resdir'], 'varlogk.dat'),
-                      os.path.join(pars['resdir'], 'h_mean.dat'),
-                      os.path.join(pars['resdir'], 'h_var.dat'),
-                      os.path.join(pars['resdir'], 'obs_mean.dat'),
-                      os.path.join(pars['resdir'], 'true_h.dat'),
-                      ]
-        
-        for file_path in file_paths:
-            if os.path.exists(file_path):
-                os.remove(file_path)
-        
         for filename in os.listdir(pars['resdir']):
-            # Check if the surname is in the filename
-            if 'covariance_model_' in filename:
-                # Construct the full file path
-                file_path = os.path.join(pars['resdir'], filename)
-                # Remove the file
+            file_path = os.path.join(pars['resdir'], filename)
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.remove(file_path)
+            elif os.path.isdir(file_path):
                 os.remove(file_path)
 
         

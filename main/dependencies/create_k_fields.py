@@ -58,23 +58,23 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
         low_bound, high_bound = mu + np.array([-mean_range,mean_range])
         # std = np.sqrt(pars['sigma'][0])
         # pp_k = np.random.normal(mu, std, len(pp_cid))
-        
+    
+    # drawing a random mean for initial field
     mean_val = np.random.uniform(low_bound, high_bound)
     
     
     if pars['f_meas']:
-        true_ppk = np.log(np.squeeze(k_ref)[pp_cid.astype(int)]) 
-        true_ppk_pert = true_ppk + 0.05 * np.random.randn(*pp_k.shape) * true_ppk
-        # CONTINUE HERE
         pp_loc_meas = pars['f_m_id']
-        pp_k[] = true_ppk_pert[pars['f_m_id']]
+        true_ppk = np.log(np.squeeze(k_ref)[pp_cid.astype(int)]) 
+        pp_k_meas = true_ppk[pp_loc_meas]
+        pp_k_meas = np.log(np.exp(pp_k_meas) + np.random.randn(*pp_k_meas.shape) * 0.1 * np.exp(pp_k_meas))
+        pp_xy_meas = pp_xy[pp_loc_meas]
         
-        field, field2f = conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy)
+        field, field2f = conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k_meas, pp_xy_meas)
+        pp_k = field[pp_cid.astype(int)]
     else:
-        K, K_pp = K_initial(lx, ang, mean_val, sigma, pars, pp_loc = pp_xy)
+        field, pp_k = K_initial(lx, ang, mean_val, sigma, pars, pp_loc = pp_xy)
 
-    
-    benchmark_field, _ = Kriging(cxy, dx, lx, pars['ang'][0], pars['sigma'][0], pars, np.log(np.squeeze(k_ref)[pp_cid.astype(int)]), pp_xy)
     
     D = pars['rotmat'](ang)
     M = np.matmul(np.matmul(D, np.array([[1/lx[0]**2, 0],[0, 1/lx[1]**2]])), D.T)
@@ -82,5 +82,5 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
     if len(test_cov) != 0:
         return field, [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k], field2f
     else:
-        return field, [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k], benchmark_field
+        return field, [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k]
 

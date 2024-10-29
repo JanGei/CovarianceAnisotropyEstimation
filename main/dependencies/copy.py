@@ -2,15 +2,16 @@ import os
 import shutil
 
 def create_Ensemble(pars: dict) -> list:
-    ens_m_dir = []
-    # orig_dir    = pars['tm_ws']
-    mem_ws      = pars['mem_ws']
     n_mem       = pars['n_mem']
-    ens_ws      = pars['ens_ws']
     vr_dir      = pars['trs_ws']
-    bench_dir   = pars['bmodws']
     ss_dir      = pars['sim_ws']
-    tmp_dir     = pars['tm_ws']
+    ens_m_dir = []
+    ghost_ens_m_dir = []
+
+    ens_ws      = pars['ens_ws']
+    mem_ws      = pars['mem_ws']
+    gens_ws     = pars['gh_ens']
+    gmem_ws     = pars['gh_mem']
     
     # removing old Ensemble
     if os.path.exists(ens_ws) and os.path.isdir(ens_ws):
@@ -18,19 +19,28 @@ def create_Ensemble(pars: dict) -> list:
         os.mkdir(ens_ws)
     else:
         os.mkdir(ens_ws)
+        
+    # Creating Ghost Ensemble
+    if os.path.exists(gens_ws) and os.path.isdir(gens_ws):
+        shutil.rmtree(gens_ws)
+        os.mkdir(gens_ws)
+    else:
+        os.mkdir(gens_ws)
     
     # create template model
     shutil.copytree(vr_dir, pars['tm_ws'])
-    shutil.copytree(vr_dir, pars['bmodws'])
     
     for i in range(n_mem):
         mem_dir = mem_ws + f'{i}'
+        gmem_dir = gmem_ws + f'{i}'
     
         # Copy the model folder to new folder
         shutil.copytree(ss_dir, mem_dir)
+        shutil.copytree(ss_dir, gmem_dir)
         ens_m_dir.append(mem_dir)
+        ghost_ens_m_dir.append(gmem_dir)
         
-    return ens_m_dir, bench_dir
+    return ens_m_dir, ghost_ens_m_dir
 
 
 def copy_model(orig_dir:str, model_dir: str) -> None:

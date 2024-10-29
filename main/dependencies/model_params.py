@@ -111,6 +111,7 @@ def get():
     parent_directory = os.path.dirname(current_directory)
     Vrdir = os.path.join(parent_directory, 'Virtual_Reality')
     ensemb_dir  = os.path.join(parent_directory, 'Ensemble')
+    ghost_ensemb_dir  = os.path.join(parent_directory, 'Ghost_Ensemble')
 
     dx          = np.array([50, 50])
     row_well    = 5
@@ -127,7 +128,7 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 2
+        n_mem  = 80
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         up_temp = True
@@ -160,7 +161,7 @@ def get():
     pilot_point_even = True
     scramble_pp = False
     conditional_flag = True
-    field_meas_flag = False
+    field_meas_flag = True
     val_first = False
     
     nPP = 45
@@ -251,6 +252,8 @@ def get():
         'gg_ws' : os.path.join(Vrdir, 'gridgen_files'),
         'ens_ws': ensemb_dir,
         'mem_ws': os.path.join(ensemb_dir, 'member'),
+        'gh_ens': ghost_ensemb_dir,
+        'gh_mem': os.path.join(ghost_ensemb_dir, 'member'),
         'timuni': 'SECONDS',                                   # time unit
         'lenuni': 'METERS',                                   # length unit
         'k_r_d' : os.path.join(Vrdir, 'model_data','logK_ref.csv'),
@@ -259,7 +262,6 @@ def get():
         'sf_d'  : os.path.join(Vrdir, 'model_data','sfac.csv'),
         'n_mem' : n_mem,
         'tm_ws' : os.path.join(ensemb_dir, 'template_model'),
-        'bmodws': os.path.join(ensemb_dir, 'benchmark_model'),
         'trs_ws': os.path.join(Vrdir, 'transient_model'),
         'resdir': os.path.join(parent_directory, 'output'),
         'nsteps': int(years*365*24/6),
