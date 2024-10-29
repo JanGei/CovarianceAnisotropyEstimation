@@ -33,6 +33,7 @@ class MFModel:
         self.n_failure  = 0
         self.n_neg_def  = 0
         self.obs_cid    = [int(i) for i in obs_cid]
+        self.log        = []
         if pars['pilotp']:
             self.ellips_mat = np.array([[ellips[0], ellips[1]], [ellips[1], ellips[2]]])
             self.lx         = [l_angs[0], l_angs[1]]
@@ -52,6 +53,7 @@ class MFModel:
             self.set_field([self.old_npf], ['npf'])
             self.sim.run_simulation()
             self.n_failure += 1
+            self.log.append(f'{os.path.join(*self.direc.split(os.sep)[-2:])} did not converge')
      
     def copy_transient(self, packages):
         for pkg in packages:
@@ -165,6 +167,7 @@ class MFModel:
             l1, l2, angle = self.pars['mat2cv'](self.ellips_mat)
             self.n_neg_def += 1 
             if self.n_neg_def == 10:
+                self.log.append(f'{os.path.join(*self.direc.split(os.sep)[-2:])} replaced cov model')
                 self.replace_model(mean_cov_par, var_cov_par, pp_xy, pp_cid)
                 
         return [[l1, l2, angle], [self.ellips_mat[0,0], self.ellips_mat[1,0], self.ellips_mat[1,1]], pos_def]
@@ -214,7 +217,15 @@ class MFModel:
             
         return mat, pos_def
 
-            
+    def log_correction(self, file_path):
+        if len(self.log) != 0:
+            g = open(file_path,'a')
+            for i in range(len(self.log)):
+                g.write(self.log[i])
+            g.write('\n')
+            g.close()
+            self.log = []
+                
     def reduce_corL(self, corL):
         # reducing correlation lengths based on monod kinetic model
         return (self.corrL_max * corL) / (self.corrL_max*(1-self.a) + corL)

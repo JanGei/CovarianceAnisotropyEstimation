@@ -256,7 +256,16 @@ class Ensemble:
             )
         
         return data
-        
+    
+    def log(self, time_step):
+       
+        if not self.shadow:
+            g = open(self.pars['logfil'],'a')
+            g.write(f'Time Step {time_step}')
+            g.write('\n')
+            g.close()
+        for member in self.members:
+            member.log_correction(self.pars['logfil'])
 
     def get_mean_var(self, h = 'h'):
         h_fields = self.get_member_fields([h])

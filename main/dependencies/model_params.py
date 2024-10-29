@@ -182,7 +182,7 @@ def get():
         damp_choice = damp[choice_static]
 
     if field_meas_flag:
-        np.random.seed(85)
+        np.random.seed(93)
         # meas_loc = np.random.randint(0, nPP, 7)
         meas_loc = np.random.choice(np.arange(0, nPP), np.min([nPP,5]), replace=False)
     else:
@@ -196,6 +196,7 @@ def get():
         'nprocs': nprocs,
         'setup' : setup,
         'EnKF_p': cov_choice, 
+        'DA_pgh': cov_variants[2], 
         'damp'  : damp_choice,
         'val1st': val_first,
         'valday': 15,
@@ -264,6 +265,7 @@ def get():
         'tm_ws' : os.path.join(ensemb_dir, 'template_model'),
         'trs_ws': os.path.join(Vrdir, 'transient_model'),
         'resdir': os.path.join(parent_directory, 'output'),
+        'logfil': os.path.join(parent_directory, 'output', 'logs.txt'),
         'nsteps': int(years*365*24/6),
         'rotmat': rotation_matrix,
         'mat2cv': extract_truth,

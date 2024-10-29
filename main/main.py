@@ -271,7 +271,10 @@ if __name__ == '__main__':
         
         # Update the intial conditiopns of the "true model"
         true_h = VR_Model.update_ic()
-
+        
+        MF_Ensemble.log(t_step)
+        MF_shadowEnsemble.log(t_step)
+        
         start_time = time.time()
         if period == "assimilation" or period == "prediction":
             if t_step%4 == 0:
