@@ -5,8 +5,8 @@ from cmcrameri import cm
 
 def compare_mean_true_head(gwf, h_fields, poi):
     
-    hmin = 15
-    hmax = 17.5
+    hmin = 14.5
+    hmax = 17
     
     varmin = 0
     varmax = 1e-3

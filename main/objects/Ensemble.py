@@ -128,8 +128,6 @@ class Ensemble:
         result = Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].apply_x)(
             np.squeeze(X[:,idx]),
             self.h_mask,
-            self.pp_xy,
-            self.pp_cid,
             self.mean_cov_par,
             self.var_cov_par
             ) 
@@ -161,7 +159,6 @@ class Ensemble:
 
         result = Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].Kalman_vec)(
             self.h_mask,
-            self.pp_cid 
             ) 
             for idx in range(self.n_mem)
             )
@@ -174,6 +171,7 @@ class Ensemble:
         
         X = np.vstack(xs).T
         Ysim = np.vstack(ysims).T
+        
         return X, Ysim
     
     def update_transient_data(self,packages):
@@ -477,45 +475,20 @@ class Ensemble:
             g.write('\n')
             f.close()
             g.close()
-
-        # if 'npf' in self.params:
-        #     if self.pilotp_flag:
-        #         f = open(os.path.join(direc,  'meanlogppk.dat'),'a')
-        #         g = open(os.path.join(direc,  'varlogppk.dat'),'a')
-        #         for i in range(len(self.meanlogppk)):
-        #             f.write("{:.2f} ".format(self.meanlogppk[i]))
-        #             g.write("{:.2f} ".format(self.varlogppk[i]))
-        #         f.write('\n')
-        #         g.write('\n')
-        #         f.close()
-        #         g.close()
+            
+        if t_step == 0:
+            f = open(os.path.join(direc,  'meanlogk.dat'),'a')
+            g = open(os.path.join(direc,  'varlogk.dat'),'a')
+            for i in range(len(self.meanlogk)):
+                f.write("{:.2f} ".format(self.meanlogk[i]))
+                g.write("{:.2f} ".format(self.varlogk[i]))
+            f.write('\n')
+            g.write('\n')
+            f.close()
+            g.close()
                 
-        #         f = open(os.path.join(direc,  'meanppk.dat'),'a')
-        #         g = open(os.path.join(direc,  'varppk.dat'),'a')
-        #         for i in range(len(self.meanppk)):
-        #             f.write("{:.5f} ".format(self.meanppk[i]))
-        #             g.write("{:.5f} ".format(self.varppk[i]))
-        #         f.write('\n')
-        #         g.write('\n')
-        #         f.close()
-        #         g.close()
             
-        #     if t_step%20 == 0:
-        #         f = open(os.path.join(direc,  'meanlogk.dat'),'a')
-        #         g = open(os.path.join(direc,  'varlogk.dat'),'a')
-        #         for i in range(len(self.meanlogk)):
-        #             f.write("{:.2f} ".format(self.meanlogk[i]))
-        #             g.write("{:.2f} ".format(self.varlogk[i]))
-        #         f.write('\n')
-        #         g.write('\n')
-        #         f.close()
-        #         g.close()
-            
-        #         f = open(os.path.join(direc,  'meank.dat'),'a')
-        #         for i in range(len(self.meank)):
-        #             f.write("{:.5f} ".format(self.meank[i]))
-        #         f.write('\n')
-        #         f.close()    
+
         
     def remove_current_files(self, pars):
         

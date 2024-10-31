@@ -68,7 +68,7 @@ def K_initial(lx, ang, Kg, sigma, pars, pp_loc = []):
                        1j * np.random.randn(*SYY.shape)))
 
     # Backtransformation into the physical coordinates
-    K = np.exp(Kg) * np.exp(np.real(np.fft.ifftn(ran*ntot)))
+    K = Kg + (np.real(np.fft.ifftn(ran*ntot)))
     K = K[0:nx[1], 0:nx[0]]
     
     xint = np.arange(dx[0]/2, pars['nx'][0]*dx[0] + dx[0]/2, dx[0])
@@ -83,6 +83,6 @@ def K_initial(lx, ang, Kg, sigma, pars, pp_loc = []):
                         K.ravel(order = 'F'),
                         (pp_loc[:,0], pp_loc[:,1]),
                         method='nearest')
-        return K, K_pp
+        return np.exp(K), np.exp(K_pp)
     else:
-        return K
+        return np.exp(K)

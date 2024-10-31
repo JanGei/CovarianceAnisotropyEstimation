@@ -35,17 +35,18 @@ def randomK(ang, sigma, Ctype, pars, grid = [], random = True, initialize = Fals
             else:
                 if pars['l_red'] == 1:
                     # old 32
-                    np.random.seed(1021)  
+                    # np.random.seed(1021) 
+                    np.random.seed(7721) 
                 elif pars['l_red'] == 2:
                     np.random.seed(16)
                     
         if ftype == 'K':
-            Kg = np.exp(pars['mu'][0])
+            Kg = pars['mu'][0]
             lx = pars['lx'][0]
         elif ftype == 'R':
             Kg = pars['mu'][1]
             lx = pars['lx'][1]
-            np.random.seed(66) 
+            np.random.seed(9687) 
         
     elif initialize:
         Kg = np.exp(ini_dat[0])
@@ -105,7 +106,7 @@ def randomK(ang, sigma, Ctype, pars, grid = [], random = True, initialize = Fals
                        1j * np.random.randn(*SYY.shape)))
 
     # Backtransformation into the physical coordinates
-    K = Kg * np.exp(np.real(np.fft.ifftn(ran*ntot)))
+    K = Kg + np.real(np.fft.ifftn(ran*ntot))
     K = K[0:nx[1], 0:nx[0]]
     
     if not random:

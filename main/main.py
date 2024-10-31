@@ -1,5 +1,5 @@
 from dependencies.model_params import get
-from dependencies.copy import create_Ensemble
+from dependencies.copy import create_Ensemble, create_shadow_Ensemble
 # from dependencies.convert_transient import convert_to_transient
 from dependencies.create_pilot_points import create_pilot_points_even, create_pilot_points
 from dependencies.load_template_model import load_template_model
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     start_time = time.time()
     
     # copy template model to ensemble folder
-    model_dir, shadow_model_dir = create_Ensemble(pars)
+    model_dir = create_Ensemble(pars)
     sim, gwf = load_template_model(pars)
     mask_chd = chd_mask(gwf)
     
@@ -122,20 +122,12 @@ if __name__ == '__main__':
                         model_dir[idx],
                         pars,
                         obs_cid,
+                        [pp_xy, pp_cid],
                         l_angs[idx],
                         cor_ellips[idx],
                         ) 
                         for idx in range(n_mem)
                         )
-    shadow_models = Parallel(n_jobs=nprocs, backend="threading")(delayed(MFModel)(
-                            shadow_model_dir[idx],
-                            pars,
-                            obs_cid,
-                            l_angs[idx],
-                            cor_ellips[idx],
-                            ) 
-                            for idx in range(n_mem)
-                            )
     
     if pars['printf']: print(f'{n_mem} models are initiated in {(time.time() - start_time):.2f} seconds')
     
@@ -155,18 +147,6 @@ if __name__ == '__main__':
                                pp_k_ini)
     MF_Ensemble.remove_current_files(pars)
     write_file(pars,[pp_cid, pp_xy], ["pp_cid","pp_xy"], 0, intf = True)
-    MF_shadowEnsemble = Ensemble(shadow_models,
-                               pars,
-                               obs_cid,
-                               nprocs,
-                               mask_chd,
-                               np.squeeze(VR_Model.npf.k.array),
-                               np.array(l_angs),
-                               np.array(cor_ellips),
-                               pp_cid,
-                               pp_xy,
-                               pp_k_ini,
-                               shadow = True)
     
     m = np.mean(cor_ellips, axis = 0)
     mat = np.array([[m[0], m[1]],[m[1], m[2]]])
@@ -177,16 +157,15 @@ if __name__ == '__main__':
         )
     # set their respective k-fields
     MF_Ensemble.set_field(k_fields, ['npf'])
-    MF_shadowEnsemble.set_field(k_fields, ['npf'])
     # MF_Ensemble.set_field([VR_Model.npf.k.array for i in range(len(models))], ['npf'])
     
     if pars['printf']: print(f'Ensemble is initiated and respective k-fields are set in {(time.time() - start_time):.2f} seconds')
     
     start_time = time.time()
     MF_Ensemble.update_initial_conditions()
-    MF_shadowEnsemble.update_initial_conditions()
+    
     if pars['printf']: print(f'Ensemble now with steady state initial conditions in {(time.time() - start_time):.2f} seconds')
-    #%%
+    #%% Setup EnKF for Ensemble and perform spinup 
     X, Ysim = MF_Ensemble.get_Kalman_X_Y()
     damp = MF_Ensemble.get_damp(X)
     local_matrix = implicit_localisation(pars['obsxy'], gwf.modelgrid, mask_chd, pars['EnKF_p'], pp_xy = pp_xy)
@@ -199,20 +178,48 @@ if __name__ == '__main__':
                 data, packages = get_transient_data(pars, t_step)
                 VR_Model.update_transient_data(data, packages)
                 MF_Ensemble.update_transient_data(packages)
-                MF_shadowEnsemble.update_transient_data(packages)
             VR_Model.simulation()
             true_h = VR_Model.update_ic()
             MF_Ensemble.propagate()  
             MF_Ensemble.update_initial_heads()
-            MF_shadowEnsemble.propagate() 
-            MF_shadowEnsemble.update_initial_heads()
             if pars['printf']: 
                 print('--------')
                 print(f'time step {t_step}')
                 true_obs[t_step,:] = np.squeeze(VR_Model.get_observations())
                 X, Ysim = MF_Ensemble.get_Kalman_X_Y()
                 shout_dif(true_obs[t_step,:], np.mean(Ysim, axis = 1))
-
+                
+    #%% Define Shadow Ensemble and assimmilation scheme
+    shadow_model_dir = create_shadow_Ensemble(pars)
+    shadow_models = Parallel(n_jobs=nprocs, backend="threading")(delayed(MFModel)(
+                            shadow_model_dir[idx],
+                            pars,
+                            obs_cid,
+                            [pp_xy, pp_cid],
+                            l_angs[idx],
+                            cor_ellips[idx],
+                            ) 
+                            for idx in range(n_mem)
+                            )
+    MF_shadowEnsemble = Ensemble(shadow_models,
+                               pars,
+                               obs_cid,
+                               nprocs,
+                               mask_chd,
+                               np.squeeze(VR_Model.npf.k.array),
+                               np.array(l_angs),
+                               np.array(cor_ellips),
+                               pp_cid,
+                               pp_xy,
+                               pp_k_ini,
+                               shadow = True)
+    X_shadow, Ysim_shadow = MF_shadowEnsemble.get_Kalman_X_Y()
+    damp = MF_shadowEnsemble.get_damp(X)
+    local_matrix = implicit_localisation(pars['obsxy'], gwf.modelgrid, mask_chd, pars['EnKF_p'], pp_xy = pp_xy)
+    EnKF = EnsembleKalmanFilter(X, Ysim, damp = damp, eps = pars['eps'], localisation=local_matrix)
+    true_obs = np.zeros((pars['nsteps'],len(obs_cid)))
+    
+    
     for t_step in range(pars['nsteps']):
         
         period, Assimilate = pars['period'](t_step, pars)  
@@ -260,9 +267,8 @@ if __name__ == '__main__':
             start_time = time.time()
             MF_Ensemble.apply_X(EnKF.X)
             
-            interim = [int(i+len(damp) -5000) for i in obs_cid]
-            shout_dif(true_obs[t_step,:], np.mean(EnKF.X, axis = 1)[interim])
-
+            if pars['printf']: interim = [int(i+len(damp) -5000) for i in obs_cid]
+            if pars['printf']: shout_dif(true_obs[t_step,:], np.mean(EnKF.X, axis = 1)[interim])
             if pars['printf']: print(f'Application of results plus kriging took {(time.time() - start_time):.2f} seconds')
         else:
             # Very important: update initial conditions if youre not assimilating

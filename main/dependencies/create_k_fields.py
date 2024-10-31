@@ -39,6 +39,10 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
     # ensure correlation lengths are not identical 
     if lx[0] == lx[1]:
         lx[0] += 1 
+    # longer correlation length should be leading
+    if lx[0] < lx[1]:
+        lx = np.flip(lx)
+        ang = (ang +np.pi/2)%np.pi
                
     if test_cov: # for testing
         lx = test_cov[0]

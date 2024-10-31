@@ -32,7 +32,7 @@ tssl.set_index('Datum / Uhrzeit', inplace=True)
 tssl.loc[:,'Wert'] = tssl['Wert'] / 100 *3.8  +12.1
 
 # Resample and calculate the mean for every 6 hours
-tssl6h = tssl.resample('6H').mean()
+tssl6h = tssl.resample('6H').mean() - 1
 
 print(np.max(tssl6h['Wert']), np.min(tssl6h['Wert']), np.mean(tssl6h['Wert']))
 
@@ -59,7 +59,7 @@ ax3.set_ylabel('River Stage (m)', color=slc)
 ax3.tick_params('y', colors=slc)
 sl_ticks = np.linspace(13, 15.5, 6)
 ax3.set_yticks(sl_ticks)
-ax3.set_ylim(13, 15.5)
+ax3.set_ylim(12, 17)
 
 # Create the second plot with the second y-axis
 ax4 = ax3.twinx()

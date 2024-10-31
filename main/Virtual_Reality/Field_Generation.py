@@ -68,7 +68,7 @@ def generate_fields(pars):
                      (cxy[:,0], cxy[:,1]), method='nearest')
     
     #%% Saving the fields - Übergabe in (m/s)
-    np.savetxt(os.path.join(pars['k_r_d']), Kflat, delimiter = ',')
+    np.savetxt(os.path.join(pars['k_r_d']), np.exp(Kflat), delimiter = ',')
     np.savetxt(os.path.join(pars['r_r_d']), Rflat/1000/86400, delimiter = ',')
 
     # return Kflat, Rflat/1000/86400, K, R

@@ -21,7 +21,8 @@ def conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy):
     # Construct covariance matrix of measurement error
     m = len(pp_k)
     n = Xint_pw.shape[0]
-    R = np.eye(m)* pars['sig_me']**2
+    # R = np.eye(m)* pars['sig_me']**2
+    R = np.eye(m)* 0.1**2
     
     # Discretized trend functions (for constant mean)
     X = np.ones((n,1))
@@ -36,7 +37,7 @@ def conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy):
     # ikrigmat = np.linalg.inv(krigmat)
     
     # random, unconditional field for the given variogram
-    sunc = np.log(randomK(ang, sigma, pars['cov'], pars, grid=[pars['nx'], dx, lx]))
+    sunc = randomK(ang, sigma, pars['cov'], pars, grid=[pars['nx'], dx, lx])
     
     # generating a conditional realisation
     sunc_at_meas = np.zeros(m)
@@ -56,10 +57,10 @@ def conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy):
     beta = sol[m]
 
     s_cond = np.squeeze(Qssm @ xi.reshape((len(xi),1))) + np.squeeze(X * beta) + sunc.flatten(order = 'F')
-    s_cond_grid = np.reshape(np.exp(s_cond),Xint.shape, order='F')     
+    s_cond_grid = np.reshape(s_cond,Xint.shape, order='F')     
 
     # generating an associated grid for K 
-    values_at_coordinates = griddata((Xint.ravel(order = 'F'), Yint.ravel(order = 'F')), np.exp(s_cond).ravel(order = 'F'),
+    values_at_coordinates = griddata((Xint.ravel(order = 'F'), Yint.ravel(order = 'F')), s_cond.ravel(order = 'F'),
                                      (cxy[:,0], cxy[:,1]), method='nearest')
 
-    return values_at_coordinates,s_cond_grid
+    return np.exp(values_at_coordinates), np.exp(s_cond_grid)

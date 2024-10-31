@@ -3,15 +3,11 @@ import shutil
 
 def create_Ensemble(pars: dict) -> list:
     n_mem       = pars['n_mem']
-    vr_dir      = pars['trs_ws']
-    ss_dir      = pars['sim_ws']
+    # vr_dir      = pars['trs_ws']
+    # ss_dir      = pars['sim_ws']
     ens_m_dir = []
-    ghost_ens_m_dir = []
-
     ens_ws      = pars['ens_ws']
     mem_ws      = pars['mem_ws']
-    gens_ws     = pars['gh_ens']
-    gmem_ws     = pars['gh_mem']
     
     # removing old Ensemble
     if os.path.exists(ens_ws) and os.path.isdir(ens_ws):
@@ -19,28 +15,41 @@ def create_Ensemble(pars: dict) -> list:
         os.mkdir(ens_ws)
     else:
         os.mkdir(ens_ws)
-        
-    # Creating Ghost Ensemble
-    if os.path.exists(gens_ws) and os.path.isdir(gens_ws):
-        shutil.rmtree(gens_ws)
-        os.mkdir(gens_ws)
-    else:
-        os.mkdir(gens_ws)
-    
+
     # create template model
-    shutil.copytree(vr_dir, pars['tm_ws'])
+    # shutil.copytree(vr_dir, pars['tm_ws'])
     
     for i in range(n_mem):
         mem_dir = mem_ws + f'{i}'
-        gmem_dir = gmem_ws + f'{i}'
-    
-        # Copy the model folder to new folder
-        shutil.copytree(ss_dir, mem_dir)
-        shutil.copytree(ss_dir, gmem_dir)
+        # Copy the steady_state model folder to new folders
+        shutil.copytree(pars['sim_ws'], mem_dir)
         ens_m_dir.append(mem_dir)
-        ghost_ens_m_dir.append(gmem_dir)
+
         
-    return ens_m_dir, ghost_ens_m_dir
+    return ens_m_dir
+
+def create_shadow_Ensemble(pars: dict):
+    n_mem       = pars['n_mem']
+    mem_ws      = pars['mem_ws']
+    shadowmem_ws= pars['sh_mem']
+    shadowens_ws= pars['sh_ens']
+    shadow_ens_m_dir= []
+    # Creating Ghost Ensemble
+    if os.path.exists(shadowens_ws) and os.path.isdir(shadowens_ws):
+        shutil.rmtree(shadowens_ws)
+        os.mkdir(shadowens_ws)
+    else:
+        os.mkdir(shadowens_ws)
+        
+    for i in range(n_mem):
+        mem_dir = mem_ws + f'{i}'
+        shadowmem_dir = shadowmem_ws + f'{i}'
+    
+        # Copy the models to the ghost ensemble
+        shutil.copytree(mem_dir, shadowmem_dir)
+        shadow_ens_m_dir.append(shadowmem_dir)
+        
+    return shadow_ens_m_dir
 
 
 def copy_model(orig_dir:str, model_dir: str) -> None:

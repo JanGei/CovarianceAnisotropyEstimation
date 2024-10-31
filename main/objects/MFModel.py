@@ -9,7 +9,7 @@ sys.path.append('..')
 
 class MFModel:
     
-    def __init__(self, direc: str,  pars, obs_cid, l_angs = [], ellips = []):
+    def __init__(self, direc: str,  pars, obs_cid, pp_loc, l_angs = [], ellips = []):
         self.direc      = direc
         self.mname      = pars['mname']
         self.pars       = pars
@@ -30,8 +30,9 @@ class MFModel:
         self.cxy        = np.vstack((self.mg.xyzcellcenters[0], self.mg.xyzcellcenters[1])).T
         self.dx         = pars['dx']
         self.old_npf    = []
-        self.n_failure  = 0
         self.n_neg_def  = 0
+        self.pp_xy      = pp_loc[0]
+        self.pp_cid     = pp_loc[1]
         self.obs_cid    = [int(i) for i in obs_cid]
         self.log        = []
         if pars['pilotp']:
@@ -50,10 +51,14 @@ class MFModel:
     def simulation(self):
         success, buff = self.sim.run_simulation()
         if not success:
-            self.set_field([self.old_npf], ['npf'])
-            self.sim.run_simulation()
-            self.n_failure += 1
             self.log.append(f'{os.path.join(*self.direc.split(os.sep)[-2:])} did not converge')
+            self.set_field([self.old_npf], ['npf'])
+            success, buff = self.sim.run_simulation()
+            if not success:
+                self.log.append(f'{os.path.join(*self.direc.split(os.sep)[-2:])} critically did not converge')
+        else:
+            self.old_npf = self.npf.k.array
+
      
     def copy_transient(self, packages):
         for pkg in packages:
@@ -65,7 +70,7 @@ class MFModel:
         self.ic.strt.set_data(self.get_field('h')['h'])
         self.ic.write()
        
-    def Kalman_vec(self, h_mask, pp_cid = []):
+    def Kalman_vec(self, h_mask):
         data = self.get_field(['h', 'npf', 'cov_data'])
         
         ysim = np.squeeze(data['h'][self.obs_cid])
@@ -73,12 +78,12 @@ class MFModel:
 
         if 'cov_data' in self.params:
             if 'npf' in self.params:
-                x = np.concatenate([data['cov_data'], np.log(data['npf'][pp_cid]), h_nobc])
+                x = np.concatenate([data['cov_data'], np.log(data['npf'][self.pp_cid]), h_nobc])
             else:
                 x = np.concatenate([data['cov_data'], h_nobc])
         else:
             if self.pars['pilotp']:
-                x = np.concatenate([np.log(data['npf'][pp_cid]), h_nobc])
+                x = np.concatenate([np.log(data['npf'][self.pp_cid]), h_nobc])
             else:
                 x = np.concatenate([data['npf'], h_nobc])
     
@@ -87,7 +92,7 @@ class MFModel:
     def updateFilter(self):
         self.params = self.pars['EnKF_p'][1]
     
-    def apply_x(self, x, h_mask, pp_xy, pp_cid, mean_cov_par, var_cov_par):
+    def apply_x(self, x, h_mask, mean_cov_par, var_cov_par):
         
         data = self.get_field(['h', 'npf', 'cov_data'])
         cl = 3
@@ -95,16 +100,12 @@ class MFModel:
         if 'cov_data' in self.params:
             if 'npf' in self.params:
                 data['h'][~h_mask] = x[self.pars['n_PP']+cl:]
-                res = self.kriging([x[0:cl], x[cl:self.pars['n_PP']+cl]],
-                                   pp_xy,
-                                   pp_cid,
+                res = self.kriging([x[0:cl],x[cl:self.pars['n_PP']+cl]],
                                    mean_cov_par,
                                    var_cov_par)
             else:
                 data['h'][~h_mask] = x[cl:]
                 res = self.kriging([x[0:cl], x[cl:self.pars['n_PP']+cl]],
-                                   pp_xy,
-                                   pp_cid,
                                    mean_cov_par,
                                    var_cov_par)
         else:
@@ -118,7 +119,7 @@ class MFModel:
                                       self.pars['sigma'][0],
                                       self.pars,
                                       x[0:self.pars['n_PP']:],
-                                      pp_xy,
+                                      self.pp_xy,
                                       )
                 
                 self.set_field([field], ['npf'])
@@ -131,7 +132,7 @@ class MFModel:
     
         return res
     
-    def kriging(self, data, pp_xy, pp_cid, mean_cov_par, var_cov_par):
+    def kriging(self, data, mean_cov_par, var_cov_par):
   
         mat, pos_def = self.check_new_matrix(data[0])
         
@@ -149,7 +150,7 @@ class MFModel:
                                       self.pars['sigma'][0],
                                       self.pars,
                                       pp_k,
-                                      pp_xy,
+                                      self.pp_xy,
                                       )
             else:
                 field = Kriging(self.cxy,
@@ -159,7 +160,7 @@ class MFModel:
                                 self.pars['sigma'][0],
                                 self.pars,
                                 pp_k,
-                                pp_xy)
+                                self.pp_xy)
             
             self.set_field([field[0]], ['npf'])
             
@@ -168,7 +169,7 @@ class MFModel:
             self.n_neg_def += 1 
             if self.n_neg_def == 10:
                 self.log.append(f'{os.path.join(*self.direc.split(os.sep)[-2:])} replaced cov model')
-                self.replace_model(mean_cov_par, var_cov_par, pp_xy, pp_cid)
+                self.replace_model(mean_cov_par, var_cov_par)
                 
         return [[l1, l2, angle], [self.ellips_mat[0,0], self.ellips_mat[1,0], self.ellips_mat[1,1]], pos_def]
                     
@@ -176,7 +177,7 @@ class MFModel:
     def update_ellips_mat(self, mat):
         self.ellips_mat = mat.copy()
      
-    def replace_model(self, mean_cov_par, var_cov_par, pp_xy, pp_cid):
+    def replace_model(self, mean_cov_par, var_cov_par):
         pos_def = False
         while not pos_def:
             a = np.random.normal(mean_cov_par[0,0], np.sqrt(var_cov_par[0,0]))
@@ -185,7 +186,9 @@ class MFModel:
         
             eigenvalues, eigenvectors, mat, pos_def = self.check_new_matrix([a,m,b])
         self.n_neg_def == 0    
-        l1, l2, angle = self.kriging([mat[0,0], mat[1,0], mat[1,1]], pp_xy, pp_cid, mean_cov_par, var_cov_par)
+        l1, l2, angle = self.kriging([mat[0,0], mat[1,0], mat[1,1]],
+                                     mean_cov_par,
+                                     var_cov_par)
     
     
     def check_new_matrix(self, data):

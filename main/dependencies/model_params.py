@@ -128,7 +128,7 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 80
+        n_mem  = 360
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         up_temp = True
@@ -154,17 +154,17 @@ def get():
     valt_variants = ["random_good", "random_low", "random_high"]
     choice_valt = 0 # 0 = random
     covt_variants = ["good", "random_low", "random_high"]
-    choice_covt = 2 # 1 = random
+    choice_covt = 0 # 1 = random
     
     
     pp_flag = True 
     pilot_point_even = True
     scramble_pp = False
     conditional_flag = True
-    field_meas_flag = True
+    field_meas_flag = False
     val_first = False
     
-    nPP = 45
+    nPP = 28
     l_red = 1
     h_damp = 0.4
     cov_damp = [0.15, 0.15]
@@ -182,7 +182,7 @@ def get():
         damp_choice = damp[choice_static]
 
     if field_meas_flag:
-        np.random.seed(93)
+        np.random.seed(94)
         # meas_loc = np.random.randint(0, nPP, 7)
         meas_loc = np.random.choice(np.arange(0, nPP), np.min([nPP,5]), replace=False)
     else:
@@ -196,7 +196,6 @@ def get():
         'nprocs': nprocs,
         'setup' : setup,
         'EnKF_p': cov_choice, 
-        'DA_pgh': cov_variants[2], 
         'damp'  : damp_choice,
         'val1st': val_first,
         'valday': 15,
@@ -216,7 +215,7 @@ def get():
         'wel_k' : False,
         'rch_is': False,                                    # Flag rch isotropy
         'l_red' : l_red,
-        'lx'    : np.array([[1100,600], [2500,600]])/l_red, # corellation lengths
+        'lx'    : np.array([[1100,600], [2500,500]])/l_red, # corellation lengths
         'ang'   : np.array([111, 17]),                      # angle in ° (logK, recharge)
         'sigma' : np.array([1.7, 0.1]),                     # variance (logK, recharge)
         'mu'    : np.array([-8.5, -0.7]),                   # mean (log(ms-1), (mm/d))
@@ -253,8 +252,8 @@ def get():
         'gg_ws' : os.path.join(Vrdir, 'gridgen_files'),
         'ens_ws': ensemb_dir,
         'mem_ws': os.path.join(ensemb_dir, 'member'),
-        'gh_ens': ghost_ensemb_dir,
-        'gh_mem': os.path.join(ghost_ensemb_dir, 'member'),
+        'sh_ens': ghost_ensemb_dir,
+        'sh_mem': os.path.join(ghost_ensemb_dir, 'member'),
         'timuni': 'SECONDS',                                   # time unit
         'lenuni': 'METERS',                                   # length unit
         'k_r_d' : os.path.join(Vrdir, 'model_data','logK_ref.csv'),
