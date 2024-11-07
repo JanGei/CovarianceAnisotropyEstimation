@@ -20,7 +20,7 @@ def implicit_localisation(obs_xy, modelgrid, mask, parameters, pp_xy = []):
     return distance_weighted_matrix
 
 
-def steep_norm(x, threshold=1500, steepness=10, cutoff = 2500):
+def steep_norm(x, threshold=1500, steepness=10):
     """
     Normalize x between 0 and 1 with a steep decline, setting all values above the threshold to 0.
     
@@ -45,5 +45,5 @@ def steep_norm(x, threshold=1500, steepness=10, cutoff = 2500):
     
     # Apply steep sigmoid-like function (to ensure steepness around the normalized threshold)
     decline = 1 / (1 + np.exp(steepness * (x_norm - 0.7)))  # Adjust threshold to 0.5 in normalized range
-    decline = np.where(x > cutoff, 0, decline)
+    # decline = np.where(x > cutoff, 0, decline)
     return decline

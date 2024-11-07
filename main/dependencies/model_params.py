@@ -126,7 +126,7 @@ def get():
     
     cov_mods = ['Exponential', 'Matern', 'Gaussian']
     computer = ['office', 'binnac']
-    setup = computer[0]
+    setup = computer[1]
     if setup == 'office':
         n_mem  = 360
         nprocs = np.min([n_mem, psutil.cpu_count()])
@@ -134,7 +134,7 @@ def get():
         up_temp = True
         printf = True
         spinup = False
-
+        shadow = False
         if n_mem == 2:
             nprocs = 1
             up_temp = True 
@@ -146,24 +146,26 @@ def get():
         printf = False
         inspection = False
         spinup = True
+        shadow = True
     
     choice_static = 0
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
-    # est_variants = ["underestimate", "good", "overestimate"]
 
-    valt_variants = ["random_good", "random_low", "random_high"]
+    valt_variants = ["random_good", "random_low", "random_high", "prior_meas"]
     choice_valt = 0 # 0 = random
     covt_variants = ["good", "random_low", "random_high"]
     choice_covt = 0 # 1 = random
-    
-    
     pp_flag = True 
     pilot_point_even = True
-    scramble_pp = False
-    conditional_flag = True
-    field_meas_flag = False
-    val_first = False
+   
     
+    if valt_variants[choice_valt] == "prior_meas":
+        field_meas_flag = True
+    else:
+        field_meas_flag = False
+    val_first = False
+    conditional_flag = True
+    scramble_pp = False
     nPP = 28
     l_red = 1
     h_damp = 0.4
@@ -182,9 +184,20 @@ def get():
         damp_choice = damp[choice_static]
 
     if field_meas_flag:
-        np.random.seed(94)
-        # meas_loc = np.random.randint(0, nPP, 7)
-        meas_loc = np.random.choice(np.arange(0, nPP), np.min([nPP,5]), replace=False)
+        
+        if nPP == 28:
+            if pilot_point_even:
+                meas_loc = np.array([2, 5, 16, 19, 25])
+            else:
+                meas_loc = np.array([2, 5, 16, 19, 24])
+        elif nPP == 45:
+            if pilot_point_even:
+                meas_loc = np.array([2, 33, 16, 19, 41])
+            else:
+                meas_loc = np.array([3, 33, 27, 22, 42])
+        
+        # np.random.seed(94)
+        # meas_loc = np.random.choice(np.arange(0, nPP), np.min([nPP,5]), replace=False)
     else:
         meas_loc = []
     
@@ -195,13 +208,14 @@ def get():
         'pilotp': pp_flag,
         'nprocs': nprocs,
         'setup' : setup,
+        'shadow': shadow,
         'EnKF_p': cov_choice, 
         'damp'  : damp_choice,
         'val1st': val_first,
         'valday': 15,
         'n_PP'  : nPP,
         'eps'   : 0.01,
-        'omitc' : 3,
+        'omitc' : 0,
         'nearPP': 4,
         'sig_me': 0.01,
         'geomea': 1,
@@ -230,7 +244,7 @@ def get():
         'welnd' : np.array([150, 365, 365, 200, 300]),      # end day of pump
         'welay' : np.array(np.zeros(5)),                    # layer of wells
         'river' : np.array([[0.0,0], [5000,0]]),            # start / end of river
-        'rivC'  : 1e-4,                                     # river conductance [ms-1]
+        'rivC'  : 1e-3,                                     # river conductance [ms-1]
         'rivd'  : 2,                                        # depth of river [m]
         'chd'   : np.array([[0.0,2500], [5000,2500]]),      # start / end of river
         'chdh'  : 15,                                       # initial stage of riv

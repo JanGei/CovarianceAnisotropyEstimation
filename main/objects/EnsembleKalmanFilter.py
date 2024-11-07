@@ -65,12 +65,17 @@ class EnsembleKalmanFilter:
         self.Cyy = Cyy                       
     
     
-    def Kalman_update(self,  Y_obs):
+    def Kalman_update(self,  Y_obs, t_step):
         Y_obs = np.tile(Y_obs, (self.n_mem,1)).T
         # perturb measurements
         Y_obs -= np.random.normal(loc=0, scale=self.eps, size=Y_obs.shape)
+        # if t_step < 80:
+        #     reduction = 0.01 + (1 - 0.01) / 80 * t_step
+        #     self.X += reduction * self.damp[:, np.newaxis] * np.matmul(self.Cxy * self.local,
+        #             np.matmul(np.linalg.inv(self.Cyy), (Y_obs - self.Ysim)))
+        # else:
         self.X += self.damp[:, np.newaxis] * np.matmul(self.Cxy * self.local,
-                            np.matmul(np.linalg.inv(self.Cyy), (Y_obs - self.Ysim)))
+                np.matmul(np.linalg.inv(self.Cyy), (Y_obs - self.Ysim)))
         
         # self.X += 1/(self.n_mem-1) * (self.damp *
         #             np.matmul(

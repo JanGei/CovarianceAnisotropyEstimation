@@ -174,7 +174,12 @@ def create_reference_model(pars):
             pump    = welq[index].astype(float)
         layer   = welay[index].astype(int)
         well_list.append([(layer,i),-pump])
-        
+        # set conductivity in well cells to 1
+        if pars['wel_k']:
+            k_ref[i] = 1
+    
+    
+    
     ### River
     # riverLS     = LineString(river)
     # l           = riverLS.length
@@ -232,9 +237,11 @@ def create_reference_model(pars):
     if pars['inspec'] and pars['setup'] == 'office':
         print(pars['mu'][0], np.mean(np.log(k_ref)))
         print(pars['sigma'][0], np.var(np.log(k_ref)))
-        print(pars['mu'][1], np.mean(r_ref*86400*1000))
-        print(pars['sigma'][1], np.var(r_ref*86400*1000))
+        print(pars['mu'][1], np.mean(np.abs(r_ref*86400*1000)))
+        print(pars['sigma'][1], np.var(np.abs(r_ref*86400*1000)))
         plot_fields(gwf, pars, np.log(k_ref), r_ref)
+        print(f'Max K: {np.max(np.log(k_ref))}')
+        print(f'Max K: {np.min(np.log(k_ref))}')
         gwf.ic.plot()
         sys.exit()
     

@@ -108,7 +108,7 @@ if __name__ == '__main__':
             l_angs.append([])
             pp_xy, pp_cid = [], []
     
-    # save original fields
+    # save original fields from dependencies.plotting.plot_k_fields import plot_k_fields
     # if pars['setup'] == 'binnac':
     #     np.save(os.path.join(pars['resdir'] ,'k_ensemble_ini.npy'), k_fields)
     print(f'The model has {len(obs_cid)} observation points')
@@ -190,34 +190,35 @@ if __name__ == '__main__':
                 shout_dif(true_obs[t_step,:], np.mean(Ysim, axis = 1))
                 
     #%% Define Shadow Ensemble and assimmilation scheme
-    shadow_model_dir = create_shadow_Ensemble(pars)
-    shadow_models = Parallel(n_jobs=nprocs, backend="threading")(delayed(MFModel)(
-                            shadow_model_dir[idx],
-                            pars,
-                            obs_cid,
-                            [pp_xy, pp_cid],
-                            l_angs[idx],
-                            cor_ellips[idx],
-                            ) 
-                            for idx in range(n_mem)
-                            )
-    MF_shadowEnsemble = Ensemble(shadow_models,
-                               pars,
-                               obs_cid,
-                               nprocs,
-                               mask_chd,
-                               np.squeeze(VR_Model.npf.k.array),
-                               np.array(l_angs),
-                               np.array(cor_ellips),
-                               pp_cid,
-                               pp_xy,
-                               pp_k_ini,
-                               shadow = True)
-    X_shadow, Ysim_shadow = MF_shadowEnsemble.get_Kalman_X_Y()
-    damp = MF_shadowEnsemble.get_damp(X)
-    local_matrix = implicit_localisation(pars['obsxy'], gwf.modelgrid, mask_chd, pars['EnKF_p'], pp_xy = pp_xy)
-    EnKF = EnsembleKalmanFilter(X, Ysim, damp = damp, eps = pars['eps'], localisation=local_matrix)
-    true_obs = np.zeros((pars['nsteps'],len(obs_cid)))
+    if pars['shadow']:
+        shadow_model_dir = create_shadow_Ensemble(pars)
+        shadow_models = Parallel(n_jobs=nprocs, backend="threading")(delayed(MFModel)(
+                                shadow_model_dir[idx],
+                                pars,
+                                obs_cid,
+                                [pp_xy, pp_cid],
+                                l_angs[idx],
+                                cor_ellips[idx],
+                                ) 
+                                for idx in range(n_mem)
+                                )
+        MF_shadowEnsemble = Ensemble(shadow_models,
+                                   pars,
+                                   obs_cid,
+                                   nprocs,
+                                   mask_chd,
+                                   np.squeeze(VR_Model.npf.k.array),
+                                   np.array(l_angs),
+                                   np.array(cor_ellips),
+                                   pp_cid,
+                                   pp_xy,
+                                   pp_k_ini,
+                                   shadow = True)
+        # X_shadow, Ysim_shadow = MF_shadowEnsemble.get_Kalman_X_Y()
+        # damp = MF_shadowEnsemble.get_damp(X)
+        # local_matrix = implicit_localisation(pars['obsxy'], gwf.modelgrid, mask_chd, pars['EnKF_p'], pp_xy = pp_xy)
+        # EnKF = EnsembleKalmanFilter(X, Ysim, damp = damp, eps = pars['eps'], localisation=local_matrix)
+        # true_obs = np.zeros((pars['nsteps'],len(obs_cid)))
     
     
     for t_step in range(pars['nsteps']):
@@ -225,7 +226,8 @@ if __name__ == '__main__':
         period, Assimilate = pars['period'](t_step, pars)  
         if t_step/4 == pars['asim_d'][1]:
             MF_Ensemble.reset_errors()
-            MF_shadowEnsemble.reset_errors()
+            if pars['shadow']:
+                MF_shadowEnsemble.reset_errors()
         elif pars['val1st'] and t_step/4 == pars['asim_d'][0]+pars['valday']:
             damp = MF_Ensemble.get_damp(X, switch = True)
             EnKF.update_damp(damp)
@@ -238,7 +240,8 @@ if __name__ == '__main__':
             
             VR_Model.update_transient_data(data, packages)
             MF_Ensemble.update_transient_data(packages)
-            MF_shadowEnsemble.update_transient_data(packages)
+            if pars['shadow']:
+                MF_shadowEnsemble.update_transient_data(packages)
 
             if pars['printf']: print(f'transient data loaded and applied in {(time.time() - start_time_ts):.2f} seconds')
         
@@ -246,21 +249,23 @@ if __name__ == '__main__':
         start_time = time.time()
         VR_Model.simulation()
         MF_Ensemble.propagate()
-        MF_shadowEnsemble.propagate()
+        if pars['shadow']:
+            MF_shadowEnsemble.propagate()
             
         if pars['printf']: print(f'Ensemble propagated in {(time.time() - start_time):.2f} seconds')
 
         if Assimilate:
             # print('---')
             # AT THE MOMENT WE ARE NOT ASSIMILATING IN THE shadow ENSEMBLE
-            MF_shadowEnsemble.update_initial_heads()
+            if pars['shadow']:
+                MF_shadowEnsemble.update_initial_heads()
             start_time = time.time()
             X, Ysim = MF_Ensemble.get_Kalman_X_Y()
             EnKF.update_X_Y(X, Ysim)
             EnKF.analysis()
             true_obs[t_step,:] = np.squeeze(VR_Model.get_observations())
             if pars['printf']: shout_dif(true_obs[t_step,:], np.mean(Ysim, axis = 1))
-            EnKF.Kalman_update(true_obs[t_step,:].T)
+            EnKF.Kalman_update(true_obs[t_step,:].T, t_step)
 
             if pars['printf']: print(f'Ensemble Kalman Filter performed in  {(time.time() - start_time):.2f} seconds')
 
@@ -273,13 +278,15 @@ if __name__ == '__main__':
         else:
             # Very important: update initial conditions if youre not assimilating
             MF_Ensemble.update_initial_heads()
-            MF_shadowEnsemble.update_initial_heads()
+            if pars['shadow']:
+                MF_shadowEnsemble.update_initial_heads()
         
         # Update the intial conditiopns of the "true model"
         true_h = VR_Model.update_ic()
         
         MF_Ensemble.log(t_step)
-        MF_shadowEnsemble.log(t_step)
+        if pars['shadow']:
+            MF_shadowEnsemble.log(t_step)
         
         start_time = time.time()
         if period == "assimilation" or period == "prediction":
@@ -289,11 +296,12 @@ if __name__ == '__main__':
                 mean_h, var_h = MF_Ensemble.model_error(true_h, period)
                 MF_Ensemble.record_state(pars, np.squeeze(true_h), period, t_step)
                 
-                mean_h, var_h = MF_shadowEnsemble.model_error(true_h, period)
-                MF_shadowEnsemble.record_shadow_state(pars, np.squeeze(true_h), period, t_step)
+                if pars['shadow']:
+                    mean_h, var_h = MF_shadowEnsemble.model_error(true_h, period)
+                    MF_shadowEnsemble.record_shadow_state(pars, np.squeeze(true_h), period, t_step)
                 
                 # visualize covariance structures
-                if pars['setup'] == 'office' and Assimilate and t_step%4 == 0:
+                if pars['setup'] == 'office' and Assimilate and t_step%12 == 0:
                     if 'cov_data' in MF_Ensemble.params:
                         m = MF_Ensemble.mean_cov_par
                         mat = np.array([[m[0], m[1]],[m[1], m[2]]])
@@ -302,7 +310,7 @@ if __name__ == '__main__':
                             pars['mat2cv'](mat),
                             pars
                             )
-                    if t_step%20 == 0:
+                    if t_step%40 == 0:
                         compare_mean_true(gwf, [np.squeeze(VR_Model.npf.k.array), MF_Ensemble.meanlogk, MF_Ensemble.varlogk], pp_xy[pars['f_m_id']])
                         compare_mean_true_head(gwf, [np.squeeze(true_h), np.squeeze(mean_h), np.squeeze(var_h)], pp_xy[pars['f_m_id']]) 
                 

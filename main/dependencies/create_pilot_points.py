@@ -7,7 +7,7 @@ from shapely.geometry import MultiPoint, Point, Polygon
 
     
 def create_pilot_points(gwf, pars:dict,):
-
+    rng_state = np.random.get_state()
     nPP = pars['n_PP']
     mg = gwf.modelgrid
     ixs  = flopy.utils.GridIntersect(mg, method = "vertex")
@@ -34,9 +34,10 @@ def create_pilot_points(gwf, pars:dict,):
     pp_xy_accepted = []
     
     n_test = nPP
-    sampler = qmc.Halton(2, scramble = pars['scramb'])
     if pars['scramb']:
         np.random.seed(805)
+        
+    sampler = qmc.Halton(2, seed = 60)
     
     while len(pp_cid_accepted) != nPP:
         
@@ -73,7 +74,7 @@ def create_pilot_points(gwf, pars:dict,):
     #     dist.append(distances[1:1+pars['nearPP']])
 
     # neardist = np.mean(np.array(dist))
-
+    np.random.set_state(rng_state)
     return pp_cid_accepted.astype(int), pp_xy_accepted.astype(int)
 
 def best_fitting_grid(n, ratio):
@@ -93,7 +94,8 @@ def best_fitting_grid(n, ratio):
     return best_grid
 
 def create_pilot_points_even(gwf, pars:dict,):
-
+    rng_state = np.random.get_state()
+    np.random.seed(805)
     nPP = pars['n_PP']
     mg = gwf.modelgrid
     ixs  = flopy.utils.GridIntersect(mg, method = "vertex")
@@ -173,7 +175,7 @@ def create_pilot_points_even(gwf, pars:dict,):
         if len(pp_cid_accepted) == nPPprod:
             pp_xy_accepted = np.array([xy[int(i)] for i in pp_cid_accepted])
 
-    
+    np.random.set_state(rng_state)
     return pp_cid_accepted.astype(int), pp_xy_accepted.astype(int)
 
 

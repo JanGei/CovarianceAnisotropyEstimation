@@ -35,8 +35,8 @@ def randomK(ang, sigma, Ctype, pars, grid = [], random = True, initialize = Fals
             else:
                 if pars['l_red'] == 1:
                     # old 32
-                    # np.random.seed(1021) 
-                    np.random.seed(7721) 
+                    np.random.seed(1021) 
+                    # np.random.seed(7722) 
                 elif pars['l_red'] == 2:
                     np.random.seed(16)
                     
@@ -46,11 +46,7 @@ def randomK(ang, sigma, Ctype, pars, grid = [], random = True, initialize = Fals
         elif ftype == 'R':
             Kg = pars['mu'][1]
             lx = pars['lx'][1]
-            np.random.seed(9687) 
-        
-    elif initialize:
-        Kg = np.exp(ini_dat[0])
-        lx = ini_dat[1]
+            np.random.seed(9299) 
     else:
         Kg = pars['geomea']
         
@@ -107,9 +103,19 @@ def randomK(ang, sigma, Ctype, pars, grid = [], random = True, initialize = Fals
 
     # Backtransformation into the physical coordinates
     K = Kg + np.real(np.fft.ifftn(ran*ntot))
+    # if ftype == 'K':
+    #     K = Kg * np.exp(np.real(np.fft.ifftn(ran*ntot)))
+    # elif ftype == 'R':
+    #     K = Kg + np.real(np.fft.ifftn(ran*ntot))
+    # else:
+    #     K = Kg * np.exp(np.real(np.fft.ifftn(ran*ntot)))
+        
     K = K[0:nx[1], 0:nx[0]]
     
     if not random:
         np.random.set_state(rng_state)
-        
-    return K
+    
+    if ftype == 'R':
+        return K 
+    else:
+        return np.exp(K)

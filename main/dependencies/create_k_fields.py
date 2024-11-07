@@ -15,7 +15,7 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
     xyz = mg.xyzcellcenters   # xyz coordinates of cells
     cxy = np.vstack((xyz[0], xyz[1])).T # reshaping (x,y) coordinates
     sig_meas = pars['sig_me'] # measurement uncertainty
-    mean_range = np.log(3)    # range from which to draw the mean
+    mean_range = 0.6          # range from which to draw the mean
 
     #%% Determining correlation initialization type
     # good initial
@@ -52,12 +52,12 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
         pp_k = np.log(np.squeeze(k_ref)[pp_cid]) 
         pp_k = pp_k + sig_meas * np.random.randn(*pp_k.shape)
     else:
-        if pars['valtyp'] == 'random':
+        if pars['valtyp'] == 'random_good':
             mu = mu
         elif pars['valtyp'] == 'random_low':
-            mu = mu - np.log(5) # decrease mean by factor of 5
+            mu = mu - 1 # decrease mean by factor of 5
         elif pars['valtyp'] == 'random_high':
-            mu = mu + np.log(5) # increase mean by factor of 5
+            mu = mu + 1 # increase mean by factor of 5
         
         low_bound, high_bound = mu + np.array([-mean_range,mean_range])
         # std = np.sqrt(pars['sigma'][0])
@@ -65,7 +65,7 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
     
     # drawing a random mean for initial field
     mean_val = np.random.uniform(low_bound, high_bound)
-    
+    # print(round(low_bound, 2), round(mean_val, 2), round(high_bound, 2))
     
     if pars['f_meas']:
         pp_loc_meas = pars['f_m_id']
@@ -84,7 +84,7 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
     M = np.matmul(np.matmul(D, np.array([[1/lx[0]**2, 0],[0, 1/lx[1]**2]])), D.T)
     
     if len(test_cov) != 0:
-        return field, [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k], field2f
+        return field.ravel(), [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k], field
     else:
-        return field, [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k]
+        return field.ravel(), [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k]
 

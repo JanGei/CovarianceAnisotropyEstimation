@@ -21,8 +21,8 @@ def conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy):
     # Construct covariance matrix of measurement error
     m = len(pp_k)
     n = Xint_pw.shape[0]
-    # R = np.eye(m)* pars['sig_me']**2
-    R = np.eye(m)* 0.1**2
+    R = np.eye(m)* pars['sig_me']**2
+    # R = np.eye(m)* 0.1**2
     
     # Discretized trend functions (for constant mean)
     X = np.ones((n,1))
@@ -37,7 +37,7 @@ def conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy):
     # ikrigmat = np.linalg.inv(krigmat)
     
     # random, unconditional field for the given variogram
-    sunc = randomK(ang, sigma, pars['cov'], pars, grid=[pars['nx'], dx, lx])
+    sunc = np.log(randomK(ang, sigma, pars['cov'], pars, grid=[pars['nx'], dx, lx]))
     
     # generating a conditional realisation
     sunc_at_meas = np.zeros(m)
@@ -47,7 +47,7 @@ def conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy):
                                 int(indmeas[ii,0])] 
     
     # Perturb the measurements and subtract the unconditional realization
-    spert = np.squeeze(pp_k) + np.squeeze(pars['sig_me'] * np.random.randn(*pp_k.shape)) - np.squeeze(sunc_at_meas)
+    spert = np.squeeze(pp_k)- np.squeeze(sunc_at_meas) #+ np.squeeze(0.1 * np.random.randn(*pp_k.shape)) 
     
     # Solve the kriging equation
     sol = np.linalg.solve(krigmat, np.append(spert, 0))
@@ -62,5 +62,8 @@ def conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k, pp_xy):
     # generating an associated grid for K 
     values_at_coordinates = griddata((Xint.ravel(order = 'F'), Yint.ravel(order = 'F')), s_cond.ravel(order = 'F'),
                                      (cxy[:,0], cxy[:,1]), method='nearest')
-
+    
+    # import matplotlib.pyplot as plt
+    # plt.contourf(Xint, Yint, s_cond_grid)
+    # plt.scatter(pp_xy[:,0], pp_xy[:,1], c = pp_k)
     return np.exp(values_at_coordinates), np.exp(s_cond_grid)

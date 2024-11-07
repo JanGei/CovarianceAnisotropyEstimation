@@ -29,7 +29,8 @@ class MFModel:
         self.mg         = self.gwf.modelgrid
         self.cxy        = np.vstack((self.mg.xyzcellcenters[0], self.mg.xyzcellcenters[1])).T
         self.dx         = pars['dx']
-        self.old_npf    = []
+        self.old_npf    = np.squeeze(self.npf.k.array)
+        self.old_ic     = np.squeeze(self.ic.strt.get_data())
         self.n_neg_def  = 0
         self.pp_xy      = pp_loc[0]
         self.pp_cid     = pp_loc[1]
@@ -53,12 +54,13 @@ class MFModel:
         if not success:
             self.log.append(f'{os.path.join(*self.direc.split(os.sep)[-2:])} did not converge')
             self.set_field([self.old_npf], ['npf'])
+            self.set_field([self.old_ic], ['h'])
             success, buff = self.sim.run_simulation()
             if not success:
-                self.log.append(f'{os.path.join(*self.direc.split(os.sep)[-2:])} critically did not converge')
+                self.log.append(f'{os.path.join(*self.direc.split(os.sep)[-2:])} critically did not converge')      
         else:
-            self.old_npf = self.npf.k.array
-
+            self.olc_ic = np.squeeze(self.get_field(['h']))
+            self.old_npf = np.squeeze(self.npf.k.get_data())
      
     def copy_transient(self, packages):
         for pkg in packages:
@@ -274,12 +276,12 @@ class MFModel:
     def set_field(self, field, pkg_name: list):
         for i, name in enumerate(pkg_name):
             if name == 'npf':
-                self.old_npf =  self.npf.k.get_data()
                 if self.pars['wel_k']:
                     wel = self.get_field(['wel'])['wel']
                     wel_cid = [i[-1] for i in wel[0]['cellid'][wel[0]['q'] != 0]]
-                    field[i][wel_cid] = 1
-                self.npf.k.set_data(np.reshape(field[i],self.npf.k.array.shape))
+                    for wel_id in wel_cid:
+                        field[i][wel_id] = 1
+                self.npf.k.set_data(field[i])
                 self.npf.write()
             elif name == 'rch':
                 self.rch.stress_period_data.set_data(field[i])
