@@ -200,10 +200,10 @@ k_true_grid = np.reshape(k_true, (50,100), order = 'C')
 
 obs_cellid = np.array([[42, 12],
                        [14, 21],
-                       [35, 36],
+                       [31, 33],
                        [10, 50],
                        [44, 73],
-                       [15, 74],
+                       [19, 74],
                        [28, 95]
                        ])
 obs_xy = np.zeros(obs_cellid.shape)
@@ -224,7 +224,7 @@ for i, index in zip(result.cellids, range(len(result.cellids))):
 # print(pp_k[1][[5]])
 lx = [pars['lx'][0], np.array([1600,400])]
 ang = [np.deg2rad(pars['ang'][0]), np.deg2rad(195)]
-conditional = True
+conditional = False
 if conditional:
     v_a_c1, f_g1 = conditional_k(cxy, dx, lx[0], ang[0], sigma, pars, np.array(pp_k[1]), obs_xy)
     v_a_c2, f_g2 = conditional_k(cxy, dx, lx[1], ang[1], sigma, pars, np.array(pp_k[1]), obs_xy)
@@ -263,16 +263,22 @@ c0 = ax0.plot_array(np.log(k_true), cmap=cm.bilbao_r, alpha=1)
 mink = np.log(np.min(k_true))
 maxk = np.log(np.max(k_true))
 arc_radius = 300
-
+levels = np.linspace(13.2, 16.2, 7)
 for i in range(ncols):
 
     ax1 = flopy.plot.PlotMapView(model=gwf, ax=axes[0,i])
-    c1 = ax1.plot_array(np.log(fields[i]), cmap=cm.bilbao_r, alpha=1, vmin=mink, vmax=maxk)
+    c1 = ax1.plot_array(np.log(fields[i])/np.log(10), cmap=cm.bilbao_r, alpha=1, vmin=mink/np.log(10), vmax=maxk/np.log(10))
     axes[0,i].set_aspect('equal')
-    axes[0,i].scatter(obs_xy[:,0],obs_xy[:,1], color = 'black', s = 5)
+    axes[0,i].scatter(obs_xy[:,0],obs_xy[:,1], color = 'black', s = 10)
     
     ax = flopy.plot.PlotMapView(model=gwf, ax=axes[2,i])
     c2 = ax.plot_array((hfields[i]), cmap=cm.devon_r, alpha=1)
+    contour = axes[2,i].contour(X,
+                                Y,
+                                np.flip(np.reshape(hfields[i], X.shape), axis = 0),
+                                levels = levels,
+                                cmap = 'gray')
+    axes[2,i].clabel(contour, inline=True, fontsize=10, fmt='%1.1f', colors='black')  # L
     axes[2,i].set_aspect('equal')
     
     for j in range(nrows):
@@ -369,7 +375,7 @@ cbar0 = fig.colorbar(c1, ax=axes[0, :], location='right', pad=0.01, shrink=0.8, 
 cbar2 = fig.colorbar(c2, ax=axes[2, :], location='right', pad=0.01, shrink=0.8, aspect=10)
 # cax1 = divider1.append_axes("right", size="5%", pad=pad)
 # cbar1 = fig.colorbar(r, cax=cax1)
-cbar0.set_label('Conductivity (ln(m/s))', fontsize=12)
+cbar0.set_label(r'Conductivity ($log_{10}$(m/s))', fontsize=12)
 cbar2.set_label('Head (m)', fontsize=12)
 axes[0,0].set_title('Reference', fontsize = 14, fontweight = 'bold')   
 axes[0,1].set_title('Correct covariance function', fontsize = 14, fontweight = 'bold') 
