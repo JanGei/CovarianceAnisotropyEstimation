@@ -12,12 +12,28 @@ def implicit_localisation(obs_xy, modelgrid, mask, parameters, pp_xy = []):
       
     dist_matrix = distance.cdist(obs_xy, cxy, metric='euclidean')
     
-    distance_weighted_matrix = steep_norm(dist_matrix, threshold = 2000, steepness= 7)
+    # distance_weighted_matrix = steep_norm(dist_matrix, threshold = 2000, steepness= 7)
+    distance_weighted_matrix = tukey_window(dist_matrix)
     
     if 'cov_data' in parameters:
         distance_weighted_matrix = np.hstack([np.ones((np.shape(distance_weighted_matrix)[0], 3)), distance_weighted_matrix])
     
     return distance_weighted_matrix
+
+
+
+def tukey_window(distance, l1=500, l2=2000):
+    w = np.zeros(distance.shape)
+    
+    # Flat section for distance <= l1
+    w[distance <= l1] = 1
+    
+    # Tapered section for l1 < distance <= l2
+    taper_mask = (distance > l1) & (distance <= l2)
+    w[taper_mask] = 0.5 * (1 + np.cos(np.pi * (distance[taper_mask] - l1) / (l2 - l1)))
+    
+    return w
+
 
 
 def steep_norm(x, threshold=1500, steepness=10):

@@ -126,9 +126,9 @@ def get():
     
     cov_mods = ['Exponential', 'Matern', 'Gaussian']
     computer = ['office', 'binnac']
-    setup = computer[1]
+    setup = computer[0]
     if setup == 'office':
-        n_mem  = 360
+        n_mem  = 2
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         up_temp = True

@@ -266,45 +266,52 @@ arc_radius = 300
 levels = np.linspace(13.2, 16.2, 7)
 for i in range(ncols):
 
-    ax1 = flopy.plot.PlotMapView(model=gwf, ax=axes[0,i])
+    # Plot data for the first row (axes[0, i])
+    ax1 = flopy.plot.PlotMapView(model=gwf, ax=axes[0, i])
     c1 = ax1.plot_array(np.log(fields[i])/np.log(10), cmap=cm.bilbao_r, alpha=1, vmin=mink/np.log(10), vmax=maxk/np.log(10))
-    axes[0,i].set_aspect('equal')
-    axes[0,i].scatter(obs_xy[:,0],obs_xy[:,1], color = 'black', s = 10)
-    
-    ax = flopy.plot.PlotMapView(model=gwf, ax=axes[2,i])
-    c2 = ax.plot_array((hfields[i]), cmap=cm.devon_r, alpha=1)
-    contour = axes[2,i].contour(X,
-                                Y,
-                                np.flip(np.reshape(hfields[i], X.shape), axis = 0),
-                                levels = levels,
-                                cmap = 'gray')
-    axes[2,i].clabel(contour, inline=True, fontsize=10, fmt='%1.1f', colors='black')  # L
-    axes[2,i].set_aspect('equal')
-    
+    axes[0, i].set_aspect('equal')
+    axes[0, i].scatter(obs_xy[:, 0], obs_xy[:, 1], color='black', s=10)
+
+    # Plot data for the last row (axes[2, i])
+    ax = flopy.plot.PlotMapView(model=gwf, ax=axes[2, i])
+    c2 = ax.plot_array(hfields[i], cmap=cm.devon_r, alpha=1)
+    contour = axes[2, i].contour(X,
+                                 Y,
+                                 np.flip(np.reshape(hfields[i], X.shape), axis=0),
+                                 levels=levels,
+                                 vmin=np.min(hfields[i]), 
+                                 vmax=np.max(hfields[i]), 
+                                 cmap='gray')
+    labels = axes[2, i].clabel(contour, inline=True, fontsize=10, fmt='%1.1f', colors='black', inline_spacing=5)
+    for label in labels:
+        label.set_bbox(dict(facecolor='white', edgecolor='none', alpha=0.5))
+    axes[2, i].set_aspect('equal')
+
     for j in range(nrows):
         if j != 2:
-            axes[j,i].tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
-            axes[j,i].tick_params(axis='y', which='both', left=False, right=False, labelleft=False)
+            axes[j, i].tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
+            axes[j, i].tick_params(axis='y', which='both', left=False, right=False, labelleft=False)
         else:
-            axes[j,i].set_xticks([1000, 2500, 4000])
-            axes[j,i].set_xticklabels([1, 2.5, 4])
-            axes[j,i].set_xlabel('Easting (km)')
+            axes[j, i].set_xticks([1000, 2500, 4000])
+            axes[j, i].set_xticklabels([1, 2.5, 4], fontsize = 12)
+            axes[j, i].set_xlabel('Easting (km)', fontsize = 12)
             if i == 0:
-                axes[j,0].set_yticks([1000, 2000])
-                axes[j,0].set_yticklabels([1, 2])
-                axes[j,0].set_ylabel('Northing (km)')
-             
-    ellipse = patches.Ellipse((2500,1250),
+                axes[j, 0].set_yticks([1000, 2000])
+                axes[j, 0].set_yticklabels([1, 2], fontsize = 12)
+                axes[j, 0].set_ylabel('Northing (km)', fontsize = 12)
+
+    # Add ellipses to the second row (axes[1, i])
+    ellipse = patches.Ellipse((2500, 1250),
                               lengths[i][0]*2,
                               lengths[i][1]*2,
                               angle=np.rad2deg(angles[i]),
                               fill=False,
                               color='black',
-                              alpha = 0.5,
-                              zorder = 1,
-                              linewidth = 3)
-    axes[1,i].add_patch(ellipse)
-    axes[1,i].set_aspect('equal')
+                              alpha=0.5,
+                              zorder=1,
+                              linewidth=3)
+    axes[1, i].add_patch(ellipse)
+    axes[1, i].set_aspect('equal')
     
     x_center, y_center = (2500,1250)
     x_length = 3000 # Length of x-axis
@@ -364,13 +371,15 @@ for i in range(ncols):
         y2c = -250
         ha1 = 'right'
         ha2 = 'right'
-    axes[1, i].text(x_axis_end[0]+x1c, x_axis_end[1]+y1c, r'Major Axis $\equiv l_x$', color='red', fontsize=12,
+    axes[1, i].text(x_axis_end[0]+x1c, x_axis_end[1]+y1c, r'Major Axis $\equiv l_1$', color='red', fontsize=12,
                     ha=ha1, va='bottom')
-    axes[1, i].text(y_axis_end[0], y_axis_end[1]+y2c, r'Minor Axis $\equiv l_y$', color='blue', fontsize=12,
+    axes[1, i].text(y_axis_end[0], y_axis_end[1]+y2c, r'Minor Axis $\equiv l_2$', color='blue', fontsize=12,
                     ha=ha2, va='bottom')
     axes[1, i].text(2750, 1450, r'$\alpha$', color='green', fontsize=12, fontweight = 'bold',
                     ha='left', va='bottom')
-        
+
+contour_plots = [axes[2, i].contour(X, Y, np.flip(np.reshape(hfields[i], X.shape), axis=0), levels=levels, cmap='gray') for i in range(ncols)]        
+# cbar2 = fig.colorbar(contour_plots[0].collections[0], ax=axes[2, :], location='right', pad=0.01, shrink=0.8, aspect=10)
 cbar0 = fig.colorbar(c1, ax=axes[0, :], location='right', pad=0.01, shrink=0.8, aspect=10)
 cbar2 = fig.colorbar(c2, ax=axes[2, :], location='right', pad=0.01, shrink=0.8, aspect=10)
 # cax1 = divider1.append_axes("right", size="5%", pad=pad)
@@ -384,9 +393,9 @@ axes[0,2].set_title('Wrong covariance function', fontsize = 14, fontweight = 'bo
 # fig.tight_layout()
 # plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05, hspace=0.001, wspace=0.3)        
 if conditional:
-    fig.savefig(os.path.join(cwd, 'plots', 'Covariance_Function_Compare_Conditional.png'), transparent=True, dpi=300)
+    fig.savefig(os.path.join(cwd, 'plots', 'fig_Covariance_Function_Compare_Conditional.png'), transparent=True, dpi=300)
 else:
-    fig.savefig(os.path.join(cwd, 'plots', 'Covariance_Function_Compare.png'), transparent=True, dpi=300)
+    fig.savefig(os.path.join(cwd, 'plots', 'fig_Covariance_Function_Compare.png'), transparent=True, dpi=300)
 # divider0 = make_axes_locatable(axes[0])
 # cax0 = divider0.append_axes("right", size="5%", pad=pad)  # Adjust size and pad for better spacing
 # cbar0 = fig.colorbar(c0, cax=cax0)

@@ -78,12 +78,12 @@ ax1.legend(handles=custom_lines, loc = 'upper right', prop={'size': fontsize -2}
 # Upper right plot [0,1]
 ax2 = fig.add_subplot(gs[0, 1])
 fp2 = flopy.plot.PlotMapView(model=gwf, ax=ax2)
-k = fp2.plot_array(np.log(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1)
+k = fp2.plot_array(np.log10(gwf.npf.k.array), cmap=cm.bilbao_r, alpha=1)
 divider0 = make_axes_locatable(ax2)
 cax0 = divider0.append_axes("right", size="5%", pad=pad)  # Adjust size and pad for better spacing
 cbar0 = fig.colorbar(k, cax=cax0)
 # cbar0.mappable.set_clim(kmin, kmax)
-cbar0.set_label('Conductivity (log(m/s))', fontsize=fontsize)
+cbar0.set_label(r'Conductivity ($\mathrm{log_{10}\frac{m}{s}}$)', fontsize=fontsize)
 cbar0.ax.tick_params(labelsize=fontsize-4)
 
 # Lower left plot [1,0]
@@ -107,7 +107,7 @@ r = fp4.plot_array(r_ref*(-m_s_to_mm_day), cmap=cm.turku_r, alpha=1)
 divider1 = make_axes_locatable(ax4)
 cax1 = divider1.append_axes("right", size="5%", pad=pad)  # Adjust size and pad for better spacing
 cbar1 = fig.colorbar(r, cax=cax1)
-cbar1.set_label('Recharge (m/s)', fontsize=fontsize)
+cbar1.set_label(r'Recharge ($\mathrm{\frac{m}{s}}$)', fontsize=fontsize)
 # cbar1.set_ticks(np.arange(0.4, 1.4, 0.2)* (-1e-8))
 # tick_labels = [f'{tick:.2}' for tick in np.arange(0.4, 1.4, 0.2)]
 # cbar1.set_ticklabels(tick_labels) 
