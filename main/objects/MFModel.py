@@ -40,6 +40,7 @@ class MFModel:
             self.ellips_mat = np.array([[ellips[0], ellips[1]], [ellips[1], ellips[2]]])
             self.lx         = [l_angs[0], l_angs[1]]
             self.ang        = l_angs[2]
+            self.sigma2     = 0
             self.a          = 0.5
             self.corrL_max  = np.min(pars['nx'] * pars['dx'])
             self.threshold  = self.corrL_max * self.a
@@ -143,13 +144,13 @@ class MFModel:
             l1, l2, angle = self.check_vario(l1,l2, angle)
             
             pp_k = data[1]
-            
+            self.sigma2 = np.var(pp_k)
             if self.pars['condfl']:
                 field = conditional_k(self.cxy,
                                       self.dx,
                                       self.lx,
                                       self.ang,
-                                      self.pars['sigma'][0],
+                                      self.sigma2,
                                       self.pars,
                                       pp_k,
                                       self.pp_xy,

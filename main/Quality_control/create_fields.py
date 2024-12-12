@@ -40,9 +40,11 @@ pars['valt'] = "good"
 #     print('_______')
 # plot_k_fields(gwf, pars,  k_fields)
 
-for j in range(1):
+for j in range(5):
     res = create_k_fields(gwf, pars, k_ref,pp_xy, pp_cid)
     pp_k = np.log(res[0][pp_cid])
+    sigma = np.var(pp_k)
+    print(sigma)
     cond_field = conditional_k(cxy, dx, [1100,600], angle, sigma, pars, pp_k, pp_xy)
     compare_conditional(gwf, pars, res[0], angle, np.log(res[3][1]), pp_xy, cond_field[0])
     

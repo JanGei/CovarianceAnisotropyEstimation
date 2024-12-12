@@ -60,8 +60,6 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
             mu = mu + 1 # increase mean by factor of 5
         
         low_bound, high_bound = mu + np.array([-mean_range,mean_range])
-        # std = np.sqrt(pars['sigma'][0])
-        # pp_k = np.random.normal(mu, std, len(pp_cid))
     
     # drawing a random mean for initial field
     mean_val = np.random.uniform(low_bound, high_bound)
@@ -73,10 +71,11 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
         pp_k_meas = true_ppk[pp_loc_meas]
         pp_k_meas = np.log(np.exp(pp_k_meas) + np.random.randn(*pp_k_meas.shape) * 0.1 * np.exp(pp_k_meas))
         pp_xy_meas = pp_xy[pp_loc_meas]
-        
-        field, field2f = conditional_k(cxy, dx, lx, ang, sigma, pars, pp_k_meas, pp_xy_meas)
+        sigma2 = np.var(pp_k_meas)
+        field, field2f = conditional_k(cxy, dx, lx, ang, sigma2, pars, pp_k_meas, pp_xy_meas)
         pp_k = field[pp_cid.astype(int)]
     else:
+        sigma2 = np.random.uniform(0.5, 3)
         field, pp_k = K_initial(lx, ang, mean_val, sigma, pars, pp_loc = pp_xy)
 
     

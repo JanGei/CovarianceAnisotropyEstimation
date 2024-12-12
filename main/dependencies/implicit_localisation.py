@@ -22,7 +22,7 @@ def implicit_localisation(obs_xy, modelgrid, mask, parameters, pp_xy = []):
 
 
 
-def tukey_window(distance, l1=500, l2=2000):
+def tukey_window(distance, l1=7500, l2=2000):
     w = np.zeros(distance.shape)
     
     # Flat section for distance <= l1
