@@ -24,7 +24,8 @@ if pars['ppeven']:
     pp_cid, pp_xy = create_pilot_points_even(gwf, pars)
 else:
     pp_cid, pp_xy = create_pilot_points(gwf, pars)
-    
+
+cellxy = gwf.modelgrid.xyzcellcenters
 k_ref = np.genfromtxt
 river_stages    = np.genfromtxt(pars['rh_d'],delimiter = ',', names=True)['Wert']
 k_ref = np.loadtxt(pars['k_r_d'], delimiter = ',')
@@ -46,6 +47,8 @@ pad = 0.2
 fig = plt.figure(figsize=(14,8))
 gs = gridspec.GridSpec(2, 2, height_ratios=[1, 1], width_ratios=[1, 1])
 
+cellid = 4033
+obsid = 37
 # Upper left plot
 ax1 = fig.add_subplot(gs[0, 0])
 fp1 = flopy.plot.PlotMapView(model=gwf, ax=ax1)
@@ -63,6 +66,7 @@ fp1.plot_bc(name     = 'RIV',
 fp1.plot_bc(name     = 'CHD',
            package  = gwf.chd,
            color    = 'green')
+# ax1.scatter(cellxy[0][cellid],cellxy[1][cellid], c = 'red', marker = 's', s  = 10, zorder = 3)
 for i in range(len(welxy)):
     ax1.scatter(welxy[:,0],welxy[:,1], c = 'red', marker = 's', s  = 10, zorder = 3)
     hollow_circle = patches.Circle(welxy[i], 100, edgecolor='red', facecolor='none', linewidth=4, zorder = 2)
@@ -73,7 +77,17 @@ custom_lines = [Line2D([0], [0], color='green', lw=6, markersize=10, label='Cons
                 Line2D([0], [0], color='blue', lw=6, markersize=10, label='River'),
                 Line2D([0], [0], color='black', lw=0, marker='s', markersize=10, label='Observation well'),
                 Line2D([0], [0], color='red', lw=0, marker='s', markersize=10, label='Production well')]
-ax1.legend(handles=custom_lines, loc = 'upper right', prop={'size': fontsize -2})    
+ax1.legend(handles=custom_lines, loc = 'upper right', prop={'size': fontsize -2})  
+
+
+hollow_circle = patches.Circle((obsxy[obsid,0],obsxy[obsid,1]), 100, edgecolor='black', facecolor='none', linewidth=4, zorder = 2)
+ax1.add_patch(hollow_circle)
+ax1.text(obsxy[obsid,0]+75, obsxy[obsid,1]+75, f'{obsid}', fontsize=fontsize+2, fontweight='bold', color='black')
+
+ax1.scatter(cellxy[0][cellid],cellxy[1][cellid], c = 'darkviolet', marker = 's', s  = 10, zorder = 3)
+hollow_circle = patches.Circle((cellxy[0][cellid],cellxy[1][cellid]), 100, edgecolor='darkviolet', facecolor='none', linewidth=4, zorder = 2)
+ax1.add_patch(hollow_circle)
+ax1.text(cellxy[0][cellid]+75, cellxy[1][cellid]+75, f'cell {cellid}', fontsize=fontsize+2, fontweight='bold', color='darkviolet')
 
 # Upper right plot [0,1]
 ax2 = fig.add_subplot(gs[0, 1])
@@ -83,7 +97,7 @@ divider0 = make_axes_locatable(ax2)
 cax0 = divider0.append_axes("right", size="5%", pad=pad)  # Adjust size and pad for better spacing
 cbar0 = fig.colorbar(k, cax=cax0)
 # cbar0.mappable.set_clim(kmin, kmax)
-cbar0.set_label(r'Conductivity ($\mathrm{log_{10}\frac{m}{s}}$)', fontsize=fontsize)
+cbar0.set_label(r'Conductivity ($\log_{10} (\mathrm{m/s})$)', fontsize=fontsize)
 cbar0.ax.tick_params(labelsize=fontsize-4)
 
 # Lower left plot [1,0]
@@ -97,7 +111,7 @@ ax3_2 = ax3.twinx()
 ax3_2.plot(sfac[:yearin6hrs], c = 'red')
 ax3_2.set_yticks([0, 1, 2])
 ax3_2.set_yticklabels([0, 1, 2], fontsize=fontsize -2, color='red') 
-ax3_2.set_ylabel('Seasonal trend (-)', fontsize=fontsize, color='red') 
+ax3_2.set_ylabel('Seasonal scaling factor (-)', fontsize=fontsize, color='red') 
 
 
 # Lower right plot [1,1]
@@ -107,7 +121,7 @@ r = fp4.plot_array(r_ref*(-m_s_to_mm_day), cmap=cm.turku_r, alpha=1)
 divider1 = make_axes_locatable(ax4)
 cax1 = divider1.append_axes("right", size="5%", pad=pad)  # Adjust size and pad for better spacing
 cbar1 = fig.colorbar(r, cax=cax1)
-cbar1.set_label(r'Recharge ($\mathrm{\frac{m}{s}}$)', fontsize=fontsize)
+cbar1.set_label(r'Recharge ($\mathrm{m/s}$)', fontsize=fontsize)
 # cbar1.set_ticks(np.arange(0.4, 1.4, 0.2)* (-1e-8))
 # tick_labels = [f'{tick:.2}' for tick in np.arange(0.4, 1.4, 0.2)]
 # cbar1.set_ticklabels(tick_labels) 

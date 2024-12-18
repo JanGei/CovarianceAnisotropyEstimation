@@ -366,14 +366,14 @@ for i in range(ncols):
         ha1 = 'left'
         ha2 = 'left'
     else:
-        y1c = -250
-        x1c = -250
+        y1c = -150
+        x1c = -175
         y2c = -250
         ha1 = 'right'
         ha2 = 'right'
-    axes[1, i].text(x_axis_end[0]+x1c, x_axis_end[1]+y1c, r'Major Axis $\equiv l_1$', color='red', fontsize=12,
+    axes[1, i].text(x_axis_end[0]+x1c, x_axis_end[1]+y1c, r'Major Axis $\equiv \lambda_1$', color='red', fontsize=12,
                     ha=ha1, va='bottom')
-    axes[1, i].text(y_axis_end[0], y_axis_end[1]+y2c, r'Minor Axis $\equiv l_2$', color='blue', fontsize=12,
+    axes[1, i].text(y_axis_end[0], y_axis_end[1]+y2c, r'Minor Axis $\equiv \lambda_2$', color='blue', fontsize=12,
                     ha=ha2, va='bottom')
     axes[1, i].text(2750, 1450, r'$\alpha$', color='green', fontsize=12, fontweight = 'bold',
                     ha='left', va='bottom')
@@ -384,7 +384,7 @@ cbar0 = fig.colorbar(c1, ax=axes[0, :], location='right', pad=0.01, shrink=0.8, 
 cbar2 = fig.colorbar(c2, ax=axes[2, :], location='right', pad=0.01, shrink=0.8, aspect=10)
 # cax1 = divider1.append_axes("right", size="5%", pad=pad)
 # cbar1 = fig.colorbar(r, cax=cax1)
-cbar0.set_label(r'Conductivity ($log_{10}$(m/s))', fontsize=12)
+cbar0.set_label(r'Conductivity ($\log_{10}$(m/s))', fontsize=12)
 cbar2.set_label('Head (m)', fontsize=12)
 axes[0,0].set_title('Reference', fontsize = 14, fontweight = 'bold')   
 axes[0,1].set_title('Correct covariance function', fontsize = 14, fontweight = 'bold') 
