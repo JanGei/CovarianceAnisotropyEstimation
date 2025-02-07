@@ -15,7 +15,15 @@ from dependencies.load_template_model import load_template_model
 from dependencies.model_params import get
 import matplotlib.pyplot as plt
 from Virtual_Reality.ReferenceModel import create_reference_model
+import matplotlib.font_manager as fm
 
+font_path = "/usr/share/fonts/truetype/msttcorefonts/Times_New_Roman.ttf"  
+times_font = fm.FontProperties(fname=font_path)
+plt.rcParams.update({
+    "text.usetex": True,                  # Use LaTeX for rendering text
+    "font.family": "serif",                # Use a serif font family
+    "font.serif": ["Times New Roman"],     # Set Times New Roman
+})
 cwd = os.getcwd()
 pars = get()
 create_reference_model(pars)
@@ -35,7 +43,7 @@ obsxy = pars['obsxy'] + np.array([-25, 25])
 welxy = pars['welxy'] + np.array([-25, 25])
 # %% plot
 yearin6hrs = 365*4
-fontsize = 12
+fontsize = 13
 m_s_to_mm_day = 1000*86400
 xticks = [1000, 2500, 4000]
 yticks = [1000, 2000]
@@ -47,7 +55,8 @@ pad = 0.2
 fig = plt.figure(figsize=(14,8))
 gs = gridspec.GridSpec(2, 2, height_ratios=[1, 1], width_ratios=[1, 1])
 
-cellid = 4033
+# cellid = 4033
+cellid = 2944
 obsid = 37
 # Upper left plot
 ax1 = fig.add_subplot(gs[0, 0])
@@ -99,6 +108,8 @@ cbar0 = fig.colorbar(k, cax=cax0)
 # cbar0.mappable.set_clim(kmin, kmax)
 cbar0.set_label(r'Conductivity ($\log_{10} (\mathrm{m/s})$)', fontsize=fontsize)
 cbar0.ax.tick_params(labelsize=fontsize-4)
+for label in cbar0.ax.get_yticklabels():
+    label.set_fontproperties(times_font)
 
 # Lower left plot [1,0]
 ax3 = fig.add_subplot(gs[1, 0])  
@@ -122,10 +133,8 @@ divider1 = make_axes_locatable(ax4)
 cax1 = divider1.append_axes("right", size="5%", pad=pad)  # Adjust size and pad for better spacing
 cbar1 = fig.colorbar(r, cax=cax1)
 cbar1.set_label(r'Recharge ($\mathrm{m/s}$)', fontsize=fontsize)
-# cbar1.set_ticks(np.arange(0.4, 1.4, 0.2)* (-1e-8))
-# tick_labels = [f'{tick:.2}' for tick in np.arange(0.4, 1.4, 0.2)]
-# cbar1.set_ticklabels(tick_labels) 
-# cbar1.ax.text(0.5, 1.05, 'x 10⁻⁸', ha='center', va='bottom', fontsize=12, transform=cbar1.ax.transAxes)
+# for label in cbar1.ax.get_yticklabels():
+#     label.set_fontproperties(times_font)
 cbar1.ax.tick_params(labelsize=fontsize -2)
 
     
@@ -133,6 +142,10 @@ axes = np.array([[ax1, ax2], [ax3, ax4]])
 
 for ax in [ax1, ax2, ax3, ax4]:
     ax.set_aspect('auto')
+    for label in ax.get_xticklabels():
+        label.set_fontproperties(times_font)
+    for label in ax.get_yticklabels():
+        label.set_fontproperties(times_font)
     
 for i in range(2):
     for j in range(2):
