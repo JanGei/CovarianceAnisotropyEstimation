@@ -23,7 +23,11 @@ import sys
 
 cwd = os.getcwd()
 pars = get()
-
+plt.rcParams.update({
+    "text.usetex": True,                  # Use LaTeX for rendering text
+    "font.family": "serif",                # Use a serif font family
+    "font.serif": ["Times New Roman"],     # Set Times New Roman
+})
 #%% Model Parameters
 nx      = pars['nx']
 dx      = pars['dx']
@@ -252,7 +256,8 @@ for i, field in enumerate(fields):
         gwf.npf.k.set_data([k_true])
         gwf.npf.write()
 
-#%% plot        
+#%% plot 
+plotlabels = ['A', 'B', 'C']       
 nrows, ncols = 3,3
 fig, axes = plt.subplots(nrows = nrows, ncols = ncols,
                          sharex = True, sharey = True,
@@ -263,7 +268,7 @@ c0 = ax0.plot_array(np.log(k_true), cmap=cm.bilbao_r, alpha=1)
 mink = np.log(np.min(k_true))
 maxk = np.log(np.max(k_true))
 arc_radius = 300
-levels = np.linspace(13.2, 16.2, 7)
+levels = np.linspace(13.2, 16.3, 8)
 for i in range(ncols):
 
     # Plot data for the first row (axes[0, i])
@@ -288,6 +293,10 @@ for i in range(ncols):
     axes[2, i].set_aspect('equal')
 
     for j in range(nrows):
+        axes[j, i].annotate(f'{j+1}{plotlabels[i]}',
+                    xy=(0.94, 0.97), xycoords='axes fraction',
+                    fontsize='medium', verticalalignment='top', fontfamily='serif',
+                    bbox=dict(facecolor='0.7', edgecolor='none', alpha = 0.5, pad=3.0))
         if j != 2:
             axes[j, i].tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
             axes[j, i].tick_params(axis='y', which='both', left=False, right=False, labelleft=False)

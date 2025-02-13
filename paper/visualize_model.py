@@ -43,10 +43,14 @@ obsxy = pars['obsxy'] + np.array([-25, 25])
 welxy = pars['welxy'] + np.array([-25, 25])
 # %% plot
 yearin6hrs = 365*4
-fontsize = 13
+fontsize = 14
 m_s_to_mm_day = 1000*86400
+
 xticks = [1000, 2500, 4000]
 yticks = [1000, 2000]
+
+xticks1000 = [1, 2, 4]
+yticks1000 = [1, 2]
 
 xticks_days = [100*4, 200*4, 300*4]
 xlabels_days = [100, 200, 300]
@@ -82,11 +86,20 @@ for i in range(len(welxy)):
     ax1.add_patch(hollow_circle)
     ax1.text(welxy[i,0]+75, welxy[i,1]+75, f'{i+1}', fontsize=fontsize+2, fontweight='bold', color='red')
 
-custom_lines = [Line2D([0], [0], color='green', lw=6, markersize=10, label='Constant head'),
-                Line2D([0], [0], color='blue', lw=6, markersize=10, label='River'),
-                Line2D([0], [0], color='black', lw=0, marker='s', markersize=10, label='Observation well'),
-                Line2D([0], [0], color='red', lw=0, marker='s', markersize=10, label='Production well')]
-ax1.legend(handles=custom_lines, loc = 'upper right', prop={'size': fontsize -2})  
+handles = [Line2D([0], [0], color='green', lw=4, markersize=5, label='Constant head'),
+           Line2D([0], [0], color='blue', lw=4, markersize=5, label='River'),
+           Line2D([0], [0], color='black', lw=0, marker='s', markersize=5, label='Observation well'),
+           Line2D([0], [0], color='red', lw=0, marker='s', markersize=5, label='Production well')]
+
+legend_labels = ['Constant head', 'River', 'Observation well', 'Production well']
+ax1.legend(handles,
+           legend_labels,
+           loc='lower center',
+           bbox_to_anchor=(0.81, 0.58),  # Adjust this value as needed
+           ncol=1,
+           frameon=True,
+           fontsize = 12)
+# ax1.legend(handles=custom_lines, loc = 'upper right', prop={'size': fontsize -2})  
 
 
 hollow_circle = patches.Circle((obsxy[obsid,0],obsxy[obsid,1]), 100, edgecolor='black', facecolor='none', linewidth=4, zorder = 2)
@@ -114,8 +127,8 @@ for label in cbar0.ax.get_yticklabels():
 # Lower left plot [1,0]
 ax3 = fig.add_subplot(gs[1, 0])  
 ax3.plot(river_stages[:yearin6hrs], c = 'blue')
-ax3.set_yticks([13,15,17, 19])
-ax3.set_yticklabels([13,15,17, 19], fontsize=fontsize -2, color='blue') 
+ax3.set_yticks([12.5,14,15.5, 17, 18.5])
+ax3.set_yticklabels([12.5,14,15.5, 17, 18.5], fontsize=fontsize -2, color='blue') 
 ax3.set_ylabel('River stage (m)', fontsize=fontsize, color='blue') 
 
 ax3_2 = ax3.twinx()
@@ -146,7 +159,7 @@ for ax in [ax1, ax2, ax3, ax4]:
         label.set_fontproperties(times_font)
     for label in ax.get_yticklabels():
         label.set_fontproperties(times_font)
-    
+plotlabels = ['A', 'B']    
 for i in range(2):
     for j in range(2):
         if i == 1 and j == 0:
@@ -157,12 +170,17 @@ for i in range(2):
               
 
         else:
-            axes[i,j].set_ylabel('Northing (m)', fontsize=fontsize)
-            axes[i,j].set_xlabel('Easting (m)', fontsize=fontsize)
+            axes[i,j].set_ylabel('Northing (km)', fontsize=fontsize)
+            axes[i,j].set_xlabel('Easting (km)', fontsize=fontsize)
             axes[i,j].set_xticks(xticks)
             axes[i,j].set_yticks(yticks)
-            axes[i,j].set_xticklabels(xticks, fontsize=fontsize -2)
-            axes[i,j].set_yticklabels(yticks, fontsize=fontsize -2) 
-plt.subplots_adjust(hspace=0.25, wspace=0.25) 
+            axes[i,j].set_xticklabels((xticks1000), fontsize=fontsize -2)
+            axes[i,j].set_yticklabels((yticks1000), fontsize=fontsize -2) 
+            
+        axes[j, i].annotate(f'{j+1}{plotlabels[i]}',
+                    xy=(0.012, 0.98), xycoords='axes fraction',
+                    fontsize='medium', verticalalignment='top', fontfamily='serif',
+                    bbox=dict(facecolor='0.8', edgecolor='none', alpha = 1, pad=3.0))
+# plt.subplots_adjust(hspace=0.25, wspace=0.25) 
 
-fig.savefig(os.path.join(cwd, 'plots', 'Model_Overview.png'), transparent=True, dpi=300)
+fig.savefig(os.path.join(cwd, 'plots', 'fig_Model_Overview.png'),bbox_inches='tight', pad_inches=0.5, dpi=400)
