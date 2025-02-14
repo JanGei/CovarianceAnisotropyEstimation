@@ -74,9 +74,16 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
         sigma2 = np.var(pp_k_meas)
         field, field2f = conditional_k(cxy, dx, lx, ang, sigma2, pars, pp_k_meas, pp_xy_meas)
         pp_k = field[pp_cid.astype(int)]
+        
+        lx_iso = np.array([np.mean(lx), np.mean(lx)])
+        field_iso, field2f = conditional_k(cxy, dx, lx_iso, ang, sigma2, pars, pp_k_meas, pp_xy_meas)
+        pp_k_iso = field[pp_cid.astype(int)]
+        
     else:
         sigma2 = np.random.uniform(0.5, 3)
         field, pp_k = K_initial(lx, ang, mean_val, sigma, pars, pp_loc = pp_xy)
+        lx_iso = np.array([np.mean(lx), np.mean(lx)])
+        field_iso, pp_k_iso = K_initial(lx_iso, ang, mean_val, sigma, pars, pp_loc = pp_xy)
 
     
     D = pars['rotmat'](ang)
@@ -85,5 +92,5 @@ def create_k_fields(gwf, pars: dict, k_ref, pp_xy=[], pp_cid=[], test_cov=[], co
     if len(test_cov) != 0:
         return field.ravel(), [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k], field
     else:
-        return field.ravel(), [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k]
+        return field.ravel(), [M[0,0], M[1,0], M[1,1]], [lx[0], lx[1], ang], [pp_xy, pp_k], field_iso, pp_k_iso, [lx_iso, sigma2]
 

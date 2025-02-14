@@ -1,26 +1,31 @@
 import os
 import shutil
 
-def create_Ensemble(pars: dict) -> list:
+def create_Ensemble(pars: dict, iso = False) -> list:
     n_mem       = pars['n_mem']
     # vr_dir      = pars['trs_ws']
     # ss_dir      = pars['sim_ws']
     ens_m_dir = []
-    ens_ws      = pars['ens_ws']
-    mem_ws      = pars['mem_ws']
     
     # removing old Ensemble
-    if os.path.exists(ens_ws) and os.path.isdir(ens_ws):
-        shutil.rmtree(ens_ws)
-        os.mkdir(ens_ws)
+    if iso:
+        e_ws = pars['sh_ens']
+        m_ws = pars['sh_mem']
     else:
-        os.mkdir(ens_ws)
+        e_ws = pars['ens_ws']
+        m_ws = pars['mem_ws']
+        
+    if os.path.exists(e_ws) and os.path.isdir(e_ws):
+        shutil.rmtree(e_ws)
+        os.mkdir(e_ws)
+    else:
+        os.mkdir(e_ws)
 
     # create template model
     # shutil.copytree(vr_dir, pars['tm_ws'])
     
     for i in range(n_mem):
-        mem_dir = mem_ws + f'{i}'
+        mem_dir = m_ws + f'{i}'
         # Copy the steady_state model folder to new folders
         shutil.copytree(pars['sim_ws'], mem_dir)
         ens_m_dir.append(mem_dir)

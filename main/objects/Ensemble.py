@@ -4,7 +4,7 @@ import os
     
 class Ensemble:
     
-    def __init__(self, members: list, pars, obs_cid, nprocs: int, mask, k_ref, ellipses = [], ellipses_par = [], pp_cid = [], pp_xy = [], pp_k = [], shadow = False):
+    def __init__(self, members: list, pars, obs_cid, nprocs: int, mask, k_ref, ellipses = [], ellipses_par = [], pp_cid = [], pp_xy = [], pp_k = [], iso = False):
         self.members    = members
         self.pars       = pars
         self.nprocs     = nprocs
@@ -27,7 +27,7 @@ class Ensemble:
         self.obs_cid    = [int(i) for i in obs_cid]
         self.meanlogk   = []
         self.meank   = []
-        self.shadow = shadow
+        self.iso = iso
         self.vark   = []
         if pars['pilotp']:
             self.ellipses   = ellipses
@@ -78,6 +78,7 @@ class Ensemble:
             )
         
     def get_damp(self, X, switch = False):
+        
         if self.pars['val1st']:
             if switch:
                 self.params = self.pars['EnKF_p'][1]
@@ -89,23 +90,29 @@ class Ensemble:
         else:
             val = self.pars['damp']
             
-        X,_ = self.get_Kalman_X_Y()
         damp = np.zeros((X[:,0].size)) + val[0]
-        if 'cov_data' in self.params:
-            cl = len(np.unique(self.members[0].ellips_mat))
-            damp[0], damp[2] = val[1][0], val[1][0]
-            damp[1] = val[1][1]
-            if 'npf' in self.params:
-                damp[cl:cl+len(self.pp_cid)] = val[2]
-                
-                if self.pars['f_meas']:
-                    ids = cl +self.pars['f_m_id']
-                    damp[ids] = val[2] / 50
+        
+        if self.iso:
+            damp[:len(self.pp_cid)] = val[2]
+            damp[len(self.pp_cid):] = val[0]
+            if self.pars['f_meas']:
+                damp[self.pars['f_m_id']] = val[2] / 50
         else:
-            if self.pilotp_flag:
-                damp[:len(self.pp_cid)] = val[1]
+            if 'cov_data' in self.params:
+                cl = len(np.unique(self.members[0].ellips_mat))
+                damp[0], damp[2] = val[1][0], val[1][0]
+                damp[1] = val[1][1]
+                if 'npf' in self.params:
+                    damp[cl:cl+len(self.pp_cid)] = val[2]
+                    
+                    if self.pars['f_meas']:
+                        ids = cl +self.pars['f_m_id']
+                        damp[ids] = val[2] / 50
             else:
-                damp[:len(self.members[0].npf.k.array.squeeze())] = val[1]
+                if self.pilotp_flag:
+                    damp[:len(self.pp_cid)] = val[1]
+                else:
+                    damp[:len(self.members[0].npf.k.array.squeeze())] = val[1]
             
         return damp
         
@@ -125,40 +132,55 @@ class Ensemble:
         
     def apply_X(self, X):
         
-        result = Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].apply_x)(
-            np.squeeze(X[:,idx]),
-            self.h_mask,
-            self.mean_cov_par,
-            self.var_cov_par
-            ) 
-            for idx in range(self.n_mem)
-            )
-        
-        cl = 3
-        if 'cov_data' in self.params:
-            # Only register ellipses that perfromed a successfull update
-            self.ellipses = np.array([data[0] for data in result if data[2]])
-            self.ellipses_par = [data[1] for data in result if data[2]]
-            # self.mean_cov = np.mean(self.ellipses, axis = 0)
-            self.var_cov = np.var(self.ellipses, axis = 0)
-            self.mean_cov_par = np.mean(np.array(self.ellipses_par), axis = 0)
-            self.var_cov_par = np.var(np.array(self.ellipses_par), axis = 0)
-            if 'npf' in self.params:
-                self.meanlogppk = np.mean(X[cl:len(self.pp_cid)+cl,:], axis = 1)
-                self.varlogppk = np.var(X[cl:len(self.pp_cid)+cl,:], axis = 1)
-                self.meanppk = np.mean(np.exp(X[cl:len(self.pp_cid)+cl,:]), axis = 1)
-                self.varppk = np.var(np.exp(X[cl:len(self.pp_cid)+cl,:]), axis = 1)
+        if self.iso:
+            Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].apply_x)(
+                np.squeeze(X[:,idx]),
+                self.h_mask,
+                ) 
+                for idx in range(self.n_mem)
+                )
+            
+            self.meanlogppk = np.mean(X[:len(self.pp_cid),:], axis = 1)
+            self.varlogppk = np.var(X[:len(self.pp_cid),:], axis = 1)
+            self.meanppk = np.mean(np.exp(X[:len(self.pp_cid),:]), axis = 1)
+            self.varppk = np.var(np.exp(X[:len(self.pp_cid),:]), axis = 1)
+            
         else:
-            if self.pilotp_flag:
-                self.meanlogppk = np.mean(X[:len(self.pp_cid),:], axis = 1)
-                self.varlogppk = np.var(X[:len(self.pp_cid),:], axis = 1)
-                self.meanppk = np.mean(np.exp(X[:len(self.pp_cid),:]), axis = 1)
-                self.varppk = np.var(np.exp(X[:len(self.pp_cid),:]), axis = 1)
+            result = Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].apply_x)(
+                np.squeeze(X[:,idx]),
+                self.h_mask,
+                self.mean_cov_par,
+                self.var_cov_par
+                ) 
+                for idx in range(self.n_mem)
+                )
+            
+            cl = 3
+            if 'cov_data' in self.params:
+                # Only register ellipses that perfromed a successfull update
+                self.ellipses = np.array([data[0] for data in result if data[2]])
+                self.ellipses_par = [data[1] for data in result if data[2]]
+                # self.mean_cov = np.mean(self.ellipses, axis = 0)
+                self.var_cov = np.var(self.ellipses, axis = 0)
+                self.mean_cov_par = np.mean(np.array(self.ellipses_par), axis = 0)
+                self.var_cov_par = np.var(np.array(self.ellipses_par), axis = 0)
+                if 'npf' in self.params:
+                    self.meanlogppk = np.mean(X[cl:len(self.pp_cid)+cl,:], axis = 1)
+                    self.varlogppk = np.var(X[cl:len(self.pp_cid)+cl,:], axis = 1)
+                    self.meanppk = np.mean(np.exp(X[cl:len(self.pp_cid)+cl,:]), axis = 1)
+                    self.varppk = np.var(np.exp(X[cl:len(self.pp_cid)+cl,:]), axis = 1)
+            else:
+                if self.pilotp_flag:
+                    self.meanlogppk = np.mean(X[:len(self.pp_cid),:], axis = 1)
+                    self.varlogppk = np.var(X[:len(self.pp_cid),:], axis = 1)
+                    self.meanppk = np.mean(np.exp(X[:len(self.pp_cid),:]), axis = 1)
+                    self.varppk = np.var(np.exp(X[:len(self.pp_cid),:]), axis = 1)
                     
     def get_Kalman_X_Y(self):   
 
         result = Parallel(n_jobs=self.nprocs, backend=self.pars['backnd'])(delayed(self.members[idx].Kalman_vec)(
             self.h_mask,
+            self.iso
             ) 
             for idx in range(self.n_mem)
             )
@@ -257,7 +279,7 @@ class Ensemble:
     
     def log(self, time_step):
        
-        if not self.shadow:
+        if not self.iso:
             g = open(self.pars['logfil'],'a')
             g.write(f'Time Step {time_step}')
             g.write('\n')
@@ -282,9 +304,14 @@ class Ensemble:
         self.meank = np.mean(k_fields, axis = 0)
         
         direc = pars['resdir']
+        
+        if self.iso:
+            suffix = '_iso'
+        else:
+            suffix = ''
 
-        f = open(os.path.join(direc,  'errors_'+period+'.dat'),'a')
-        g = open(os.path.join(direc,  'errors_'+period+'_ts.dat'),'a')
+        f = open(os.path.join(direc,  'errors_'+period+suffix+'.dat'),'a')
+        g = open(os.path.join(direc,  'errors_'+period+suffix+'_ts.dat'),'a')
         f.write("{:.3f} ".format(self.ole[period][-1]))
         f.write("{:.3f} ".format(self.te1[period][-1]))
         f.write("{:.7f} ".format(self.te2[period][-1]))
@@ -298,8 +325,8 @@ class Ensemble:
         f.close()
         g.close()
         
-        f = open(os.path.join(direc,  'errors_k.dat'),'a')
-        g = open(os.path.join(direc,  'errors_k_ts.dat'),'a')
+        f = open(os.path.join(direc,  'errors_k'+suffix+'.dat'),'a')
+        g = open(os.path.join(direc,  'errors_k_ts'+suffix+'.dat'),'a')
         f.write("{:.3f} ".format(self.te1_k['normal'][-1]))
         f.write("{:.7f} ".format(self.te2_k['normal'][-1]))
         f.write("{:.5f} ".format(self.nrmse_k['normal'][-1]))
@@ -311,8 +338,8 @@ class Ensemble:
         f.close()
         g.close()
         
-        f = open(os.path.join(direc,  'obs_true.dat'),'a')
-        g = open(os.path.join(direc,  'obs_mean.dat'),'a')
+        f = open(os.path.join(direc,  'obs_true'+suffix+'.dat'),'a')
+        g = open(os.path.join(direc,  'obs_mean'+suffix+'.dat'),'a')
         for i in range(len(self.obs[0])):
             f.write("{:.2f} ".format(self.obs[0][i]))
             g.write("{:.2f} ".format(self.obs[1][i]))
@@ -322,9 +349,9 @@ class Ensemble:
         g.close()
         
         if t_step%20 == 0:
-            f = open(os.path.join(direc,  'h_mean.dat'),'a')
-            g = open(os.path.join(direc,  'h_var.dat'),'a')
-            h = open(os.path.join(direc,  'true_h.dat'),'a')
+            f = open(os.path.join(direc,  'h_mean'+suffix+'.dat'),'a')
+            g = open(os.path.join(direc,  'h_var'+suffix+'.dat'),'a')
+            h = open(os.path.join(direc,  'true_h'+suffix+'.dat'),'a')
             for i in range(len(mean_h)):
                 f.write("{:.2f} ".format(mean_h[i]))
                 g.write("{:.2f} ".format(var_h[i]))
@@ -338,7 +365,7 @@ class Ensemble:
 
         
         # also store covariance data for all models
-        if 'cov_data' in self.params:
+        if not self.iso:
             cov_data = self.get_member_fields(['cov_data'])
             
             mat = np.array([[self.mean_cov_par[0], self.mean_cov_par[1]],
@@ -365,6 +392,7 @@ class Ensemble:
             f.write("{:.10f} ".format(self.mean_cov_par[2]))
             f.write('\n')
             f.close()
+        
             
             f = open(os.path.join(direc, 'cov_variance_par.dat'),'a')
             f.write("{:.2f} ".format(np.log(self.var_cov_par[0])))
@@ -382,8 +410,8 @@ class Ensemble:
 
         if 'npf' in self.params:
             if self.pilotp_flag:
-                f = open(os.path.join(direc,  'meanlogppk.dat'),'a')
-                g = open(os.path.join(direc,  'varlogppk.dat'),'a')
+                f = open(os.path.join(direc,  'meanlogppk'+suffix+'.dat'),'a')
+                g = open(os.path.join(direc,  'varlogppk'+suffix+'.dat'),'a')
                 for i in range(len(self.meanlogppk)):
                     f.write("{:.2f} ".format(self.meanlogppk[i]))
                     g.write("{:.2f} ".format(self.varlogppk[i]))
@@ -392,8 +420,8 @@ class Ensemble:
                 f.close()
                 g.close()
                 
-                f = open(os.path.join(direc,  'meanppk.dat'),'a')
-                g = open(os.path.join(direc,  'varppk.dat'),'a')
+                f = open(os.path.join(direc,  'meanppk'+suffix+'.dat'),'a')
+                g = open(os.path.join(direc,  'varppk'+suffix+'.dat'),'a')
                 for i in range(len(self.meanppk)):
                     f.write("{:.5f} ".format(self.meanppk[i]))
                     g.write("{:.5f} ".format(self.varppk[i]))
@@ -403,8 +431,8 @@ class Ensemble:
                 g.close()
             
             if t_step%20 == 0:
-                f = open(os.path.join(direc,  'meanlogk.dat'),'a')
-                g = open(os.path.join(direc,  'varlogk.dat'),'a')
+                f = open(os.path.join(direc,  'meanlogk'+suffix+'.dat'),'a')
+                g = open(os.path.join(direc,  'varlogk'+suffix+'.dat'),'a')
                 for i in range(len(self.meanlogk)):
                     f.write("{:.2f} ".format(self.meanlogk[i]))
                     g.write("{:.2f} ".format(self.varlogk[i]))
@@ -413,7 +441,7 @@ class Ensemble:
                 f.close()
                 g.close()
             
-                f = open(os.path.join(direc,  'meank.dat'),'a')
+                f = open(os.path.join(direc,  'meank'+suffix+'.dat'),'a')
                 for i in range(len(self.meank)):
                     f.write("{:.5f} ".format(self.meank[i]))
                 f.write('\n')

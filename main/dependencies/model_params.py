@@ -126,9 +126,9 @@ def get():
     
     cov_mods = ['Exponential', 'Matern', 'Gaussian']
     computer = ['office', 'binnac']
-    setup = computer[0]
+    setup = computer[1]
     if setup == 'office':
-        n_mem  = 2
+        n_mem  = 80
         nprocs = np.min([n_mem, psutil.cpu_count()])
         inspection = False
         up_temp = True
@@ -152,9 +152,9 @@ def get():
     cov_variants = [['cov_data', 'npf'], ['cov_data'], ['npf']]
 
     valt_variants = ["random_good", "random_low", "random_high", "prior_meas"]
-    choice_valt = 0 # 0 = random
+    choice_valt = 0 
     covt_variants = ["good", "random_low", "random_high"]
-    choice_covt = 0 # 1 = random
+    choice_covt = 2 
     pp_flag = True 
     pilot_point_even = True
    
@@ -166,10 +166,10 @@ def get():
     val_first = False
     conditional_flag = True
     scramble_pp = False
-    nPP = 28
+    nPP = 45
     l_red = 1
-    h_damp = 0.4
-    cov_damp = [0.15, 0.15]
+    h_damp = 0.3
+    cov_damp = [0.1, 0.1]
     npf_damp = 0.1
     asimdays = [0, 300]
     

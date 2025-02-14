@@ -9,10 +9,11 @@ sys.path.append('..')
 
 class MFModel:
     
-    def __init__(self, direc: str,  pars, obs_cid, pp_loc, l_angs = [], ellips = []):
+    def __init__(self, direc: str,  pars, obs_cid, pp_loc, l_angs = [], ellips = [], iso = False):
         self.direc      = direc
         self.mname      = pars['mname']
         self.pars       = pars
+        self.iso        = iso
         self.sim        = flopy.mf6.modflow.MFSimulation.load(
                                 version             = 'mf6', 
                                 exe_name            = 'mf6',
@@ -36,7 +37,7 @@ class MFModel:
         self.pp_cid     = pp_loc[1]
         self.obs_cid    = [int(i) for i in obs_cid]
         self.log        = []
-        if pars['pilotp']:
+        if pars['pilotp'] and not iso:
             self.ellips_mat = np.array([[ellips[0], ellips[1]], [ellips[1], ellips[2]]])
             self.lx         = [l_angs[0], l_angs[1]]
             self.ang        = l_angs[2]
@@ -44,6 +45,10 @@ class MFModel:
             self.a          = 0.5
             self.corrL_max  = np.min(pars['nx'] * pars['dx'])
             self.threshold  = self.corrL_max * self.a
+        if iso:
+            self.lx         = l_angs[0]
+            self.ang        = 0
+            self.sigma2     = l_angs[1]
         if pars['val1st']:
             self.params     = pars['EnKF_p'][0]
         else:
@@ -73,108 +78,138 @@ class MFModel:
         self.ic.strt.set_data(self.get_field('h')['h'])
         self.ic.write()
        
-    def Kalman_vec(self, h_mask):
-        data = self.get_field(['h', 'npf', 'cov_data'])
+    def Kalman_vec(self, h_mask, iso):
         
-        ysim = np.squeeze(data['h'][self.obs_cid])
-        h_nobc = data['h'][~h_mask]
-
-        if 'cov_data' in self.params:
-            if 'npf' in self.params:
-                x = np.concatenate([data['cov_data'], np.log(data['npf'][self.pp_cid]), h_nobc])
-            else:
-                x = np.concatenate([data['cov_data'], h_nobc])
+        if iso:
+            data = self.get_field(['h', 'npf'])
+            ysim = np.squeeze(data['h'][self.obs_cid])
+            h_nobc = data['h'][~h_mask]
+            x = np.concatenate([np.log(data['npf'][self.pp_cid]), h_nobc])
+            
         else:
-            if self.pars['pilotp']:
-                x = np.concatenate([np.log(data['npf'][self.pp_cid]), h_nobc])
-            else:
-                x = np.concatenate([data['npf'], h_nobc])
+            data = self.get_field(['h', 'npf', 'cov_data'])
+            
+            ysim = np.squeeze(data['h'][self.obs_cid])
+            h_nobc = data['h'][~h_mask]
     
+            if 'cov_data' in self.params:
+                if 'npf' in self.params:
+                    x = np.concatenate([data['cov_data'], np.log(data['npf'][self.pp_cid]), h_nobc])
+                else:
+                    x = np.concatenate([data['cov_data'], h_nobc])
+            else:
+                if self.pars['pilotp']:
+                    x = np.concatenate([np.log(data['npf'][self.pp_cid]), h_nobc])
+                else:
+                    x = np.concatenate([data['npf'], h_nobc])
+        
         return x, ysim
     
     def updateFilter(self):
         self.params = self.pars['EnKF_p'][1]
     
-    def apply_x(self, x, h_mask, mean_cov_par, var_cov_par):
+    def apply_x(self, x, h_mask, mean_cov_par = [], var_cov_par = []):
         
-        data = self.get_field(['h', 'npf', 'cov_data'])
-        cl = 3
-
-        if 'cov_data' in self.params:
-            if 'npf' in self.params:
-                data['h'][~h_mask] = x[self.pars['n_PP']+cl:]
-                res = self.kriging([x[0:cl],x[cl:self.pars['n_PP']+cl]],
-                                   mean_cov_par,
-                                   var_cov_par)
-            else:
-                data['h'][~h_mask] = x[cl:]
-                res = self.kriging([x[0:cl], x[cl:self.pars['n_PP']+cl]],
-                                   mean_cov_par,
-                                   var_cov_par)
-        else:
-            if self.pars['pilotp']:
-                data['h'][~h_mask] = x[self.pars['n_PP']:]
-                
-                field, _ = conditional_k(self.cxy,
-                                      self.dx,
-                                      self.lx,
-                                      self.ang,
-                                      self.pars['sigma'][0],
-                                      self.pars,
-                                      x[0:self.pars['n_PP']:],
-                                      self.pp_xy,
-                                      )
-                
-                self.set_field([field], ['npf'])
-                res = []
-            else:
-                print('this is not functional yeat')
-
-        
-        self.set_field([data['h']], ['h'])
-    
-        return res
-    
-    def kriging(self, data, mean_cov_par, var_cov_par):
-  
-        mat, pos_def = self.check_new_matrix(data[0])
-        
-        if pos_def:
-            l1, l2, angle = self.pars['mat2cv'](mat)    
-            l1, l2, angle = self.check_vario(l1,l2, angle)
+        if self.iso:
             
-            pp_k = data[1]
+            data = self.get_field(['h', 'npf'])
+            data['h'][~h_mask] = x[self.pars['n_PP']:]
+            
+            res = self.kriging([x[:self.pars['n_PP']]])
+            self.set_field([data['h']], ['h'])
+        else:
+            data = self.get_field(['h', 'npf', 'cov_data'])
+            cl = 3
+    
+            if 'cov_data' in self.params:
+                if 'npf' in self.params:
+                    data['h'][~h_mask] = x[self.pars['n_PP']+cl:]
+                    res = self.kriging([x[0:cl],x[cl:self.pars['n_PP']+cl]],
+                                       mean_cov_par,
+                                       var_cov_par)
+                else:
+                    data['h'][~h_mask] = x[cl:]
+                    res = self.kriging([x[0:cl], x[cl:self.pars['n_PP']+cl]],
+                                       mean_cov_par,
+                                       var_cov_par)
+            else:
+                if self.pars['pilotp']:
+                    data['h'][~h_mask] = x[self.pars['n_PP']:]
+                    
+                    field, _ = conditional_k(self.cxy,
+                                          self.dx,
+                                          self.lx,
+                                          self.ang,
+                                          self.pars['sigma'][0],
+                                          self.pars,
+                                          x[0:self.pars['n_PP']:],
+                                          self.pp_xy,
+                                          )
+                    
+                    self.set_field([field], ['npf'])
+                    res = []
+                else:
+                    print('this is not functional yeat')
+    
+            
+            self.set_field([data['h']], ['h'])
+    
+            return res
+    
+    def kriging(self, data, mean_cov_par = [], var_cov_par = []):
+        
+        if self.iso:
+            pp_k = data[0]
             self.sigma2 = np.var(pp_k)
-            if self.pars['condfl']:
-                field = conditional_k(self.cxy,
-                                      self.dx,
-                                      self.lx,
-                                      self.ang,
-                                      self.sigma2,
-                                      self.pars,
-                                      pp_k,
-                                      self.pp_xy,
-                                      )
-            else:
-                field = Kriging(self.cxy,
-                                self.dx,
-                                self.lx,
-                                self.ang,
-                                self.pars['sigma'][0],
-                                self.pars,
-                                pp_k,
-                                self.pp_xy)
-            
+            field = conditional_k(self.cxy,
+                                  self.dx,
+                                  self.lx,
+                                  self.ang,
+                                  self.sigma2,
+                                  self.pars,
+                                  pp_k,
+                                  self.pp_xy,
+                                  )
             self.set_field([field[0]], ['npf'])
-            
         else:
-            l1, l2, angle = self.pars['mat2cv'](self.ellips_mat)
-            self.n_neg_def += 1 
-            if self.n_neg_def == 10:
-                self.log.append(f'{os.path.join(*self.direc.split(os.sep)[-2:])} replaced cov model')
-                self.replace_model(mean_cov_par, var_cov_par)
+            mat, pos_def = self.check_new_matrix(data[0])
+            
+            if pos_def:
+                l1, l2, angle = self.pars['mat2cv'](mat)    
+                l1, l2, angle = self.check_vario(l1,l2, angle)
                 
-        return [[l1, l2, angle], [self.ellips_mat[0,0], self.ellips_mat[1,0], self.ellips_mat[1,1]], pos_def]
+                pp_k = data[1]
+                self.sigma2 = np.var(pp_k)
+                if self.pars['condfl']:
+                    field = conditional_k(self.cxy,
+                                          self.dx,
+                                          self.lx,
+                                          self.ang,
+                                          self.sigma2,
+                                          self.pars,
+                                          pp_k,
+                                          self.pp_xy,
+                                          )
+                else:
+                    field = Kriging(self.cxy,
+                                    self.dx,
+                                    self.lx,
+                                    self.ang,
+                                    self.pars['sigma'][0],
+                                    self.pars,
+                                    pp_k,
+                                    self.pp_xy)
+                
+                self.set_field([field[0]], ['npf'])
+                
+            else:
+                l1, l2, angle = self.pars['mat2cv'](self.ellips_mat)
+                self.n_neg_def += 1 
+                if self.n_neg_def == 10:
+                    self.log.append(f'{os.path.join(*self.direc.split(os.sep)[-2:])} replaced cov model')
+                    self.replace_model(mean_cov_par, var_cov_par)
+                    
+            return [[l1, l2, angle], [self.ellips_mat[0,0], self.ellips_mat[1,0], self.ellips_mat[1,1]], pos_def]
                     
     
     def update_ellips_mat(self, mat):

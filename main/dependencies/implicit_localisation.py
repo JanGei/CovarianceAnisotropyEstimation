@@ -2,7 +2,7 @@ import numpy as np
 from scipy.spatial import distance
 
 
-def implicit_localisation(obs_xy, modelgrid, mask, parameters, pp_xy = []):
+def implicit_localisation(obs_xy, modelgrid, mask, parameters, pp_xy = [], iso = False):
     x,y,_ = modelgrid.xyzcellcenters
     cxy = np.array([x,y]).T 
     cxy = cxy[~np.asarray(mask, dtype = bool)]
@@ -15,14 +15,14 @@ def implicit_localisation(obs_xy, modelgrid, mask, parameters, pp_xy = []):
     # distance_weighted_matrix = steep_norm(dist_matrix, threshold = 2000, steepness= 7)
     distance_weighted_matrix = tukey_window(dist_matrix)
     
-    if 'cov_data' in parameters:
+    if not iso:
         distance_weighted_matrix = np.hstack([np.ones((np.shape(distance_weighted_matrix)[0], 3)), distance_weighted_matrix])
     
     return distance_weighted_matrix
 
 
 
-def tukey_window(distance, l1=7500, l2=2000):
+def tukey_window(distance, l1=750, l2=2000):
     w = np.zeros(distance.shape)
     
     # Flat section for distance <= l1
