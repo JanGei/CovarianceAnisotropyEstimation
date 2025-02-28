@@ -1,9 +1,17 @@
+# -*- coding: utf-8 -*-
+"""
+This script converts a  steady-state MODFLOW 6 model to a transient model.
+
+@author: Janek Geiger
+"""
+
 import flopy
 from dependencies.copy import copy_model
 import numpy as np
 
 def convert_to_transient(model_dir: str, target_dir: str, pars: dict, nsteps: int = 1):
     
+    # Loading parameters, pre-generated fields, and the MF6 model
     sname               = pars['sname']
     mname               = pars['mname']
     sfac                = np.genfromtxt(pars['sf_d'],delimiter = ',', names=True)['Wert']
@@ -13,13 +21,13 @@ def convert_to_transient(model_dir: str, target_dir: str, pars: dict, nsteps: in
     welst               = pars['welst'] 
     welnd               = pars['welnd'] 
     
-    
     copy_model(model_dir, target_dir)
     
     sim = flopy.mf6.MFSimulation.load(sname,
                                       sim_ws = target_dir,
                                       verbosity_level = 1) 
     #%% set transient forcing
+    # retrieve MODFLOW packages
     gwf             = sim.get_model(mname)
     rch             = gwf.rch
     riv             = gwf.riv
@@ -76,4 +84,3 @@ def convert_to_transient(model_dir: str, target_dir: str, pars: dict, nsteps: in
     sim.write_simulation()
     
     return sim
-    

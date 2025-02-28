@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+This script visualizes the hydraulic conductivity field and the recharge field
+of a MODFLOW 6 model
+
+@author: Janek Geiger
+"""
+
 import flopy
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,24 +14,17 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 def plot_fields(gwf: flopy.mf6.modflow.mfgwf.ModflowGwf, pars,  logk_proposal, rech_proposal: np.ndarray):
     
-    # kmin    = np.min(np.log(np.loadtxt(pars['k_r_d'], delimiter = ',')))
-    # kmax    = np.max(np.log(np.loadtxt(pars['k_r_d'], delimiter = ',')))
-    # rmin    = np.min(np.loadtxt(pars['r_r_d'], delimiter = ','))
-    # rmax    = np.max(np.loadtxt(pars['r_r_d'], delimiter = ','))
-    
     kmin    = np.min(np.min(logk_proposal))
     kmax    = np.max(np.max(logk_proposal))
     rmin    = np.min(np.loadtxt(pars['r_r_d'], delimiter = ','))
     rmax    = np.max(np.loadtxt(pars['r_r_d'], delimiter = ','))
     
     pad = 0.1
-    # gwf.npf.k.set_data(logk_proposal)
     
     rch_spd     = gwf.rch.stress_period_data.get_data()
     rch_spd[0]['recharge'] = rech_proposal
     gwf.rch.stress_period_data.set_data(rch_spd)
   
-
     # Define font size
     fontsize = 20
     

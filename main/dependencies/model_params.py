@@ -1,9 +1,22 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+This parameter file contains functions and parameters 
+
+@author: janek geiger
+"""
+
 import numpy as np
 import os
 import sys
 import psutil
 
 def create_wells(row_well, col_well, dx):
+    """
+    Creating the pumping wells
+
+    @author: janek geiger
+    """
     well_loc = np.zeros((col_well*row_well,2))
     for i in range(row_well):
         for j in range(col_well):
@@ -100,11 +113,6 @@ def period(t_step, pars):
         
     return period, Assimilate
 
-
-def ellips_to_matrix(lx1, lx2, ang):
-    
-    
-    return 
 
 def get():
     current_directory = os.path.dirname(os.path.abspath(__file__))

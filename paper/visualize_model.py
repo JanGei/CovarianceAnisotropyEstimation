@@ -60,8 +60,8 @@ fig = plt.figure(figsize=(14,8))
 gs = gridspec.GridSpec(2, 2, height_ratios=[1, 1], width_ratios=[1, 1])
 
 # cellid = 4033
-cellid = 2944
-obsid = 37
+cellid = 3975
+# obsid = 37
 # Upper left plot
 ax1 = fig.add_subplot(gs[0, 0])
 fp1 = flopy.plot.PlotMapView(model=gwf, ax=ax1)
@@ -102,9 +102,9 @@ ax1.legend(handles,
 # ax1.legend(handles=custom_lines, loc = 'upper right', prop={'size': fontsize -2})  
 
 
-hollow_circle = patches.Circle((obsxy[obsid,0],obsxy[obsid,1]), 100, edgecolor='black', facecolor='none', linewidth=4, zorder = 2)
-ax1.add_patch(hollow_circle)
-ax1.text(obsxy[obsid,0]+75, obsxy[obsid,1]+75, f'{obsid}', fontsize=fontsize+2, fontweight='bold', color='black')
+# hollow_circle = patches.Circle((obsxy[obsid,0],obsxy[obsid,1]), 100, edgecolor='black', facecolor='none', linewidth=4, zorder = 2)
+# ax1.add_patch(hollow_circle)
+# ax1.text(obsxy[obsid,0]+75, obsxy[obsid,1]+75, f'{obsid}', fontsize=fontsize+2, fontweight='bold', color='black')
 
 ax1.scatter(cellxy[0][cellid],cellxy[1][cellid], c = 'darkviolet', marker = 's', s  = 10, zorder = 3)
 hollow_circle = patches.Circle((cellxy[0][cellid],cellxy[1][cellid]), 100, edgecolor='darkviolet', facecolor='none', linewidth=4, zorder = 2)

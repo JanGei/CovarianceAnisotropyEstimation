@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+This script contains several functions that deal with copying MODFLOW 6 models
+from different requirements
+
+@author: Janek Geiger
+"""
 import os
 import shutil
 
