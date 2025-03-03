@@ -18,7 +18,6 @@ from objects.MFModel import MFModel
 from objects.Virtual_Reality import Virtual_Reality
 from objects.EnsembleKalmanFilter import EnsembleKalmanFilter
 from Virtual_Reality.ReferenceModel import create_reference_model
-from Virtual_Reality.functions.generator import gsgenerator
 import time
 import numpy as np
 from joblib import Parallel, delayed
@@ -96,23 +95,6 @@ if __name__ == '__main__':
             l_angs.append(l_ang)
             pp_k_ini.append(pilotpoints[1])
             pp_k_ini_iso.append(pp_k_ini_iso)
-    else:
-        k_fields = Parallel(n_jobs=nprocs, backend = pars['backnd'])(delayed(gsgenerator)(
-            gwf,
-            pars,
-            pars['lx'][0], 
-            pars['ang'][0],
-            pars['sigma'][0],
-            pars['cov'],
-            pars['mu'],
-            covtype = pars['covt'],
-            valtype = pars['valt']) 
-            for idx in range(n_mem)
-            )
-        for field in k_fields:
-            cor_ellips.append([])
-            l_angs.append([])
-            pp_xy, pp_cid = [], []
     
     # save original fields from dependencies.plotting.plot_k_fields import plot_k_fields
     # if pars['setup'] == 'binnac':

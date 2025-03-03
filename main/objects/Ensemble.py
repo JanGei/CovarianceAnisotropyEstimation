@@ -22,6 +22,7 @@ class Ensemble:
         self.te2_k      = {'normal': [], 'nsq': []}
         self.nrmse_k    = {'normal': [], 'nsq': []}
         self.k_ref      = k_ref
+        self.k_ref_log  = np.log(k_ref)
         self.obs        = []
         self.pilotp_flag= pars['pilotp']
         self.obs_cid    = [int(i) for i in obs_cid]
@@ -250,12 +251,12 @@ class Ensemble:
         self.nrmse[period].append(time_nrmse)
         
         if period == 'assimilation':
-            mean_k, var_k = self.get_mean_var(h = 'npf')
+            mean_k, var_k = self.get_mean_var(h = 'npf', log = True)
             
-            var_te2_k = self.k_ref**2
-            node_te1_k = np.mean((self.k_ref - mean_k)**2/var_k)
-            node_te2_k = np.mean((self.k_ref - mean_k)**2/var_te2_k)
-            node_nrmse_k = np.mean((self.k_ref - mean_k)**2/0.01**2)
+            var_te2_k = self.k_ref_log**2
+            node_te1_k = np.mean((self.k_ref_log - mean_k)**2/var_k)
+            node_te2_k = np.mean((self.k_ref_log - mean_k)**2/var_te2_k)
+            node_nrmse_k = np.mean((self.k_ref_log - mean_k)**2/0.01**2)
             
             self.te1_k['nsq'].append(node_te1_k)
             self.te2_k['nsq'].append(node_te2_k)
@@ -287,11 +288,14 @@ class Ensemble:
         for member in self.members:
             member.log_correction(self.pars['logfil'])
 
-    def get_mean_var(self, h = 'h'):
+    def get_mean_var(self, h = 'h', log = False):
         h_fields = self.get_member_fields([h])
         
         h_f = np.array([np.squeeze(field[h]) for field in h_fields]).T
         
+        if h == 'npf' and log:
+            h_f = np.log(h_f)
+
         return np.mean(h_f, axis = 1), np.var(h_f, axis = 1)
     
     def record_state(self, pars: dict, true_h, period: str, t_step):
