@@ -1,10 +1,68 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+This file contains the Ensemble class. This class contains an ensemble of MF6
+models and functions to controll and manipulate its members. Further, it records
+the state of the ensemble 
+equips it with class functions to controll and manipulate the model files
+
+Input:
+    members         ensemble members of the MFModel class
+    pars            dictionary of parameters
+    obs_cid         cell id's (cid) of cells with observation wells
+    nprocs          number of processors for parallel computing
+    mask            mask of cells with 0 variance in hydraulic head
+    k_ref           reference hydraulic conductivity field
+    ellipses        covariance function parameters of all members (correlation lengths, angels)
+    ellipses_par    parameteric covariance function paramters in ellipse representation
+    pp_cid          cell id's of pilot points
+    pp_xy           cell xy coordiates of pilot points
+    pp_k            hydraulic conductivity values at pilot points
+    iso             flag whether ensemble is isotropic or anisotropic
+    
+@author: janek geiger
+"""
 from joblib import Parallel, delayed
 import numpy as np
 import os
     
 class Ensemble:
-    
     def __init__(self, members: list, pars, obs_cid, nprocs: int, mask, k_ref, ellipses = [], ellipses_par = [], pp_cid = [], pp_xy = [], pp_k = [], iso = False):
+        '''
+        
+
+        Parameters
+        ----------
+        members : list
+            DESCRIPTION.
+        pars : TYPE
+            DESCRIPTION.
+        obs_cid : TYPE
+            DESCRIPTION.
+        nprocs : int
+            DESCRIPTION.
+        mask : TYPE
+            DESCRIPTION.
+        k_ref : TYPE
+            DESCRIPTION.
+        ellipses : TYPE, optional
+            DESCRIPTION. The default is [].
+        ellipses_par : TYPE, optional
+            DESCRIPTION. The default is [].
+        pp_cid : TYPE, optional
+            DESCRIPTION. The default is [].
+        pp_xy : TYPE, optional
+            DESCRIPTION. The default is [].
+        pp_k : TYPE, optional
+            DESCRIPTION. The default is [].
+        iso : TYPE, optional
+            DESCRIPTION. The default is False.
+
+        Returns
+        -------
+        None.
+
+        '''
         self.members    = members
         self.pars       = pars
         self.nprocs     = nprocs
@@ -27,9 +85,9 @@ class Ensemble:
         self.pilotp_flag= pars['pilotp']
         self.obs_cid    = [int(i) for i in obs_cid]
         self.meanlogk   = []
-        self.meank   = []
-        self.iso = iso
-        self.vark   = []
+        self.meank      = []
+        self.iso        = iso
+        self.vark       = []
         if pars['pilotp']:
             self.ellipses   = ellipses
             self.ellipses_par = ellipses_par
@@ -40,10 +98,10 @@ class Ensemble:
             self.mean_cov_par   = np.mean(ellipses_par, axis = 0)
             self.var_cov_par    = np.var(ellipses_par, axis = 0)
             self.meanlogppk = []
-            self.varlogppk = []
-            self.meanppk = []
-            self.varppk = []
-            self.pp_k_ini = pp_k
+            self.varlogppk  = []
+            self.meanppk    = []
+            self.varppk     = []
+            self.pp_k_ini   = pp_k
         if pars['val1st']:
             self.params     = pars['EnKF_p'][0]
         else:
