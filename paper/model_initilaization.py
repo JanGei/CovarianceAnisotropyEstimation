@@ -20,7 +20,7 @@ from flopy.utils.gridgen import Gridgen
 import shutil
 from Virtual_Reality.Field_Generation import generate_fields
 import sys
-
+from matplotlib.patches import Rectangle
 cwd = os.getcwd()
 pars = get()
 plt.rcParams.update({
@@ -308,7 +308,16 @@ for i in range(ncols):
                 axes[j, 0].set_yticks([1000, 2000])
                 axes[j, 0].set_yticklabels([1, 2], fontsize = 12)
                 axes[j, 0].set_ylabel('Northing (km)', fontsize = 12)
+    
+    # Get axis limits based on your domain extent
+    xmin, xmax = gwf.modelgrid.extent[0], gwf.modelgrid.extent[1]
+    ymin, ymax = gwf.modelgrid.extent[2], gwf.modelgrid.extent[3]
 
+    # Add a white rectangle at the bottom layer
+    axes[1, i].add_patch(
+        Rectangle((xmin, ymin), xmax - xmin, ymax - ymin,
+                  color='white', zorder=0)
+    )
     # Add ellipses to the second row (axes[1, i])
     ellipse = patches.Ellipse((2500, 1250),
                               lengths[i][0]*2,
@@ -386,6 +395,7 @@ for i in range(ncols):
                     ha=ha2, va='bottom')
     axes[1, i].text(2750, 1450, r'$\alpha$', color='green', fontsize=12, fontweight = 'bold',
                     ha='left', va='bottom')
+    axes[1, i].set_facecolor('white')
 
 contour_plots = [axes[2, i].contour(X, Y, np.flip(np.reshape(hfields[i], X.shape), axis=0), levels=levels, cmap='gray') for i in range(ncols)]        
 # cbar2 = fig.colorbar(contour_plots[0].collections[0], ax=axes[2, :], location='right', pad=0.01, shrink=0.8, aspect=10)
@@ -398,6 +408,8 @@ cbar2.set_label('Head (m)', fontsize=12)
 axes[0,0].set_title('Reference', fontsize = 14, fontweight = 'bold')   
 axes[0,1].set_title('Correct covariance function', fontsize = 14, fontweight = 'bold') 
 axes[0,2].set_title('Wrong covariance function', fontsize = 14, fontweight = 'bold') 
+fig.patch.set_alpha(0.0)
+
 
 # fig.tight_layout()
 # plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05, hspace=0.001, wspace=0.3)        
