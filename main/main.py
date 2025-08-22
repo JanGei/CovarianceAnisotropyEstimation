@@ -285,6 +285,8 @@ if __name__ == '__main__':
             # if pars['shadow']:
             #     MF_shadowEnsemble.update_initial_heads()
             start_time = time.time()
+            import sys
+            sys.exit()
             X, Ysim = MF_Ensemble.get_Kalman_X_Y()
             X_iso, Ysim_iso = MF_Ensemble_iso.get_Kalman_X_Y()
             EnKF.update_X_Y(X, Ysim)

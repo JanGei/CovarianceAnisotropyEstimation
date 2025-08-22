@@ -136,8 +136,8 @@ def get():
     computer = ['office', 'binnac']
     setup = computer[0]
     if setup == 'office':
-        n_mem  = 80
-        nprocs = np.min([n_mem, psutil.cpu_count()])
+        n_mem  = 40
+        nprocs = np.min([n_mem, psutil.cpu_count()]) -1
         inspection = False
         up_temp = True
         printf = True
